@@ -1,6 +1,8 @@
 package com.mytech.api.auth.controller;
 
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +40,7 @@ import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.security.jwt.JwtUtils;
 import com.mytech.api.auth.security.services.MyUserDetails;
 import com.mytech.api.auth.security.services.SignupService;
+import com.mytech.api.auth.security.services.UserService;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -52,6 +57,9 @@ public class AuthController {
 
   @Autowired
   JwtUtils jwtUtils;
+  
+  @Autowired
+  UserService userService;
   
   @Autowired
   SignupService signupService;
@@ -120,5 +128,21 @@ public class AuthController {
       ResponseEntity<String> response = forgotPassService.resetPassword(token, password);
       return response;
   }
+  
+  @PostMapping("/logout")
+  public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+      if (authentication != null) {
+          new SecurityContextLogoutHandler().logout(request, response, authentication);
+      }
+      return ResponseEntity.ok("Logout successful");
+  }
+  
+  @DeleteMapping("/{userId}")
+  public ResponseEntity<String> deleteUser(@PathVariable Long userId) {
+      userService.deleteUser(userId);
+      return ResponseEntity.ok("User deleted successfully");
+  }
+
 
 }

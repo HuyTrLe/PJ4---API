@@ -23,4 +23,5 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 	
 	long countByUser(User user);
 	boolean existsByUserAndIconIn(User user, List<Cat_Icon> icons);
+	void deleteByUserId(Long userId);
 }
