@@ -11,6 +11,8 @@ public interface CategoryService {
 	List<Category> getCategoriesByUserId(Long userId);
 	
 	void seedCategoriesForNewUsers(User user);
-
 	
+	void deleteCategoryById(Long categoryId);
+	
+	boolean existsCategoryById(Long categoryId);
 }

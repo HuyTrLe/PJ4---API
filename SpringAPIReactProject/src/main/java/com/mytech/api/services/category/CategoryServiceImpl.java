@@ -14,6 +14,8 @@ import com.mytech.api.models.category.Category;
 import com.mytech.api.repositories.categories.CateIconRepository;
 import com.mytech.api.repositories.categories.CategoryRepository;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @Service
 public class CategoryServiceImpl implements CategoryService {
 	private final CategoryRepository categoryRepository;
@@ -89,5 +91,20 @@ public class CategoryServiceImpl implements CategoryService {
 	    System.out.println("Retrieved categories: " + categories);
 	    return categories;
 	}
+	
+	@Override
+    @Transactional
+    public void deleteCategoryById(Long categoryId) {
+        if (existsCategoryById(categoryId)) {
+            categoryRepository.deleteById(categoryId);
+        } else {
+            throw new EntityNotFoundException("Category not found");
+        }
+    }
 
+	@Override
+    @Transactional(readOnly = true)
+    public boolean existsCategoryById(Long categoryId) {
+        return categoryRepository.existsById(categoryId);
+    }
 }
