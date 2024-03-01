@@ -17,6 +17,7 @@ import com.mytech.api.auth.payload.request.token.ConfirmationToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationTokenService;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.User;
+import com.mytech.api.services.category.CategoryService;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,9 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	
 	@Autowired
 	PasswordResetTokenService passwordResetTokenService;
+	
+	@Autowired
+	CategoryService categoryService;
 	
 	@Override
 	@Transactional
@@ -59,11 +63,11 @@ public class UserDetailServiceImpl implements UserDetailsService {
 		String encodedPassword = encoder.encode(user.getPassword());
 		user.setPassword(encodedPassword);
 		userRepository.save(user);
-
 		String token = UUID.randomUUID().toString();
 		ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
 				LocalDateTime.now().plusMinutes(15), user);
 		confirmationTokenService.saveConfirmationToken(confirmationToken);
+		categoryService.seedCategoriesForNewUsers(user);
 		return token;
 	}
 	
