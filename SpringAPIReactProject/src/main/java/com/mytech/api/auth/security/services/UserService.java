@@ -16,21 +16,8 @@ public class UserService {
 	@Autowired
 	UserRepository userRepository;
 	
-	@Autowired
-	ConfirmationTokenRepository confirmationTokenRepository;
-	
-	@Autowired
-	PasswordResetTokenRepository passwordResetTokenRepository;
-	
-	@Autowired
-	CategoryRepository categoryRepository;
-	
 	@Transactional
     public void deleteUser(Long userId) {
-        
-        confirmationTokenRepository.deleteByUserId(userId);
-        passwordResetTokenRepository.deleteByUserId(userId);
-        categoryRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);
     }
 }

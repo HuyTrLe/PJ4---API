@@ -24,11 +24,9 @@ private final CategoryService categoryService;
 
 	@GetMapping("/user/{userId}")
 	public ResponseEntity<List<Category>> getAllCategoryByUser(@PathVariable Long userId) {
-	    System.out.println("Controller - User ID: " + userId);
 	    List<Category> categories = categoryService.getCategoriesByUserId(userId);
-	    System.out.println("Controller - Categories size: " + categories.size());
 	    if (categories.isEmpty()) {
-	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	        return new ResponseEntity<>(categories, HttpStatus.NOT_FOUND);
 	    }
 	    return new ResponseEntity<>(categories, HttpStatus.OK);
 	}

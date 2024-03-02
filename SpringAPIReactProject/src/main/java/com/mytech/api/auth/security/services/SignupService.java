@@ -33,7 +33,7 @@ public class SignupService {
 		if(!isValidEmail) {
 			throw new IllegalStateException("Email Not Valid.");
 		}
-		String token =  userDetailServiceImpl.signUpUser(new User(null, request.getUsername() , request.getEmail() , request.getPassword(), false));
+		String token =  userDetailServiceImpl.signUpUser(new User(request.getUsername() , request.getEmail() , request.getPassword(), false));
 		String link = "http://localhost:8080/api/auth/signup/confirm?token=" + token;
 		emailSender.send(
 				request.getEmail(),

@@ -1,6 +1,5 @@
 package com.mytech.api.models.category;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mytech.api.models.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,7 +34,6 @@ public class Category {
 	@JoinColumn(name = "icon_id")
 	private Cat_Icon icon;
 	
-	@JsonIgnore
 	@ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
