@@ -8,10 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.controllers.category.CategoryRequest;
-import com.mytech.api.models.User;
 import com.mytech.api.models.category.Cat_Icon;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.user.User;
 import com.mytech.api.repositories.categories.CateIconRepository;
 import com.mytech.api.repositories.categories.CategoryRepository;
 
@@ -118,5 +118,25 @@ public class CategoryServiceImpl implements CategoryService {
 				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
 		Category category = new Category(categoryRequest.getName(), categoryRequest.getType(), icon, user);
         return categoryRepository.save(category);
+	}
+	
+	@Override
+	@Transactional
+	public Category updateCategory(Long categoryId, CategoryRequest updateCategoryRequest) {
+		Category existingCategory = categoryRepository.findById(categoryId)
+				 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+		
+		existingCategory.setName(updateCategoryRequest.getName());
+		existingCategory.setType(updateCategoryRequest.getType());
+		
+		User user = userRepository.findById(updateCategoryRequest.getUserId())
+				.orElseThrow(() -> new IllegalArgumentException("User not found"));
+		existingCategory.setUser(user);
+		
+		Cat_Icon icon = catIconRepository.findById(updateCategoryRequest.getIconId())
+				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
+		existingCategory.setIcon(icon);
+		
+		return categoryRepository.save(existingCategory);
 	}
 }

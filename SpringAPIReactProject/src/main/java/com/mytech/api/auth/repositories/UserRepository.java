@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.mytech.api.models.User;
+import com.mytech.api.models.user.User;
 
 import jakarta.transaction.Transactional;
 

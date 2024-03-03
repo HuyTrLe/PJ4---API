@@ -1,6 +1,5 @@
 package com.mytech.api.models.recurrence;
 
-import com.mytech.api.models.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,6 +7,8 @@ import lombok.Setter;
 
 import jakarta.persistence.*;
 import java.util.Date;
+
+import com.mytech.api.models.user.User;
 
 @Entity
 @Getter @Setter

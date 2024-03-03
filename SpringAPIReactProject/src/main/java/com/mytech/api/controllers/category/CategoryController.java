@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,6 +49,19 @@ private final CategoryService categoryService;
 	public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryRequest categoryRequest) {
 		Category category = categoryService.createCategory(categoryRequest);
 		return ResponseEntity.status(HttpStatus.CREATED).body(category);
+
+	}
+	
+	@PutMapping("/{categoryId}")
+	public ResponseEntity<Category> updateCategory (@PathVariable Long categoryId, @RequestBody CategoryRequest updatedCategoryRequest){
+		try {
+            Category updatedCategory = categoryService.updateCategory(categoryId, updatedCategoryRequest);
+            return ResponseEntity.ok(updatedCategory);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
 	}
 }

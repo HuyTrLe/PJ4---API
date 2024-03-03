@@ -16,7 +16,7 @@ import com.mytech.api.auth.password.PasswordResetTokenService;
 import com.mytech.api.auth.payload.request.token.ConfirmationToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationTokenService;
 import com.mytech.api.auth.repositories.UserRepository;
-import com.mytech.api.models.User;
+import com.mytech.api.models.user.User;
 import com.mytech.api.services.category.CategoryService;
 
 import jakarta.transaction.Transactional;

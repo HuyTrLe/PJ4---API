@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mytech.api.auth.email.EmailSender;
 import com.mytech.api.auth.payload.request.EmailValidator;
 import com.mytech.api.auth.security.services.UserDetailServiceImpl;
-import com.mytech.api.models.User;
+import com.mytech.api.models.user.User;
 
 import lombok.AllArgsConstructor;
 

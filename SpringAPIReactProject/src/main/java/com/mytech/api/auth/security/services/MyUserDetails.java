@@ -5,7 +5,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mytech.api.models.User;
+import com.mytech.api.models.user.User;
 
 public class MyUserDetails implements UserDetails{
 	

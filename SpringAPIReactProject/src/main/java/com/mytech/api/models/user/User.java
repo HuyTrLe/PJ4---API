@@ -1,4 +1,4 @@
-package com.mytech.api.models;
+package com.mytech.api.models.user;
 
 import java.util.ArrayList;
 import java.util.List;

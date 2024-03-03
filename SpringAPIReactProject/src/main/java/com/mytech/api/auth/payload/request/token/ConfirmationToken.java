@@ -2,7 +2,7 @@ package com.mytech.api.auth.payload.request.token;
 
 import java.time.LocalDateTime;
 
-import com.mytech.api.models.User;
+import com.mytech.api.models.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,8 +20,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-public class ConfirmationToken {
-    @Id
+public class ConfirmationToken{
+	
+	@Id
     @SequenceGenerator(name = "confirmation_token_sequence", sequenceName = "confirmation_token_sequence", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "confirmation_token_sequence")
     private Long id;

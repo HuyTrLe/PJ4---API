@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.mytech.api.models.User;
 import com.mytech.api.models.category.Cat_Icon;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.user.User;
 
 import jakarta.transaction.Transactional;
 

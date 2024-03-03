@@ -1,7 +1,8 @@
 package com.mytech.api.auth.password;
 
 import java.time.LocalDateTime;
-import com.mytech.api.models.User;
+
+import com.mytech.api.models.user.User;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -16,8 +17,9 @@ import lombok.Setter;
 @Getter @Setter
 @NoArgsConstructor
 @Entity
-public class PasswordResetToken {
-    @Id
+public class PasswordResetToken{
+    
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String token;

@@ -42,7 +42,7 @@ import com.mytech.api.auth.security.jwt.JwtUtils;
 import com.mytech.api.auth.security.services.MyUserDetails;
 import com.mytech.api.auth.security.services.SignupService;
 import com.mytech.api.auth.security.services.UserService;
-import com.mytech.api.models.User;
+import com.mytech.api.models.user.User;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")

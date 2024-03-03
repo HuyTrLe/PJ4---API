@@ -11,7 +11,7 @@ import com.mytech.api.auth.payload.request.EmailValidator;
 import com.mytech.api.auth.payload.request.SignupRequest;
 import com.mytech.api.auth.payload.request.token.ConfirmationToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationTokenService;
-import com.mytech.api.models.User;
+import com.mytech.api.models.user.User;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;

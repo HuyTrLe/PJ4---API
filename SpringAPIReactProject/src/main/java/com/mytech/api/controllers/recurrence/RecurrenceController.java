@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
-import com.mytech.api.models.User;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceType;
+import com.mytech.api.models.user.User;
 import com.mytech.api.services.recurrence.RecurrenceService;
 
 @RestController

@@ -3,8 +3,8 @@ package com.mytech.api.services.category;
 import java.util.List;
 
 import com.mytech.api.controllers.category.CategoryRequest;
-import com.mytech.api.models.User;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.user.User;
 
 
 public interface CategoryService {
@@ -18,4 +18,6 @@ public interface CategoryService {
 	boolean existsCategoryById(Long categoryId);
 	
 	Category createCategory(CategoryRequest categoryRequest);
+	
+	Category updateCategory(Long categoryId, CategoryRequest updateCategoryRequest);
 }
