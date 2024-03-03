@@ -1,4 +1,4 @@
-package com.mytech.api.security;
+package com.mytech.api.config;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.lang.annotation.*;

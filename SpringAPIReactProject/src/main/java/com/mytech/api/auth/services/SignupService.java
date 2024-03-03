@@ -1,4 +1,4 @@
-package com.mytech.api.auth.security.services;
+package com.mytech.api.auth.services;
 
 import java.time.LocalDateTime;
 

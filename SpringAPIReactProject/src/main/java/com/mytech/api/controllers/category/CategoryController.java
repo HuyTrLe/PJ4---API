@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mytech.api.models.category.Category;
+import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.services.category.CategoryService;
 
 import jakarta.validation.Valid;
@@ -28,8 +28,8 @@ private final CategoryService categoryService;
 	}
 
 	@GetMapping("/user/{userId}")
-	public ResponseEntity<List<Category>> getAllCategoryByUser(@PathVariable Long userId) {
-	    List<Category> categories = categoryService.getCategoriesByUserId(userId);
+	public ResponseEntity<List<CategoryDTO>> getAllCategoryByUser(@PathVariable Long userId) {
+	    List<CategoryDTO> categories = categoryService.getCategoriesByUserId(userId);
 	    if (categories.isEmpty()) {
 	        return new ResponseEntity<>(categories, HttpStatus.NOT_FOUND);
 	    }
@@ -46,16 +46,16 @@ private final CategoryService categoryService;
 	    }
 	}
 	@PostMapping("/create")
-	public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryRequest categoryRequest) {
-		Category category = categoryService.createCategory(categoryRequest);
-		return ResponseEntity.status(HttpStatus.CREATED).body(category);
+	public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryDTO categoryRequest) {
+		CategoryDTO createdCategoryDTO = categoryService.createCategory(categoryRequest);
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdCategoryDTO);
 
 	}
 	
 	@PutMapping("/{categoryId}")
-	public ResponseEntity<Category> updateCategory (@PathVariable Long categoryId, @RequestBody CategoryRequest updatedCategoryRequest){
+	public ResponseEntity<CategoryDTO> updateCategory (@PathVariable Long categoryId, @RequestBody CategoryDTO updatedCategoryDTO){
 		try {
-            Category updatedCategory = categoryService.updateCategory(categoryId, updatedCategoryRequest);
+			CategoryDTO updatedCategory = categoryService.updateCategory(categoryId, updatedCategoryDTO);
             return ResponseEntity.ok(updatedCategory);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);

@@ -1,4 +1,4 @@
-package com.mytech.api.security;
+package com.mytech.api.config;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 

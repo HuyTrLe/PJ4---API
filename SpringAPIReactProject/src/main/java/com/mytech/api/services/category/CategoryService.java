@@ -2,14 +2,14 @@ package com.mytech.api.services.category;
 
 import java.util.List;
 
-import com.mytech.api.controllers.category.CategoryRequest;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.user.User;
 
 
 public interface CategoryService {
 
-	List<Category> getCategoriesByUserId(Long userId);
+	List<CategoryDTO> getCategoriesByUserId(Long userId);
 	
 	void seedCategoriesForNewUsers(User user);
 	
@@ -17,7 +17,7 @@ public interface CategoryService {
 	
 	boolean existsCategoryById(Long categoryId);
 	
-	Category createCategory(CategoryRequest categoryRequest);
+	CategoryDTO createCategory(CategoryDTO categoryRequest);
 	
-	Category updateCategory(Long categoryId, CategoryRequest updateCategoryRequest);
+	CategoryDTO updateCategory(Long categoryId, CategoryDTO updateCategoryDTO);
 }

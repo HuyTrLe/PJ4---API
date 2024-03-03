@@ -1,5 +1,4 @@
-package com.mytech.api.security;
-
+package com.mytech.api.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -15,15 +14,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.mytech.api.auth.security.jwt.AuthTokenFilter;
-import com.mytech.api.auth.security.services.UserDetailServiceImpl;
-
+import com.mytech.api.auth.jwt.AuthTokenFilter;
+import com.mytech.api.auth.services.UserDetailServiceImpl;
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig{
+public class SecurityConfig {
 	@Autowired
 	UserDetailServiceImpl userDetailServiceImpl;
-
 
 	@Bean
 	AuthTokenFilter authenticationJwtTokenFilter() {
@@ -32,12 +29,12 @@ public class SecurityConfig{
 
 	@Bean
 	DaoAuthenticationProvider authenticationProvider() {
-		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();       
-	    authProvider.setUserDetailsService(userDetailServiceImpl);
-	    authProvider.setPasswordEncoder(passwordEncoder());
-	    return authProvider;
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(userDetailServiceImpl);
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
 	}
-	  
+
 	@Bean
 	AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
 		return authConfig.getAuthenticationManager();
@@ -47,23 +44,20 @@ public class SecurityConfig{
 	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	  
+
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
-	        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-	        .authorizeHttpRequests(auth -> 
-	          auth.requestMatchers("/api/auth/**").permitAll()
-	              .requestMatchers("/api/recurrences/**").permitAll()
-	              .requestMatchers("/api/categories/**").permitAll()
-	              .anyRequest().authenticated()
-	              
-	        		);
-	    
-	   http.authenticationProvider(authenticationProvider());
-	   http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-	   return http.build();
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
+						.requestMatchers("/api/recurrences/**").permitAll().requestMatchers("/api/categories/**")
+						.permitAll().anyRequest().authenticated()
+
+				);
+
+		http.authenticationProvider(authenticationProvider());
+		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+		return http.build();
 	}
-	
-	
+
 }

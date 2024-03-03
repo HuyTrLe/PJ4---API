@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.jwt.JwtUtils;
 import com.mytech.api.auth.password.ForgotPasswordRequest;
 import com.mytech.api.auth.password.ForgotPasswordService;
 import com.mytech.api.auth.password.PasswordResetToken;
@@ -38,11 +40,11 @@ import com.mytech.api.auth.payload.request.LoginRequest;
 import com.mytech.api.auth.payload.request.SignupRequest;
 import com.mytech.api.auth.payload.response.JwtResponse;
 import com.mytech.api.auth.repositories.UserRepository;
-import com.mytech.api.auth.security.jwt.JwtUtils;
-import com.mytech.api.auth.security.services.MyUserDetails;
-import com.mytech.api.auth.security.services.SignupService;
-import com.mytech.api.auth.security.services.UserService;
+import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.auth.services.SignupService;
+import com.mytech.api.auth.services.UserService;
 import com.mytech.api.models.user.User;
+import com.mytech.api.models.user.UserDTO;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -71,6 +73,9 @@ public class AuthController {
   
   @Autowired
   PasswordResetTokenService passwordResetTokenService;
+  
+  @Autowired
+  ModelMapper modelMapper;
 
   @PostMapping("/signin")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -147,9 +152,10 @@ public class AuthController {
   }
 
   @GetMapping("/{userId}")
-  public ResponseEntity<User> getUserId(@PathVariable Long userId){
-	  Optional<User> user = userRepository.findById(userId);
-	  return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+  public ResponseEntity<UserDTO> getUserId(@PathVariable Long userId) {
+      Optional<User> user = userRepository.findById(userId);
+      return user.map(u -> ResponseEntity.ok(modelMapper.map(u, UserDTO.class)))
+              .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
 }

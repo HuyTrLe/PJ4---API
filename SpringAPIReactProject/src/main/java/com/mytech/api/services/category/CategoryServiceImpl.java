@@ -2,16 +2,21 @@ package com.mytech.api.services.category;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.auth.repositories.UserRepository;
-import com.mytech.api.controllers.category.CategoryRequest;
 import com.mytech.api.models.category.Cat_Icon;
+import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.user.User;
+import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.repositories.categories.CateIconRepository;
 import com.mytech.api.repositories.categories.CategoryRepository;
 
@@ -19,15 +24,14 @@ import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
-	private final CategoryRepository categoryRepository;
-	private final CateIconRepository catIconRepository;
-	private final UserRepository userRepository;
-
-	public CategoryServiceImpl(CategoryRepository categoryRepository, CateIconRepository catIconRepository, UserRepository userRepository) {
-		this.categoryRepository = categoryRepository;
-		this.catIconRepository = catIconRepository;
-		this.userRepository = userRepository;
-	}
+	@Autowired
+	CategoryRepository categoryRepository;
+	@Autowired
+	CateIconRepository catIconRepository;
+	@Autowired
+	UserRepository userRepository;
+	@Autowired
+	ModelMapper modelMapper;
 
 	@Transactional
 	public void seedCategoriesForNewUsers(User user) {
@@ -84,59 +88,63 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
-	public List<Category> getCategoriesByUserId(Long userId) {
-	    System.out.println("Fetching categories for user ID: " + userId);
-	    User user = userRepository.findById(userId).orElse(null);
-	    System.out.println("User details: " + user);
-	    List<Category> categories = categoryRepository.findByUserId(userId);
-	    System.out.println("Retrieved categories: " + categories);
-	    return categories;
+	public List<CategoryDTO> getCategoriesByUserId(Long userId) {
+		List<Category> categories = categoryRepository.findByUserId(userId);
+		System.out.println("Retrieved categories: " + categories);
+		List<CategoryDTO> categoryDTOs = categories.stream()
+				.map(category -> modelMapper.map(category, CategoryDTO.class)).collect(Collectors.toList());
+
+		return categoryDTOs;
 	}
-	
-	@Override
-    @Transactional
-    public void deleteCategoryById(Long categoryId) {
-        if (existsCategoryById(categoryId)) {
-            categoryRepository.deleteById(categoryId);
-        } else {
-            throw new EntityNotFoundException("Category not found");
-        }
-    }
 
 	@Override
-    @Transactional(readOnly = true)
-    public boolean existsCategoryById(Long categoryId) {
-        return categoryRepository.existsById(categoryId);
-    }
-	
-	@Override
 	@Transactional
-	public Category createCategory(CategoryRequest categoryRequest) {
-		User user = userRepository.findById(categoryRequest.getUserId())
-				.orElseThrow(() -> new IllegalArgumentException("User not found"));
-		Cat_Icon icon = catIconRepository.findById(categoryRequest.getIconId())
-				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
-		Category category = new Category(categoryRequest.getName(), categoryRequest.getType(), icon, user);
-        return categoryRepository.save(category);
+	public void deleteCategoryById(Long categoryId) {
+		if (existsCategoryById(categoryId)) {
+			categoryRepository.deleteById(categoryId);
+		} else {
+			throw new EntityNotFoundException("Category not found");
+		}
 	}
-	
+
+	@Override
+	@Transactional(readOnly = true)
+	public boolean existsCategoryById(Long categoryId) {
+		return categoryRepository.existsById(categoryId);
+	}
+
+	@Override
+	public CategoryDTO createCategory(CategoryDTO categoryDTO) {
+		User user = modelMapper.map(new UserDTO(categoryDTO.getUserId(), null, null, null, false), User.class);
+		Cat_Icon catIcon = modelMapper.map(new Cat_IconDTO(categoryDTO.getIconId(), null), Cat_Icon.class);
+
+		Category category = modelMapper.map(categoryDTO, Category.class);
+		category.setUser(user);
+		category.setIcon(catIcon);
+
+		Category createdCategory = categoryRepository.save(category);
+
+		return modelMapper.map(createdCategory, CategoryDTO.class);
+	}
+
 	@Override
 	@Transactional
-	public Category updateCategory(Long categoryId, CategoryRequest updateCategoryRequest) {
+	public CategoryDTO updateCategory(Long categoryId, CategoryDTO updateCategoryDTO) {
 		Category existingCategory = categoryRepository.findById(categoryId)
-				 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
-		
-		existingCategory.setName(updateCategoryRequest.getName());
-		existingCategory.setType(updateCategoryRequest.getType());
-		
-		User user = userRepository.findById(updateCategoryRequest.getUserId())
+				.orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+		modelMapper.map(updateCategoryDTO, existingCategory);
+
+		User user = userRepository.findById(updateCategoryDTO.getUserId())
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
-		existingCategory.setUser(user);
-		
-		Cat_Icon icon = catIconRepository.findById(updateCategoryRequest.getIconId())
+		Cat_Icon catIcon = catIconRepository.findById(updateCategoryDTO.getIconId())
 				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
-		existingCategory.setIcon(icon);
-		
-		return categoryRepository.save(existingCategory);
+
+		existingCategory.setUser(user);
+		existingCategory.setIcon(catIcon);
+
+		Category updatedCategory = categoryRepository.save(existingCategory);
+
+		return modelMapper.map(updatedCategory, CategoryDTO.class);
 	}
 }

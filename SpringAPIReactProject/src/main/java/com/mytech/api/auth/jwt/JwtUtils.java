@@ -1,4 +1,4 @@
-package com.mytech.api.auth.security.jwt;
+package com.mytech.api.auth.jwt;
 
 import java.security.Key;
 import java.util.Date;
@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import com.mytech.api.auth.security.services.MyUserDetails;
+import com.mytech.api.auth.services.MyUserDetails;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;

@@ -1,4 +1,4 @@
-package com.mytech.api.auth.security.jwt;
+package com.mytech.api.auth.jwt;
 
 import java.io.IOException;
 
@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.mytech.api.auth.security.services.UserDetailServiceImpl;
+import com.mytech.api.auth.services.UserDetailServiceImpl;
 
 
 public class AuthTokenFilter extends OncePerRequestFilter {

@@ -1,11 +1,11 @@
-package com.mytech.api.auth.security.services;
+package com.mytech.api.auth.services;
 
 import java.util.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mytech.api.models.user.User;
+import com.mytech.api.models.user.UserDTO;
 
 public class MyUserDetails implements UserDetails{
 	
@@ -29,7 +29,7 @@ public class MyUserDetails implements UserDetails{
         this.password = password;
         this.isEnabled = isEnabled;
     }
-	 public static MyUserDetails build(User user) {
+	 public static MyUserDetails build(UserDTO user) {
 	        return new MyUserDetails(
 	                user.getId(),
 	                user.getUsername(),
