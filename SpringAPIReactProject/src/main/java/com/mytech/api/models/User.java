@@ -3,6 +3,7 @@ package com.mytech.api.models;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mytech.api.auth.password.PasswordResetToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationToken;
 import com.mytech.api.models.category.Category;
@@ -25,6 +26,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@JsonIgnoreProperties({"categories", "recurrences", "confirmationTokens", "passwordResetToken"})
 public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

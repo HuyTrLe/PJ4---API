@@ -37,7 +37,6 @@ public class Category {
 	private Cat_Icon icon;
 	
 	@ManyToOne
-	@JsonIgnore
     @JoinColumn(name = "user_id")
     private User user;
 

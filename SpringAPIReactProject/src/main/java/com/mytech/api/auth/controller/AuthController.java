@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,7 @@ import com.mytech.api.auth.security.jwt.JwtUtils;
 import com.mytech.api.auth.security.services.MyUserDetails;
 import com.mytech.api.auth.security.services.SignupService;
 import com.mytech.api.auth.security.services.UserService;
+import com.mytech.api.models.User;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -144,5 +146,10 @@ public class AuthController {
       return ResponseEntity.ok("User deleted successfully");
   }
 
+  @GetMapping("/{userId}")
+  public ResponseEntity<User> getUserId(@PathVariable Long userId){
+	  Optional<User> user = userRepository.findById(userId);
+	  return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+  }
 
 }
