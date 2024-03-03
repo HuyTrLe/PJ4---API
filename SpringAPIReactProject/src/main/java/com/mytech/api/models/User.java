@@ -49,16 +49,16 @@ public class User {
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Category> categories = new ArrayList<>();
-	
+
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Recurrence>  recurrences= new ArrayList<>();
-	
+	private List<Recurrence> recurrences = new ArrayList<>();
+
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<ConfirmationToken> confirmationTokens= new ArrayList<>();
-	
+	private List<ConfirmationToken> confirmationTokens = new ArrayList<>();
+
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private PasswordResetToken passwordResetToken;
-	
+
 	public User(String username, String email, String password, boolean isEnabled) {
 		this.username = username;
 		this.email = email;

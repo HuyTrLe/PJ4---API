@@ -2,6 +2,7 @@ package com.mytech.api.services.category;
 
 import java.util.List;
 
+import com.mytech.api.controllers.category.CategoryRequest;
 import com.mytech.api.models.User;
 import com.mytech.api.models.category.Category;
 
@@ -15,4 +16,6 @@ public interface CategoryService {
 	void deleteCategoryById(Long categoryId);
 	
 	boolean existsCategoryById(Long categoryId);
+	
+	Category createCategory(CategoryRequest categoryRequest);
 }

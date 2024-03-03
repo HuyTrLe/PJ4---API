@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.controllers.category.CategoryRequest;
 import com.mytech.api.models.User;
 import com.mytech.api.models.category.Cat_Icon;
 import com.mytech.api.models.category.CateTypeENum;
@@ -107,4 +108,15 @@ public class CategoryServiceImpl implements CategoryService {
     public boolean existsCategoryById(Long categoryId) {
         return categoryRepository.existsById(categoryId);
     }
+	
+	@Override
+	@Transactional
+	public Category createCategory(CategoryRequest categoryRequest) {
+		User user = userRepository.findById(categoryRequest.getUserId())
+				.orElseThrow(() -> new IllegalArgumentException("User not found"));
+		Cat_Icon icon = catIconRepository.findById(categoryRequest.getIconId())
+				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
+		Category category = new Category(categoryRequest.getName(), categoryRequest.getType(), icon, user);
+        return categoryRepository.save(category);
+	}
 }
