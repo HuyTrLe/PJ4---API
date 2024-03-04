@@ -11,14 +11,14 @@ public class CategoryDTO {
 	private Long id;
 	private String name;
 	private CateTypeENum type;
-	private Long iconId;
+	private Cat_IconDTO icon;
 	private Long userId;
 
-	public CategoryDTO(Long id, String name, CateTypeENum type, Long iconId, Long userId) {
+	public CategoryDTO(Long id, String name, CateTypeENum type, Cat_IconDTO icon, Long userId) {
 		this.id = id;
 		this.name = name;
 		this.type = type;
-		this.iconId = iconId;
+		this.icon = icon;
 		this.userId = userId;
 	}
 }

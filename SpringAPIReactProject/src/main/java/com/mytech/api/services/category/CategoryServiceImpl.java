@@ -50,27 +50,27 @@ public class CategoryServiceImpl implements CategoryService {
 
 	private void seedCatIcons() {
 		if (catIconRepository.count() == 0) {
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/anotherbill.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/beauty.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/bill&fees.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/business.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/drink.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/food.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/education.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/entertainment.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/extraincome.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/gift.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/grocery.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/home.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/homebill.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/loan.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/other.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/phonebill.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/salary.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/shopping.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/transport.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/travel.png"));
-			catIconRepository.save(new Cat_Icon("./assets/img/icons/waterbill.png"));
+			catIconRepository.save(new Cat_Icon("anotherbill.png"));
+			catIconRepository.save(new Cat_Icon("beauty.png"));
+			catIconRepository.save(new Cat_Icon("bill&fees.png"));
+			catIconRepository.save(new Cat_Icon("business.png"));
+			catIconRepository.save(new Cat_Icon("drink.png"));
+			catIconRepository.save(new Cat_Icon("food.png"));
+			catIconRepository.save(new Cat_Icon("education.png"));
+			catIconRepository.save(new Cat_Icon("entertainment.png"));
+			catIconRepository.save(new Cat_Icon("extraincome.png"));
+			catIconRepository.save(new Cat_Icon("gift.png"));
+			catIconRepository.save(new Cat_Icon("grocery.png"));
+			catIconRepository.save(new Cat_Icon("home.png"));
+			catIconRepository.save(new Cat_Icon("homebill.png"));
+			catIconRepository.save(new Cat_Icon("loan.png"));
+			catIconRepository.save(new Cat_Icon("other.png"));
+			catIconRepository.save(new Cat_Icon("phonebill.png"));
+			catIconRepository.save(new Cat_Icon("salary.png"));
+			catIconRepository.save(new Cat_Icon("shopping.png"));
+			catIconRepository.save(new Cat_Icon("transport.png"));
+			catIconRepository.save(new Cat_Icon("travel.png"));
+			catIconRepository.save(new Cat_Icon("waterbill.png"));
 		}
 	}
 
@@ -116,7 +116,7 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	public CategoryDTO createCategory(CategoryDTO categoryDTO) {
 		User user = modelMapper.map(new UserDTO(categoryDTO.getUserId(), null, null, null, false), User.class);
-		Cat_Icon catIcon = modelMapper.map(new Cat_IconDTO(categoryDTO.getIconId(), null), Cat_Icon.class);
+		Cat_Icon catIcon = modelMapper.map(new Cat_IconDTO(categoryDTO.getIcon()), Cat_Icon.class);
 
 		Category category = modelMapper.map(categoryDTO, Category.class);
 		category.setUser(user);
@@ -137,7 +137,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 		User user = userRepository.findById(updateCategoryDTO.getUserId())
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
-		Cat_Icon catIcon = catIconRepository.findById(updateCategoryDTO.getIconId())
+		Cat_Icon catIcon = catIconRepository.findById(updateCategoryDTO.getIcon().getId())
 				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
 
 		existingCategory.setUser(user);
