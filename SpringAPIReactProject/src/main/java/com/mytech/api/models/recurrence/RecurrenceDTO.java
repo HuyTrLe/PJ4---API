@@ -2,7 +2,6 @@ package com.mytech.api.models.recurrence;
 
 import java.util.Date;
 
-import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
 
 import jakarta.persistence.Column;
