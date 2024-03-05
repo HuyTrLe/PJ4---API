@@ -103,8 +103,7 @@ public class AuthController {
   
   @GetMapping(path = "/signup/confirm")
   public ResponseEntity<String> confirm(@RequestParam("token") String token) {
-      ResponseEntity<String> confirmationResponse = signupService.confirmToken(token);
-      return confirmationResponse;
+      return signupService.confirmToken(token);
   }
   
   @PostMapping("/forgot-password")
@@ -157,5 +156,14 @@ public class AuthController {
       return user.map(u -> ResponseEntity.ok(modelMapper.map(u, UserDTO.class)))
               .orElseGet(() -> ResponseEntity.notFound().build());
   }
-
+  
+  @PutMapping("/update/{userId}")
+  public ResponseEntity<String> updateUser(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
+      return userService.updateUser(userId, userDTO);
+  }
+  
+  @GetMapping("/update/confirm")
+  public ResponseEntity<String> confirmUpdate(@RequestParam("token") String token) {
+      return userService.confirmToken(token);
+  }
 }

@@ -28,8 +28,8 @@ public class EmailService implements EmailSender {
 	                    new MimeMessageHelper(mimeMessage, "utf-8");
 	            helper.setText(email, true);
 	            helper.setTo(to);
-	            helper.setSubject("Confirm your email");
-	            helper.setFrom("anhvdcts2202016@fpt.edu.vn");
+	            helper.setSubject("Confirm your information");
+	            helper.setFrom("bugdet.company@gmail.com");
 	            javaMailSender.send(mimeMessage);
 	        } catch (MessagingException e) {
 	            LOGGER.error("Failed To Send Email.", e);

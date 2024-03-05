@@ -44,7 +44,7 @@ public class ForgotPasswordService {
 	@Transactional
 	public ResponseEntity<String> resetPassword(String token, String password) {
 		PasswordResetToken passwordResetToken = passwordResetTokenService.getToken(token).orElseThrow(() ->
-        new IllegalStateException("token not found"));;
+        new IllegalStateException("token not found"));
 		User user = passwordResetToken.getUser();
 		user.setPassword(new BCryptPasswordEncoder().encode(password));
 		userDetailServiceImpl.save(user);

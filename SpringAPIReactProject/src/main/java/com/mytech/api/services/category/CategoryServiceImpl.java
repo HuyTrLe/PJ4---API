@@ -115,7 +115,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 	@Override
 	public CategoryDTO createCategory(CategoryDTO categoryDTO) {
-		User user = modelMapper.map(new UserDTO(categoryDTO.getUserId(), null, null, null, false), User.class);
+		User user = modelMapper.map(new UserDTO(null, categoryDTO.getUserId(), null, null, null, false, false, null), User.class);
 		Cat_Icon catIcon = modelMapper.map(new Cat_IconDTO(categoryDTO.getIcon()), Cat_Icon.class);
 
 		Category category = modelMapper.map(categoryDTO, Category.class);
