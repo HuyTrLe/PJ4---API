@@ -93,13 +93,13 @@ public class UserService {
 	            .orElseThrow(() -> new IllegalStateException("Token not found"));
 
 	    if (confirmationToken.getConfirmedAt() != null) {
-	        String alertScript = "<script>alert('Email already confirmed'); window.location.href='http://localhost:3000/';</script>";
+	        String alertScript = "<script>alert('Email already confirmed'); window.location.href='http://localhost:3000/user';</script>";
 	        return ResponseEntity.ok(alertScript);
 	    }
 
 	    LocalDateTime expiredAt = confirmationToken.getExpiresAt();
 	    if (expiredAt.isBefore(LocalDateTime.now())) {
-	        String alertScript = "<script>alert('Token expired'); window.location.href='http://localhost:3000/';</script>";
+	        String alertScript = "<script>alert('Token expired'); window.location.href='http://localhost:3000/user';</script>";
 	        return ResponseEntity.ok(alertScript);
 	    }
 

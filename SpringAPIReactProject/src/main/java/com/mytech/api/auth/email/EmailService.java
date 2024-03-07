@@ -29,7 +29,7 @@ public class EmailService implements EmailSender {
 	            helper.setText(email, true);
 	            helper.setTo(to);
 	            helper.setSubject("Confirm your information");
-	            helper.setFrom("bugdet.company@gmail.com");
+	            helper.setFrom("achauu997@gmail.com");
 	            javaMailSender.send(mimeMessage);
 	        } catch (MessagingException e) {
 	            LOGGER.error("Failed To Send Email.", e);
