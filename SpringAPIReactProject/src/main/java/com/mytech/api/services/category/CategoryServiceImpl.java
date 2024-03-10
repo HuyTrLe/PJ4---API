@@ -115,9 +115,10 @@ public class CategoryServiceImpl implements CategoryService {
 
 	@Override
 	public CategoryDTO createCategory(CategoryDTO categoryDTO) {
-		User user = modelMapper.map(new UserDTO(null, categoryDTO.getUserId(), null, null, null, false, false, null), User.class);
-		Cat_Icon catIcon = modelMapper.map(new Cat_IconDTO(categoryDTO.getIcon()), Cat_Icon.class);
-
+		User user = userRepository.findById(categoryDTO.getUserId())
+				.orElseThrow(() -> new IllegalArgumentException("User not found"));
+		Cat_Icon catIcon = catIconRepository.findById(categoryDTO.getIcon().getId())
+				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
 		Category category = modelMapper.map(categoryDTO, Category.class);
 		category.setUser(user);
 		category.setIcon(catIcon);
@@ -147,4 +148,15 @@ public class CategoryServiceImpl implements CategoryService {
 
 		return modelMapper.map(updatedCategory, CategoryDTO.class);
 	}
+	
+	@Override
+	@Transactional
+	public List<Cat_IconDTO> getAllIcons(){
+		List<Cat_Icon> icons = catIconRepository.findAll();
+		List<Cat_IconDTO> iconsDTO = icons.stream()
+				.map(category -> modelMapper.map(category, Cat_IconDTO.class)).collect(Collectors.toList());
+
+		return iconsDTO;
+	}
+	
 }

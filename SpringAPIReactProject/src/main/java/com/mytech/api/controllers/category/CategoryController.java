@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.services.category.CategoryService;
 
@@ -64,4 +65,10 @@ private final CategoryService categoryService;
         }
 
 	}
+	
+	@GetMapping("/icons")
+	public ResponseEntity<List<Cat_IconDTO>> getAllIcons() {
+        List<Cat_IconDTO> icons = categoryService.getAllIcons();
+        return ResponseEntity.ok(icons);
+    }
 }
