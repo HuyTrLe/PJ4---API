@@ -65,7 +65,6 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	}
 
 	public String signUpUser(User user) {
-
 		String encodedPassword = encoder.encode(user.getPassword());
 		user.setPassword(encodedPassword);
 		userRepository.save(user);

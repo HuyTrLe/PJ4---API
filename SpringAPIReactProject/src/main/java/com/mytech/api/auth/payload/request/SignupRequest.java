@@ -22,6 +22,10 @@ public class SignupRequest {
 	private String email;
 
 	@NotBlank
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$", message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, at least 8 characters long.")
 	private String password;
+	
+	@NotBlank
+	private String confirmPassword;
 
 }

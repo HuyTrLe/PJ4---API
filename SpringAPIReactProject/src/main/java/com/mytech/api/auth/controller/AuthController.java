@@ -1,12 +1,13 @@
 package com.mytech.api.auth.controller;
 
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,120 +52,141 @@ import com.mytech.api.models.user.UserDTO;
 @CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/auth")
 public class AuthController {
-  @Autowired
-  AuthenticationManager authenticationManager;
+	@Autowired
+	AuthenticationManager authenticationManager;
 
-  @Autowired
-  UserRepository userRepository;
+	@Autowired
+	UserRepository userRepository;
 
-  @Autowired
-  PasswordEncoder encoder;
+	@Autowired
+	PasswordEncoder encoder;
 
-  @Autowired
-  JwtUtils jwtUtils;
-  
-  @Autowired
-  UserService userService;
-  
-  @Autowired
-  SignupService signupService;
-  
-  @Autowired
-  ForgotPasswordService forgotPassService;
-  
-  @Autowired
-  PasswordResetTokenService passwordResetTokenService;
-  
-  @Autowired
-  ModelMapper modelMapper;
+	@Autowired
+	JwtUtils jwtUtils;
 
-  @PostMapping("/signin")
-  public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-	  try {
-		  System.out.println("Received login request: " + loginRequest.getUsername() + ", " + loginRequest.getPassword());
-	        Authentication authentication = authenticationManager.authenticate(
-	                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+	@Autowired
+	UserService userService;
 
-	        SecurityContextHolder.getContext().setAuthentication(authentication);
-	        String jwt = jwtUtils.generateJwtToken(authentication);
+	@Autowired
+	SignupService signupService;
 
-	        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-	        System.out.println("Token: " + jwt);
-	        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(), userDetails.isEnabled()));
-	    } catch (BadCredentialsException ex) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
-	    }
-  }
+	@Autowired
+	ForgotPasswordService forgotPassService;
 
+	@Autowired
+	PasswordResetTokenService passwordResetTokenService;
 
-  @PostMapping("/signup")
-  public String signup(@RequestBody SignupRequest request) {
-	  return signupService.signUp(request);
-  }
-  
-  @GetMapping(path = "/signup/confirm")
-  public ResponseEntity<String> confirm(@RequestParam("token") String token) {
-      return signupService.confirmToken(token);
-  }
-  
-  @PostMapping("/forgot-password")
-  public String fogotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
-	  String email = forgotPasswordRequest.getEmail();
-	  return forgotPassService.forgotPassword(email);
-  }
-  
-  @GetMapping("/validate-token/{token}")
-  public ResponseEntity<String> validateToken(@PathVariable String token) {
-      try {
-          PasswordResetToken passwordResetToken = passwordResetTokenService.getToken(token)
-                  .orElseThrow(() -> new IllegalStateException("Token not found"));
-          if (passwordResetToken.getExpiry().isBefore(LocalDateTime.now())) {
-              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token expired");
-          }
-          
-          return ResponseEntity.ok("Token is valid");
-      } catch (Exception e) {
-          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
-      }
-  }
-  
-  @PutMapping("/reset-password")
-  public ResponseEntity<String> resetPass(@RequestBody ResetPasswordRequest passwordRequest) {
-      String password = passwordRequest.getPassword();
-      String token = passwordRequest.getToken();
-      ResponseEntity<String> response = forgotPassService.resetPassword(token, password);
-      return response;
-  }
-  
-  @PostMapping("/logout")
-  public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-      if (authentication != null) {
-          new SecurityContextLogoutHandler().logout(request, response, authentication);
-      }
-      return ResponseEntity.ok("Logout successful");
-  }
-  
-  @DeleteMapping("/{userId}")
-  public ResponseEntity<String> deleteUser(@PathVariable Long userId) {
-      userService.deleteUser(userId);
-      return ResponseEntity.ok("User deleted successfully");
-  }
+	@Autowired
+	ModelMapper modelMapper;
 
-  @GetMapping("/{userId}")
-  public ResponseEntity<UserDTO> getUserId(@PathVariable Long userId) {
-      Optional<User> user = userRepository.findById(userId);
-      return user.map(u -> ResponseEntity.ok(modelMapper.map(u, UserDTO.class)))
-              .orElseGet(() -> ResponseEntity.notFound().build());
-  }
-  
-  @PutMapping("/update/{userId}")
-  public ResponseEntity<String> updateUser(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
-      return userService.updateUser(userId, userDTO);
-  }
-  
-  @GetMapping("/update/confirm")
-  public ResponseEntity<String> confirmUpdate(@RequestParam("token") String token) {
-      return userService.confirmToken(token);
-  }
+	@PostMapping("/signin")
+	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+		try {
+			System.out.println(
+					"Received login request: " + loginRequest.getUsername() + ", " + loginRequest.getPassword());
+			Authentication authentication = authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+			String jwt = jwtUtils.generateJwtToken(authentication);
+
+			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+			System.out.println("Token: " + jwt);
+			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(),
+					userDetails.getEmail(), userDetails.isEnabled()));
+		} catch (BadCredentialsException ex) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+		}
+	}
+
+	@PostMapping("/signup")
+	public ResponseEntity<?> signup(@RequestBody @Valid SignupRequest request, BindingResult result) {
+		if(result.hasErrors()) {
+			 String errors = result.getFieldErrors()
+		                .stream()
+		                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+		                .collect(Collectors.joining(", "));
+
+		        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+		}
+		return ResponseEntity.ok(signupService.signUp(request));
+	}
+
+	@GetMapping(path = "/signup/confirm")
+	public ResponseEntity<?> confirm(@RequestParam("token") String token) {
+		return signupService.confirmToken(token);
+	}
+
+	@PostMapping("/forgot-password")
+	public String fogotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+		String email = forgotPasswordRequest.getEmail();
+		return forgotPassService.forgotPassword(email);
+	}
+
+	@GetMapping("/validate-token/{token}")
+	public ResponseEntity<?> validateToken(@PathVariable String token) {
+		try {
+			PasswordResetToken passwordResetToken = passwordResetTokenService.getToken(token)
+					.orElseThrow(() -> new IllegalStateException("Token not found"));
+			if (passwordResetToken.getExpiry().isBefore(LocalDateTime.now())) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token expired");
+			}
+
+			return ResponseEntity.ok("Token is valid");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
+		}
+	}
+
+	@PutMapping("/reset-password")
+	public ResponseEntity<?> resetPass(@RequestBody @Valid ResetPasswordRequest passwordRequest,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			List<String> errors = result.getFieldErrors()
+	                .stream()
+	                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+	                .collect(Collectors.toList());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+		}
+		String password = passwordRequest.getPassword();
+		String token = passwordRequest.getToken();
+		String confirmPassword = passwordRequest.getConfirmPassword();
+		if (!password.equals(confirmPassword)) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password not match");
+		}
+		ResponseEntity<?> response = forgotPassService.resetPassword(token, password);
+		return response;
+	}
+
+	@PostMapping("/logout")
+	public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null) {
+			new SecurityContextLogoutHandler().logout(request, response, authentication);
+		}
+		return ResponseEntity.ok("Logout successful");
+	}
+
+	@DeleteMapping("/{userId}")
+	public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+		userService.deleteUser(userId);
+		return ResponseEntity.ok("User deleted successfully");
+	}
+
+	@GetMapping("/{userId}")
+	public ResponseEntity<UserDTO> getUserId(@PathVariable Long userId) {
+		Optional<User> user = userRepository.findById(userId);
+		return user.map(u -> ResponseEntity.ok(modelMapper.map(u, UserDTO.class)))
+				.orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@PutMapping("/update/{userId}")
+	public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
+		return userService.updateUser(userId, userDTO);
+	}
+
+	@GetMapping("/update/confirm")
+	public ResponseEntity<?> confirmUpdate(@RequestParam("token") String token) {
+		return userService.confirmToken(token);
+	}
 }

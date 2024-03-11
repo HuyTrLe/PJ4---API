@@ -71,4 +71,6 @@ private final CategoryService categoryService;
         List<Cat_IconDTO> icons = categoryService.getAllIcons();
         return ResponseEntity.ok(icons);
     }
+	
+	
 }

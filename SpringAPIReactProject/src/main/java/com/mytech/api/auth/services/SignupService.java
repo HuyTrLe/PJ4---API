@@ -33,6 +33,9 @@ public class SignupService {
 		if(!isValidEmail) {
 			throw new IllegalStateException("Email Not Valid.");
 		}
+		if (!request.getPassword().equals(request.getConfirmPassword())) {
+	        throw new IllegalStateException("Password does not match the confirmation.");
+	    }
 		String token =  userDetailServiceImpl.signUpUser(new User(request.getUsername() , request.getEmail() , request.getPassword(), false));
 		String link = "http://localhost:8080/api/auth/signup/confirm?token=" + token;
 		emailSender.send(
