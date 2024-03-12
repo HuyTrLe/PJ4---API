@@ -33,6 +33,9 @@ public class SignupService {
 		if(!isValidEmail) {
 			throw new IllegalStateException("Email Not Valid.");
 		}
+		if(request.getEmail().equals(request.getEmail())) {
+			throw new IllegalStateException("Email already have");
+		}
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
 	        throw new IllegalStateException("Password does not match the confirmation.");
 	    }

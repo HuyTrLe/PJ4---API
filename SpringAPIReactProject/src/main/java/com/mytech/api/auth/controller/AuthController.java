@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -80,17 +81,20 @@ public class AuthController {
 	ModelMapper modelMapper;
 
 	@PostMapping("/signin")
-	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
 		try {
-			System.out.println(
-					"Received login request: " + loginRequest.getUsername() + ", " + loginRequest.getPassword());
+			if(result.hasErrors()) {
+				String errors = result.getFieldErrors().stream()
+						.map(error -> error.getDefaultMessage())
+						.collect(Collectors.joining("\n"));
+				System.out.println(errors);
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+			}
 			Authentication authentication = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-
+			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 			String jwt = jwtUtils.generateJwtToken(authentication);
-
-			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
 			System.out.println("Token: " + jwt);
 			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(),
 					userDetails.getEmail(), userDetails.isEnabled()));
@@ -101,13 +105,12 @@ public class AuthController {
 
 	@PostMapping("/signup")
 	public ResponseEntity<?> signup(@RequestBody @Valid SignupRequest request, BindingResult result) {
-		if(result.hasErrors()) {
-			 String errors = result.getFieldErrors()
-		                .stream()
-		                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-		                .collect(Collectors.joining(", "));
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream()
+					.map(error -> error.getField())
+					.collect(Collectors.joining("\n"));
 
-		        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 		}
 		return ResponseEntity.ok(signupService.signUp(request));
 	}
@@ -139,14 +142,13 @@ public class AuthController {
 	}
 
 	@PutMapping("/reset-password")
-	public ResponseEntity<?> resetPass(@RequestBody @Valid ResetPasswordRequest passwordRequest,
-			BindingResult result) {
+	public ResponseEntity<?> resetPass(@RequestBody @Valid ResetPasswordRequest passwordRequest, BindingResult result) {
 		if (result.hasErrors()) {
-			List<String> errors = result.getFieldErrors()
-	                .stream()
-	                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-	                .collect(Collectors.toList());
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+			String errors = result.getFieldErrors().stream()
+					.map(error -> error.getField())
+					.collect(Collectors.joining("\n"));
+
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 		}
 		String password = passwordRequest.getPassword();
 		String token = passwordRequest.getToken();

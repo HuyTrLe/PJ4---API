@@ -20,6 +20,7 @@ import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.services.category.CategoryService;
+import org.springframework.security.authentication.DisabledException;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -50,6 +51,9 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		User user = userRepository.findByUsername(username)
 				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+		if (!user.isEnabled()) {
+            throw new DisabledException("User is not enabled");
+        }
 		UserDTO userDTO = modelMapper.map(user, UserDTO.class);
 		return MyUserDetails.build(userDTO);
 	}
