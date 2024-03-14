@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,6 +38,7 @@ import com.mytech.api.auth.password.ForgotPasswordService;
 import com.mytech.api.auth.password.PasswordResetToken;
 import com.mytech.api.auth.password.PasswordResetTokenService;
 import com.mytech.api.auth.password.ResetPasswordRequest;
+import com.mytech.api.auth.payload.request.EmailValidator;
 import com.mytech.api.auth.payload.request.LoginRequest;
 import com.mytech.api.auth.payload.request.SignupRequest;
 import com.mytech.api.auth.payload.response.JwtResponse;
@@ -80,12 +80,14 @@ public class AuthController {
 	@Autowired
 	ModelMapper modelMapper;
 
+	@Autowired
+	EmailValidator emailValidator;
+
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
 		try {
-			if(result.hasErrors()) {
-				String errors = result.getFieldErrors().stream()
-						.map(error -> error.getDefaultMessage())
+			if (result.hasErrors()) {
+				String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 						.collect(Collectors.joining("\n"));
 				System.out.println(errors);
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
@@ -96,6 +98,9 @@ public class AuthController {
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 			String jwt = jwtUtils.generateJwtToken(authentication);
 			System.out.println("Token: " + jwt);
+			if (!userDetails.isEnabled()) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You need to verify your email");
+			}
 			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(),
 					userDetails.getEmail(), userDetails.isEnabled()));
 		} catch (BadCredentialsException ex) {
@@ -106,13 +111,13 @@ public class AuthController {
 	@PostMapping("/signup")
 	public ResponseEntity<?> signup(@RequestBody @Valid SignupRequest request, BindingResult result) {
 		if (result.hasErrors()) {
-			String errors = result.getFieldErrors().stream()
-					.map(error -> error.getField())
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining("\n"));
-
+			System.out.println(errors);
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 		}
-		return ResponseEntity.ok(signupService.signUp(request));
+		ResponseEntity<?> response = signupService.signUp(request);
+		return response;
 	}
 
 	@GetMapping(path = "/signup/confirm")
@@ -121,9 +126,18 @@ public class AuthController {
 	}
 
 	@PostMapping("/forgot-password")
-	public String fogotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+	public ResponseEntity<?> fogotPassword(@RequestBody @Valid ForgotPasswordRequest forgotPasswordRequest,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
 		String email = forgotPasswordRequest.getEmail();
-		return forgotPassService.forgotPassword(email);
+		ResponseEntity<?> response = forgotPassService.forgotPassword(email);
+		return response;
+
 	}
 
 	@GetMapping("/validate-token/{token}")
@@ -144,8 +158,7 @@ public class AuthController {
 	@PutMapping("/reset-password")
 	public ResponseEntity<?> resetPass(@RequestBody @Valid ResetPasswordRequest passwordRequest, BindingResult result) {
 		if (result.hasErrors()) {
-			String errors = result.getFieldErrors().stream()
-					.map(error -> error.getField())
+			String errors = result.getFieldErrors().stream().map(error -> error.getField())
 					.collect(Collectors.joining("\n"));
 
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
@@ -171,8 +184,7 @@ public class AuthController {
 
 	@DeleteMapping("/{userId}")
 	public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-		userService.deleteUser(userId);
-		return ResponseEntity.ok("User deleted successfully");
+		return userService.deleteUser(userId);
 	}
 
 	@GetMapping("/{userId}")

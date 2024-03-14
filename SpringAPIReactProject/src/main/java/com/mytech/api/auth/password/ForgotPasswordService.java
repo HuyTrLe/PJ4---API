@@ -2,6 +2,7 @@ package com.mytech.api.auth.password;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,20 +30,24 @@ public class ForgotPasswordService {
 	@Autowired
 	EmailSender emailSender;
 
-	public String forgotPassword(String email) {
-		User user = userDetailServiceImpl.findByEmail(email);
+	public ResponseEntity<?> forgotPassword(String email) {
+	    User user = userDetailServiceImpl.findByEmail(email);
 		if (user != null) {
-			String token = userDetailServiceImpl.forgotPassword(user);
-			String link = "http://localhost:3000/auth/reset-password/" + token;
-			emailSender.send(email, buildEmail(user.getUsername(), link));
-			return token;
+			if (user.isEnabled()) {
+	            String token = userDetailServiceImpl.forgotPassword(user);
+	            String link = "http://localhost:3000/auth/reset-password/" + token;
+	            emailSender.send(email, buildEmail(user.getUsername(), link));
+	            return ResponseEntity.ok(token);
+	        } else {
+	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email is not verified.");
+	        }
 		} else {
-			throw new IllegalStateException("Email Not Found.");
+			return ResponseEntity.badRequest().body("Email Not Found.");
 		}
 	}
 	
 	@Transactional
-	public ResponseEntity<String> resetPassword(String token, String password) {
+	public ResponseEntity<?> resetPassword(String token, String password) {
 		PasswordResetToken passwordResetToken = passwordResetTokenService.getToken(token).orElseThrow(() ->
         new IllegalStateException("token not found"));
 		User user = passwordResetToken.getUser();

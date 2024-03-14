@@ -13,8 +13,8 @@ public class SignupRequest {
 	private String username;
 
 	@NotBlank(message = "Email cannot be blank")
-	@Email
 	@Column(unique = true)
+	@Email
 	private String email;
 
 	@NotBlank(message = "Password cannot be blank")
