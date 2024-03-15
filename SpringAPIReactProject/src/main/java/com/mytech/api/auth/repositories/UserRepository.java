@@ -9,13 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import com.mytech.api.models.user.User;
 
-import jakarta.transaction.Transactional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>{
 	Optional<User> findByUsername(String username);
 	Optional<User> findByEmail(String email);
-	@Transactional
     @Modifying
     @Query("UPDATE User u SET u.isEnabled = true WHERE u.email = ?1")
     int enabledUser(String email);

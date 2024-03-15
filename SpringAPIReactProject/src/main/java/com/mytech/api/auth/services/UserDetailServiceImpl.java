@@ -1,7 +1,6 @@
 package com.mytech.api.auth.services;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
@@ -18,11 +17,8 @@ import com.mytech.api.auth.payload.request.token.ConfirmationToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationTokenService;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.services.category.CategoryService;
-import org.springframework.security.authentication.DisabledException;
 
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -36,36 +32,34 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
 	@Autowired
 	ConfirmationTokenService confirmationTokenService;
-	
+
 	@Autowired
 	PasswordResetTokenService passwordResetTokenService;
-	
+
 	@Autowired
 	CategoryService categoryService;
-	
+
 	@Autowired
 	ModelMapper modelMapper;
-	
+
 	@Override
-	@Transactional
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		User user = userRepository.findByUsername(username)
 				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
-		if (!user.isEnabled()) {
-            throw new DisabledException("User is not enabled");
-        }
-		UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-		return MyUserDetails.build(userDTO);
+		
+		return MyUserDetails.build(user);
 	}
-	
-	@Transactional
-	public User findByEmail(String email){
-		Optional<User> userOptional = userRepository.findByEmail(email);
-		return userOptional.orElse(null);
+
+	public User findByEmail(String email) {
+		return userRepository.findByEmail(email).orElse(null);
 	}
-	
-	 public User save(User user) {
-	        return userRepository.save(user);
+
+	public User findByUsername(String username) {
+		return userRepository.findByUsername(username).orElse(null);
+	}
+
+	public User save(User user) {
+		return userRepository.save(user);
 	}
 
 	public String signUpUser(User user) {
@@ -79,17 +73,15 @@ public class UserDetailServiceImpl implements UserDetailsService {
 		categoryService.seedCategoriesForNewUsers(user);
 		return token;
 	}
-	
 
 	public String forgotPassword(User user) {
 		String token = UUID.randomUUID().toString();
 		PasswordResetToken passwordResetToken = new PasswordResetToken(token, LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(15), user);
+				LocalDateTime.now().plusMinutes(15), user);
 		passwordResetTokenService.save(passwordResetToken);
 		return token;
 	}
-	
-	
+
 	public void enabledUser(String email) {
 		userRepository.enabledUser(email);
 	}

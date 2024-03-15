@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -19,6 +18,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.validation.BindingResult;
@@ -39,12 +39,14 @@ import com.mytech.api.auth.password.ForgotPasswordService;
 import com.mytech.api.auth.password.PasswordResetToken;
 import com.mytech.api.auth.password.PasswordResetTokenService;
 import com.mytech.api.auth.password.ResetPasswordRequest;
+import com.mytech.api.auth.payload.request.EmailValidator;
 import com.mytech.api.auth.payload.request.LoginRequest;
 import com.mytech.api.auth.payload.request.SignupRequest;
 import com.mytech.api.auth.payload.response.JwtResponse;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.auth.services.SignupService;
+import com.mytech.api.auth.services.UserDetailServiceImpl;
 import com.mytech.api.auth.services.UserService;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
@@ -80,16 +82,27 @@ public class AuthController {
 	@Autowired
 	ModelMapper modelMapper;
 
+	@Autowired
+	EmailValidator emailValidator;
+	
+	@Autowired 
+	UserDetailServiceImpl userServiceImpl;
+
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
 		try {
-			if(result.hasErrors()) {
-				String errors = result.getFieldErrors().stream()
-						.map(error -> error.getDefaultMessage())
+			if (result.hasErrors()) {
+				String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 						.collect(Collectors.joining("\n"));
 				System.out.println(errors);
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 			}
+			User user = userServiceImpl.findByUsername(loginRequest.getUsername());
+			if(user == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username not found");
+			}
+			if(!user.isEnabled()) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You need to verify your email before login.");			}
 			Authentication authentication = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
@@ -106,13 +119,13 @@ public class AuthController {
 	@PostMapping("/signup")
 	public ResponseEntity<?> signup(@RequestBody @Valid SignupRequest request, BindingResult result) {
 		if (result.hasErrors()) {
-			String errors = result.getFieldErrors().stream()
-					.map(error -> error.getField())
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining("\n"));
-
+			System.out.println(errors);
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 		}
-		return ResponseEntity.ok(signupService.signUp(request));
+		ResponseEntity<?> response = signupService.signUp(request);
+		return response;
 	}
 
 	@GetMapping(path = "/signup/confirm")
@@ -121,9 +134,18 @@ public class AuthController {
 	}
 
 	@PostMapping("/forgot-password")
-	public String fogotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+	public ResponseEntity<?> fogotPassword(@RequestBody @Valid ForgotPasswordRequest forgotPasswordRequest,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
 		String email = forgotPasswordRequest.getEmail();
-		return forgotPassService.forgotPassword(email);
+		ResponseEntity<?> response = forgotPassService.forgotPassword(email);
+		return response;
+
 	}
 
 	@GetMapping("/validate-token/{token}")
@@ -144,8 +166,7 @@ public class AuthController {
 	@PutMapping("/reset-password")
 	public ResponseEntity<?> resetPass(@RequestBody @Valid ResetPasswordRequest passwordRequest, BindingResult result) {
 		if (result.hasErrors()) {
-			String errors = result.getFieldErrors().stream()
-					.map(error -> error.getField())
+			String errors = result.getFieldErrors().stream().map(error -> error.getField())
 					.collect(Collectors.joining("\n"));
 
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
@@ -171,8 +192,7 @@ public class AuthController {
 
 	@DeleteMapping("/{userId}")
 	public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-		userService.deleteUser(userId);
-		return ResponseEntity.ok("User deleted successfully");
+		return userService.deleteUser(userId);
 	}
 
 	@GetMapping("/{userId}")

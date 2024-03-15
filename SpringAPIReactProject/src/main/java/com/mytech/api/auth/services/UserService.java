@@ -37,12 +37,18 @@ public class UserService {
 	@Autowired
 	PasswordEncoder encoder;
 
-	@Transactional
-	public void deleteUser(Long userId) {
-		userRepository.deleteById(userId);
+	
+	public ResponseEntity<?> deleteUser(Long userId) {
+		Optional<User> userOptional = userRepository.findById(userId);
+	    if (userOptional.isPresent()) {
+	        userRepository.deleteById(userId);
+	        return ResponseEntity.ok("User deleted successfully.");
+	    } else {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+	    }
 	}
 
-	public ResponseEntity<String> updateUser(Long userId, UserDTO userDTO) {
+	public ResponseEntity<?> updateUser( Long userId, UserDTO userDTO) {
 		User existingUser = userRepository.findById(userId)
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
 		String newUsername = userDTO.getUsername();
