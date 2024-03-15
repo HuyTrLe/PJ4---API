@@ -87,7 +87,7 @@ public class SignupService {
 
 		confirmationTokenService.setConfirmedAt(token);
 		userDetailServiceImpl.enabledUser(confirmationToken.getUser().getEmail());
-		String redirectScript = "<script>alert('Email confirmed. Please Login!');window.location.href='http://localhost:3000/#/auth/signin';</script>";
+		String redirectScript = "<script>alert('Email confirmed. Please Login!');window.location.href='http://localhost:3000/auth/signin';</script>";
 		return ResponseEntity.ok(redirectScript);
 	}
 

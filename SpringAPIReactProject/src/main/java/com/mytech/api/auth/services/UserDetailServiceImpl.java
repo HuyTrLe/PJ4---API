@@ -1,7 +1,6 @@
 package com.mytech.api.auth.services;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
@@ -18,9 +17,7 @@ import com.mytech.api.auth.payload.request.token.ConfirmationToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationTokenService;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.services.category.CategoryService;
-import org.springframework.security.authentication.DisabledException;
 
 import lombok.AllArgsConstructor;
 
@@ -47,14 +44,9 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		Optional<User> userOptional = userRepository.findByUsername(username);
-		userOptional.ifPresent(user -> {
-            if (!user.isEnabled()) {
-                throw new DisabledException("User is not enabled");
-            }
-        });
-		UserDTO userDTO = modelMapper.map(userOptional, UserDTO.class);
-		return MyUserDetails.build(userDTO);
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+		return MyUserDetails.build(user);
 	}
 
 	public User findByEmail(String email) {

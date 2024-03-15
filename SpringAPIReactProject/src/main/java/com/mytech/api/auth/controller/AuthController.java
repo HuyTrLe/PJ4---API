@@ -98,9 +98,6 @@ public class AuthController {
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 			String jwt = jwtUtils.generateJwtToken(authentication);
 			System.out.println("Token: " + jwt);
-			if (!userDetails.isEnabled()) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You need to verify your email");
-			}
 			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(),
 					userDetails.getEmail(), userDetails.isEnabled()));
 		} catch (BadCredentialsException ex) {
