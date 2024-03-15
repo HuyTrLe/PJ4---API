@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.mytech.api.auth.jwt.AuthTokenFilter;
 import com.mytech.api.auth.services.UserDetailServiceImpl;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -51,7 +52,7 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
 						.requestMatchers("/api/recurrences/**").permitAll().requestMatchers("/api/categories/**")
-						.permitAll().anyRequest().authenticated()
+						.permitAll().requestMatchers("/api/bills/**").permitAll().anyRequest().authenticated()
 
 				);
 

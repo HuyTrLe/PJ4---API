@@ -5,36 +5,40 @@ import java.util.Date;
 import com.mytech.api.models.user.UserDTO;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class RecurrenceDTO {
-	private int recurrenceId; 
+	private int recurrenceId;
 
-    private UserDTO user;
-    
-    private RecurrenceType recurrenceType;
+	private UserDTO user;
 
-    @Column(nullable = false)
-    @Temporal(TemporalType.DATE)
-    private Date startDate;
+	private RecurrenceType recurrenceType;
 
-    @Temporal(TemporalType.DATE)
-    private Date endDate;
+	@Column(nullable = false)
+	@Temporal(TemporalType.DATE)
+	private Date startDate;
 
-    private Integer intervalAmount;
-    
-    public RecurrenceDTO(int recurrenceId, UserDTO user, Date startDate, Date endDate, Integer intervalAmount) {
-    	this.recurrenceId = recurrenceId;
-    	this.user = user;
-    	this.startDate = startDate;
-    	this.endDate = endDate;
-    	this.intervalAmount = intervalAmount;
-    }
-    
+	@Temporal(TemporalType.DATE)
+	private Date endDate;
+
+	private Integer intervalAmount;
+
+	public RecurrenceDTO(int recurrenceId, UserDTO user, Date startDate, Date endDate, Integer intervalAmount,
+			RecurrenceType recurrenceType) {
+		this.recurrenceId = recurrenceId;
+		this.user = user;
+		this.startDate = startDate;
+		this.endDate = endDate;
+		this.intervalAmount = intervalAmount;
+		this.recurrenceType = recurrenceType;
+	}
+
 }
