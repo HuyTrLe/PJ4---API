@@ -14,13 +14,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.mytech.api.auth.jwt.AuthEntryPointJwt;
 import com.mytech.api.auth.jwt.AuthTokenFilter;
 import com.mytech.api.auth.services.UserDetailServiceImpl;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 	@Autowired
 	UserDetailServiceImpl userDetailServiceImpl;
+	
+	@Autowired
+	AuthEntryPointJwt authEntryPointJwt;
 
 	@Bean
 	AuthTokenFilter authenticationJwtTokenFilter() {
@@ -53,8 +58,7 @@ public class SecurityConfig {
 						.requestMatchers("/api/recurrences/**").permitAll().requestMatchers("/api/categories/**")
 						.permitAll().anyRequest().authenticated()
 
-				);
-
+				).exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPointJwt));
 		http.authenticationProvider(authenticationProvider());
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 		return http.build();

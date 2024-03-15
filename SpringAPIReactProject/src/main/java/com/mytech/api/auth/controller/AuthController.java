@@ -18,6 +18,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.validation.BindingResult;
@@ -45,6 +46,7 @@ import com.mytech.api.auth.payload.response.JwtResponse;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.auth.services.SignupService;
+import com.mytech.api.auth.services.UserDetailServiceImpl;
 import com.mytech.api.auth.services.UserService;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
@@ -82,6 +84,9 @@ public class AuthController {
 
 	@Autowired
 	EmailValidator emailValidator;
+	
+	@Autowired 
+	UserDetailServiceImpl userServiceImpl;
 
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
@@ -92,6 +97,12 @@ public class AuthController {
 				System.out.println(errors);
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 			}
+			User user = userServiceImpl.findByUsername(loginRequest.getUsername());
+			if(user == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username not found");
+			}
+			if(!user.isEnabled()) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You need to verify your email before login.");			}
 			Authentication authentication = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
