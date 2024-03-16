@@ -2,6 +2,7 @@ package com.mytech.api.services.category;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -16,7 +17,6 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.repositories.categories.CateIconRepository;
 import com.mytech.api.repositories.categories.CategoryRepository;
 
@@ -148,15 +148,33 @@ public class CategoryServiceImpl implements CategoryService {
 
 		return modelMapper.map(updatedCategory, CategoryDTO.class);
 	}
-	
+
 	@Override
 	@Transactional
-	public List<Cat_IconDTO> getAllIcons(){
+	public List<Cat_IconDTO> getAllIcons() {
 		List<Cat_Icon> icons = catIconRepository.findAll();
-		List<Cat_IconDTO> iconsDTO = icons.stream()
-				.map(category -> modelMapper.map(category, Cat_IconDTO.class)).collect(Collectors.toList());
+		List<Cat_IconDTO> iconsDTO = icons.stream().map(category -> modelMapper.map(category, Cat_IconDTO.class))
+				.collect(Collectors.toList());
 
 		return iconsDTO;
 	}
-	
+
+	@Override
+	public CategoryDTO getByCateId(Long categoryId) {
+		Optional<Category> categoryOptional = categoryRepository.findById(categoryId);
+
+		if (categoryOptional.isPresent()) {
+			Category category = categoryOptional.get();
+
+			CategoryDTO resultCategoryDTO = new CategoryDTO();
+			resultCategoryDTO.setId(category.getId());
+			resultCategoryDTO.setName(category.getName());
+
+			return resultCategoryDTO;
+		} else {
+			throw new IllegalArgumentException("Category not found with ID: " + categoryId);
+
+		}
+	}
+
 }
