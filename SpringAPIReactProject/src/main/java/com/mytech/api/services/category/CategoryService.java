@@ -22,4 +22,6 @@ public interface CategoryService {
 	CategoryDTO updateCategory(Long categoryId, CategoryDTO updateCategoryDTO);
 	
 	List<Cat_IconDTO> getAllIcons();
+	
+	CategoryDTO getByCateId(Long categoryId);
 }

@@ -1,9 +1,11 @@
 package com.mytech.api.controllers.category;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,7 +49,13 @@ private final CategoryService categoryService;
 	    }
 	}
 	@PostMapping("/create")
-	public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryDTO categoryRequest) {
+	public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryDTO categoryRequest, BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
 		CategoryDTO createdCategoryDTO = categoryService.createCategory(categoryRequest);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdCategoryDTO);
 
@@ -72,5 +80,14 @@ private final CategoryService categoryService;
         return ResponseEntity.ok(icons);
     }
 	
+	@GetMapping("/{categoryId}")
+    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long categoryId) {
+        CategoryDTO category = categoryService.getByCateId(categoryId);
+        if (category != null) {
+            return ResponseEntity.ok(category);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 	
 }
