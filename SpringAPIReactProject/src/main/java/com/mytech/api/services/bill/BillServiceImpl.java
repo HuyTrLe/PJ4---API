@@ -2,6 +2,8 @@ package com.mytech.api.services.bill;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.bill.Bill;
@@ -26,8 +28,8 @@ public class BillServiceImpl implements BillService{
 	}
 
 	@Override
-	public List<Bill> findAllBillByUserId(int userId) {
-		return billRepository.findAllBillByUserId(userId);
+	public Page<Bill> findAllBillByUserId(int userId, Pageable pageable) {
+		return billRepository.findAllBillByUserId(userId, pageable);
 	}
 
 	@Override

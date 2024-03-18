@@ -2,15 +2,16 @@ package com.mytech.api.services.bill;
 
 import java.util.List;
 
-import com.mytech.api.models.bill.Bill;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import jakarta.transaction.Transactional;
+import com.mytech.api.models.bill.Bill;
 
 public interface BillService {
 	
 	List<Bill> findAllBill();
 	
-	List<Bill> findAllBillByUserId(int userId);
+	Page<Bill> findAllBillByUserId(int userId, Pageable pageable);
 	
 	Bill findBillById(int billId);
 	

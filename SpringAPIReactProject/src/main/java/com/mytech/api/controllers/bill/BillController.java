@@ -5,7 +5,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
@@ -92,11 +94,12 @@ public class BillController {
 	}
 
 	@GetMapping("/users/{userId}/bills")
-	public ResponseEntity<List<BillDTO>> getAllBillsForUser(@PathVariable int userId) {
-		List<Bill> bills = billService.findAllBillByUserId(userId);
-		List<BillDTO> billDTOs = bills.stream().map(bill -> modelMapper.map(bill, BillDTO.class))
-				.collect(Collectors.toList());
-
+	public ResponseEntity<Page<BillDTO>> getAllBillsForUser(@PathVariable int userId, @RequestParam(defaultValue = "0") int page,
+		    @RequestParam(defaultValue = "10") int size) {
+		
+		PageRequest pageable = PageRequest.of(page, size);
+	    Page<Bill> bills = billService.findAllBillByUserId(userId, pageable);
+	    Page<BillDTO> billDTOs = bills.map(bill -> modelMapper.map(bill, BillDTO.class));
 		return billDTOs.isEmpty() ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
 				: new ResponseEntity<>(billDTOs, HttpStatus.OK);
 	}
