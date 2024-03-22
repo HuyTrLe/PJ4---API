@@ -1,6 +1,7 @@
 package com.mytech.api.auth.services;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
@@ -43,10 +44,10 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	ModelMapper modelMapper;
 
 	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user = userRepository.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
-		
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
+
 		return MyUserDetails.build(user);
 	}
 
@@ -63,23 +64,60 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	}
 
 	public String signUpUser(User user) {
-		String encodedPassword = encoder.encode(user.getPassword());
-		user.setPassword(encodedPassword);
-		userRepository.save(user);
-		String token = UUID.randomUUID().toString();
-		ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
-				LocalDateTime.now().plusMinutes(15), user);
-		confirmationTokenService.saveConfirmationToken(confirmationToken);
-		categoryService.seedCategoriesForNewUsers(user);
-		return token;
+	    Optional<User> existingUserOptional = userRepository.findByEmail(user.getEmail());
+
+	    if (existingUserOptional.isPresent()) {
+	        User existingUser = existingUserOptional.get();
+	        if (user.getUsername() != null && !user.getUsername().isEmpty()) {
+	            existingUser.setUsername(user.getUsername());
+	        }
+	        Optional<ConfirmationToken> existingTokenOptional = confirmationTokenService.getTokenByUser(existingUser);
+
+	        if (existingTokenOptional.isPresent()) {
+	            ConfirmationToken tokenToUpdate = existingTokenOptional.get();
+	            tokenToUpdate.setCreatedAt(LocalDateTime.now());
+	            tokenToUpdate.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+	            confirmationTokenService.saveConfirmationToken(tokenToUpdate);
+	            return tokenToUpdate.getToken();
+	        } else {
+	            String token = UUID.randomUUID().toString();
+	            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
+	                    LocalDateTime.now().plusMinutes(15), existingUser);
+	            confirmationTokenService.saveConfirmationToken(confirmationToken);
+	            categoryService.seedCategoriesForNewUsers(existingUser);
+	            return token;
+	        }
+	    } else {
+	        String encodedPassword = encoder.encode(user.getPassword());
+	        user.setPassword(encodedPassword);
+	        User savedUser = userRepository.save(user);
+	        String token = UUID.randomUUID().toString();
+	        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
+	                LocalDateTime.now().plusMinutes(15), savedUser);
+	        confirmationTokenService.saveConfirmationToken(confirmationToken);
+	        categoryService.seedCategoriesForNewUsers(savedUser);
+	        return token;
+	    }
 	}
 
 	public String forgotPassword(User user) {
-		String token = UUID.randomUUID().toString();
-		PasswordResetToken passwordResetToken = new PasswordResetToken(token, LocalDateTime.now(),
-				LocalDateTime.now().plusMinutes(15), user);
-		passwordResetTokenService.save(passwordResetToken);
-		return token;
+		Optional<PasswordResetToken> existingToken = passwordResetTokenService.getTokenByUser(user);
+
+		if (existingToken.isPresent()) {
+			PasswordResetToken tokenToUpdate = existingToken.get();
+			tokenToUpdate.setToken(UUID.randomUUID().toString());
+			tokenToUpdate.setCreatedAt(LocalDateTime.now());
+			tokenToUpdate.setExpiry(LocalDateTime.now().plusMinutes(15));
+			passwordResetTokenService.save(tokenToUpdate);
+			return tokenToUpdate.getToken();
+
+		} else {
+			String token = UUID.randomUUID().toString();
+			PasswordResetToken passwordResetToken = new PasswordResetToken(token, LocalDateTime.now(),
+					LocalDateTime.now().plusMinutes(15), user);
+			passwordResetTokenService.save(passwordResetToken);
+			return token;
+		}
 	}
 
 	public void enabledUser(String email) {

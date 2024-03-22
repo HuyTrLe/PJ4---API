@@ -3,6 +3,8 @@ package com.mytech.api.auth.payload.request.token;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.mytech.api.models.user.User;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -23,4 +25,8 @@ public class ConfirmationTokenService {
         return confirmationTokenRepository.updateConfirmedAt(
                 token, LocalDateTime.now());
     }
+    
+    public Optional<ConfirmationToken> getTokenByUser(User user) {
+		return confirmationTokenRepository.findByUser(user);
+	}
 }

@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.mytech.api.models.user.User;
+
 import lombok.AllArgsConstructor;
 
 @Service
@@ -11,14 +13,17 @@ import lombok.AllArgsConstructor;
 public class PasswordResetTokenService {
 
 	private final PasswordResetTokenRepository passwordResetTokenRepository;
-	
-    
+
 	public PasswordResetToken save(PasswordResetToken passwordResetToken) {
 		return passwordResetTokenRepository.save(passwordResetToken);
 	}
-	
-	public Optional<PasswordResetToken> getToken (String token){
+
+	public Optional<PasswordResetToken> getToken(String token) {
 		return passwordResetTokenRepository.findByToken(token);
 	}
-   
+
+	public Optional<PasswordResetToken> getTokenByUser(User user) {
+		return passwordResetTokenRepository.findByUser(user);
+	}
+
 }

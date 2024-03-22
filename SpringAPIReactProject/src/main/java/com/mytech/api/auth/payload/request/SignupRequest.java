@@ -1,7 +1,6 @@
 package com.mytech.api.auth.payload.request;
 
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,11 +8,9 @@ import lombok.Setter;
 @Getter @Setter
 public class SignupRequest {
 	@NotBlank(message = "Username cannot be blank")
-	@Column(unique = true)
 	private String username;
 
 	@NotBlank(message = "Email cannot be blank")
-	@Column(unique = true)
 	@Email
 	private String email;
 
