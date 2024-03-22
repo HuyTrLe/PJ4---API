@@ -95,14 +95,14 @@ public class AuthController {
 				System.out.println(errors);
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 			}
-			User user = userServiceImpl.findByUsername(loginRequest.getUsername());
+			User user = userServiceImpl.findByEmail(loginRequest.getEmail());
 			if(user == null) {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username not found");
 			}
 			if(!user.isEnabled()) {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You need to verify your email before login.");			}
 			Authentication authentication = authenticationManager.authenticate(
-					new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+					new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 			String jwt = jwtUtils.generateJwtToken(authentication);

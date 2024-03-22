@@ -31,7 +31,6 @@ public class User {
 	private Long id;
 
 	@NotBlank
-	@Column(unique = true)
 	@Size(max = 20)
 	private String username;
 

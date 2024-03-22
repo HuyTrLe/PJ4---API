@@ -37,7 +37,8 @@ public class ForgotPasswordService {
 	            String token = userDetailServiceImpl.forgotPassword(user);
 	            String link = "http://localhost:3000/auth/reset-password/" + token;
 	            emailSender.send(email, buildEmail(user.getUsername(), link));
-	            return ResponseEntity.ok(token);
+	            System.out.println("Please check your email to verify your account.");
+	            return ResponseEntity.ok("Please check your email to verify your account.");
 	        } else {
 	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email is not verified.");
 	        }
@@ -55,7 +56,7 @@ public class ForgotPasswordService {
 		userDetailServiceImpl.save(user);
 		passwordResetToken.setEnabled(false);
 		passwordResetTokenService.save(passwordResetToken);
-		    return ResponseEntity.ok("Reset Success");
+		    return ResponseEntity.ok("Please login again!");
 	}
 
 	private String buildEmail(String name, String link) {

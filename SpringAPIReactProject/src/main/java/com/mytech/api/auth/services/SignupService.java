@@ -40,13 +40,8 @@ public class SignupService {
 		if (!isValidEmail) {
 			errors.add("Email Not Valid.");
 		}
-		User existingUserByUsername = userDetailServiceImpl.findByUsername(request.getUsername());
-		if (existingUserByUsername != null) {
-			errors.add("Username already taken");
-		}
-
 		User existingUserByEmail = userDetailServiceImpl.findByEmail(request.getEmail());
-		if (existingUserByEmail != null) {
+		if (existingUserByEmail != null && existingUserByEmail.isEnabled()) {
 			errors.add("Email already taken");
 		}
 		if(!request.getPassword().equals(request.getConfirmPassword())) {
@@ -65,7 +60,7 @@ public class SignupService {
 				.signUpUser(new User(request.getUsername(), request.getEmail(), request.getPassword(), false));
 		String link = "http://localhost:8080/api/auth/signup/confirm?token=" + token;
 		emailSender.send(request.getEmail(), buildEmail(request.getUsername(), link));
-		return ResponseEntity.ok("Sign up successful! Please check your email to verify your account.");
+		return ResponseEntity.ok("Please check your email to verify your account.");
 	}
 
 	@Transactional

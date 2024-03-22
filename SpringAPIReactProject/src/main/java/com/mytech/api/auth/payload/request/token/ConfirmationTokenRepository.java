@@ -6,14 +6,18 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mytech.api.models.user.User;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
-public interface ConfirmationTokenRepository extends JpaRepository<ConfirmationToken , Long> {
-    Optional<ConfirmationToken> findByToken(String token);
+public interface ConfirmationTokenRepository extends JpaRepository<ConfirmationToken, Long> {
+	Optional<ConfirmationToken> findByUser(User user);
 
-    @Transactional
+	Optional<ConfirmationToken> findByToken(String token);
+	
+	@Transactional
     @Modifying
     @Query("UPDATE ConfirmationToken c " +
             "SET c.confirmedAt = ?2 " +
