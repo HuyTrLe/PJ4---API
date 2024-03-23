@@ -153,21 +153,26 @@ public class AuthController {
 			PasswordResetToken passwordResetToken = passwordResetTokenService.getToken(token)
 					.orElseThrow(() -> new IllegalStateException("Token not found"));
 			if (passwordResetToken.getExpiry().isBefore(LocalDateTime.now())) {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token expired");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token expired. Please try again!");
 			}
 
 			return ResponseEntity.ok("Token is valid");
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token not found. Please try again!");
 		}
 	}
 
 	@DeleteMapping("/password-reset-tokens/{token}")
-    public ResponseEntity<String> deletePasswordResetToken(@PathVariable String token) {
-        passwordResetTokenService.deleteTokenByTokenValue(token);
-        return new ResponseEntity<>("Token deleted successfully", HttpStatus.OK);
-    }
-	
+	public ResponseEntity<String> deletePasswordResetToken(@PathVariable String token) {
+	    Optional<PasswordResetToken> optionalToken = passwordResetTokenService.getToken(token);
+	    if (optionalToken.isPresent()) {
+	        passwordResetTokenService.deleteTokenByTokenValue(token);
+	        return ResponseEntity.ok("Password reset token deleted successfully");
+	    } else {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token not found");
+	    }
+	}
+
 	@PutMapping("/reset-password")
 	public ResponseEntity<?> resetPass(@RequestBody @Valid ResetPasswordRequest passwordRequest, BindingResult result) {
 		if (result.hasErrors()) {
@@ -181,9 +186,9 @@ public class AuthController {
 		String confirmPassword = passwordRequest.getConfirmPassword();
 		String oldPassword = userServiceImpl.getUserPasswordByResetToken(token);
 		if (password.equals(oldPassword)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("New password must be different from the old password.");
-        }
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("New password must be different from the old password.");
+		}
 		if (!password.equals(confirmPassword)) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password not match");
 		}

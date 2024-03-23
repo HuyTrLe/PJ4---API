@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.mytech.api.auth.password.PasswordResetToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationToken;
+import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
 
@@ -54,6 +55,9 @@ public class User {
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ConfirmationToken> confirmationTokens = new ArrayList<>();
 
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Bill> bills = new ArrayList<>();
+	
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private PasswordResetToken passwordResetToken;
 

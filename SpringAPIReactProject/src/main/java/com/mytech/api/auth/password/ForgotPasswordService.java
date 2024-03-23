@@ -1,6 +1,5 @@
 package com.mytech.api.auth.password;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +40,9 @@ public class ForgotPasswordService {
 		if (user == null) {
 			errors.add("Email not found.");
 		}
+		else if (!user.isEnabled()) {
+	        errors.add("Your account has not been verified yet. Please verify your email before resetting the password.");
+	    }
 		if (!errors.isEmpty()) {
 			List<String> formattedErrors = new ArrayList<>();
 			for (String error : errors) {

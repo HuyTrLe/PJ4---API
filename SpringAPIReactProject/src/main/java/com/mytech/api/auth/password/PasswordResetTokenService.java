@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.models.user.User;
 
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 @Service
