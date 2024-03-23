@@ -33,11 +33,9 @@ public class PasswordResetTokenService {
 	}
 
 	@Transactional
-	public void deleteTokenByTokenValue(String tokenValue) {
-		Optional<PasswordResetToken> token = passwordResetTokenRepository.findByToken(tokenValue);
-        if (token != null) {
-            passwordResetTokenRepository.deleteByToken(tokenValue);
-        }
+    public void deleteTokenByTokenValue(String tokenValue) {
+        Optional<PasswordResetToken> token = passwordResetTokenRepository.findByToken(tokenValue);
+        token.ifPresent(passwordResetTokenRepository::delete);
     }
 
 }
