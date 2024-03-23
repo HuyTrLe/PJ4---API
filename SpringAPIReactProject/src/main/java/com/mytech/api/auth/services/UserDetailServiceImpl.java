@@ -64,40 +64,40 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	}
 
 	public String signUpUser(User user) {
-	    Optional<User> existingUserOptional = userRepository.findByEmail(user.getEmail());
+		Optional<User> existingUserOptional = userRepository.findByEmail(user.getEmail());
 
-	    if (existingUserOptional.isPresent()) {
-	        User existingUser = existingUserOptional.get();
-	        if (user.getUsername() != null && !user.getUsername().isEmpty()) {
-	            existingUser.setUsername(user.getUsername());
-	        }
-	        Optional<ConfirmationToken> existingTokenOptional = confirmationTokenService.getTokenByUser(existingUser);
+		if (existingUserOptional.isPresent()) {
+			User existingUser = existingUserOptional.get();
+			if (user.getUsername() != null && !user.getUsername().isEmpty()) {
+				existingUser.setUsername(user.getUsername());
+			}
+			Optional<ConfirmationToken> existingTokenOptional = confirmationTokenService.getTokenByUser(existingUser);
 
-	        if (existingTokenOptional.isPresent()) {
-	            ConfirmationToken tokenToUpdate = existingTokenOptional.get();
-	            tokenToUpdate.setCreatedAt(LocalDateTime.now());
-	            tokenToUpdate.setExpiresAt(LocalDateTime.now().plusMinutes(15));
-	            confirmationTokenService.saveConfirmationToken(tokenToUpdate);
-	            return tokenToUpdate.getToken();
-	        } else {
-	            String token = UUID.randomUUID().toString();
-	            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
-	                    LocalDateTime.now().plusMinutes(15), existingUser);
-	            confirmationTokenService.saveConfirmationToken(confirmationToken);
-	            categoryService.seedCategoriesForNewUsers(existingUser);
-	            return token;
-	        }
-	    } else {
-	        String encodedPassword = encoder.encode(user.getPassword());
-	        user.setPassword(encodedPassword);
-	        User savedUser = userRepository.save(user);
-	        String token = UUID.randomUUID().toString();
-	        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
-	                LocalDateTime.now().plusMinutes(15), savedUser);
-	        confirmationTokenService.saveConfirmationToken(confirmationToken);
-	        categoryService.seedCategoriesForNewUsers(savedUser);
-	        return token;
-	    }
+			if (existingTokenOptional.isPresent()) {
+				ConfirmationToken tokenToUpdate = existingTokenOptional.get();
+				tokenToUpdate.setCreatedAt(LocalDateTime.now());
+				tokenToUpdate.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+				confirmationTokenService.saveConfirmationToken(tokenToUpdate);
+				return tokenToUpdate.getToken();
+			} else {
+				String token = UUID.randomUUID().toString();
+				ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
+						LocalDateTime.now().plusMinutes(15), existingUser);
+				confirmationTokenService.saveConfirmationToken(confirmationToken);
+				categoryService.seedCategoriesForNewUsers(existingUser);
+				return token;
+			}
+		} else {
+			String encodedPassword = encoder.encode(user.getPassword());
+			user.setPassword(encodedPassword);
+			User savedUser = userRepository.save(user);
+			String token = UUID.randomUUID().toString();
+			ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
+					LocalDateTime.now().plusMinutes(15), savedUser);
+			confirmationTokenService.saveConfirmationToken(confirmationToken);
+			categoryService.seedCategoriesForNewUsers(savedUser);
+			return token;
+		}
 	}
 
 	public String forgotPassword(User user) {
@@ -118,6 +118,18 @@ public class UserDetailServiceImpl implements UserDetailsService {
 			passwordResetTokenService.save(passwordResetToken);
 			return token;
 		}
+	}
+
+	public String getUserPasswordByResetToken(String resetToken) {
+		Optional<PasswordResetToken> passwordResetTokens = passwordResetTokenService.getToken(resetToken);
+		if (passwordResetTokens.isPresent()) {
+			PasswordResetToken passwordResetToken = passwordResetTokens.get();
+			User user = passwordResetToken.getUser();
+			if (user != null) {
+				return user.getPassword();
+			}
+		}
+		return null;
 	}
 
 	public void enabledUser(String email) {

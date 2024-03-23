@@ -1,5 +1,8 @@
 package com.mytech.api.auth.password;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.auth.email.EmailSender;
 import com.mytech.api.auth.payload.request.EmailValidator;
+import com.mytech.api.auth.payload.response.MessageResponse;
 import com.mytech.api.auth.services.UserDetailServiceImpl;
 import com.mytech.api.models.user.User;
 
@@ -30,33 +34,48 @@ public class ForgotPasswordService {
 	@Autowired
 	EmailSender emailSender;
 
-	public ResponseEntity<?> forgotPassword(String email) {
-	    User user = userDetailServiceImpl.findByEmail(email);
-		if (user != null) {
-			if (user.isEnabled()) {
-	            String token = userDetailServiceImpl.forgotPassword(user);
-	            String link = "http://localhost:3000/auth/reset-password/" + token;
-	            emailSender.send(email, buildEmail(user.getUsername(), link));
-	            System.out.println("Please check your email to verify your account.");
-	            return ResponseEntity.ok("Please check your email to verify your account.");
-	        } else {
-	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email is not verified.");
-	        }
-		} else {
-			return ResponseEntity.badRequest().body("Email Not Found.");
+	public ResponseEntity<?> forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
+		List<String> errors = new ArrayList<>();
+		String email = forgotPasswordRequest.getEmail();
+		User user = userDetailServiceImpl.findByEmail(email);
+		if (user == null) {
+			errors.add("Email not found.");
 		}
+		if (!errors.isEmpty()) {
+			List<String> formattedErrors = new ArrayList<>();
+			for (String error : errors) {
+				formattedErrors.add(error);
+			}
+			System.out.println(formattedErrors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(formattedErrors);
+		}
+
+		String token = userDetailServiceImpl.forgotPassword(user);
+		String link = "http://localhost:3000/auth/reset-password/" + token;
+		emailSender.send(email, buildEmail(user.getUsername(), link));
+		System.out.println("Please check your email to verify your account.");
+		MessageResponse response = new MessageResponse("Please check your email to reset password.");
+		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
-	
+
 	@Transactional
 	public ResponseEntity<?> resetPassword(String token, String password) {
-		PasswordResetToken passwordResetToken = passwordResetTokenService.getToken(token).orElseThrow(() ->
-        new IllegalStateException("token not found"));
-		User user = passwordResetToken.getUser();
-		user.setPassword(new BCryptPasswordEncoder().encode(password));
-		userDetailServiceImpl.save(user);
-		passwordResetToken.setEnabled(false);
-		passwordResetTokenService.save(passwordResetToken);
-		    return ResponseEntity.ok("Please login again!");
+	    PasswordResetToken passwordResetToken = passwordResetTokenService.getToken(token)
+	            .orElseThrow(() -> new IllegalStateException("token not found"));
+
+	    User user = passwordResetToken.getUser();
+	    String oldPassword = userDetailServiceImpl.getUserPasswordByResetToken(token);	
+	    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+	    if (encoder.matches(password, oldPassword)) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	                .body("New password must be different from the old password.");
+	    }
+	    user.setPassword(new BCryptPasswordEncoder().encode(password));
+	    passwordResetTokenService.setConfirmedAt(token);
+	    userDetailServiceImpl.save(user);
+	    passwordResetTokenService.deleteTokenByTokenValue(token);
+	    MessageResponse response = new MessageResponse("Please login again!");
+		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 
 	private String buildEmail(String name, String link) {

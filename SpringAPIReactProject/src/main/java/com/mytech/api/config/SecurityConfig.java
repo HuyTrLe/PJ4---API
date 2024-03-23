@@ -56,7 +56,9 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
 						.requestMatchers("/api/recurrences/**").permitAll().requestMatchers("/api/categories/**")
-						.permitAll().requestMatchers("/api/bills/**").permitAll().anyRequest().authenticated()
+						.permitAll().requestMatchers("/api/bills/**").permitAll()
+						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+						.anyRequest().authenticated()
 
 				).exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPointJwt));
 		http.authenticationProvider(authenticationProvider());

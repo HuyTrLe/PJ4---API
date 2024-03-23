@@ -10,11 +10,11 @@ import lombok.Setter;
 public class ResetPasswordRequest {
 	private String token;
 	
-	@NotEmpty(message = "Password is required")
+	@NotBlank(message = "Password is required")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$", message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, at least 8 characters long.")
     private String password;
 	
-	@NotBlank
+	@NotBlank(message = "Password confirm is required")
 	private String confirmPassword;
 
 }

@@ -82,8 +82,8 @@ public class AuthController {
 
 	@Autowired
 	EmailValidator emailValidator;
-	
-	@Autowired 
+
+	@Autowired
 	UserDetailServiceImpl userServiceImpl;
 
 	@PostMapping("/signin")
@@ -96,11 +96,13 @@ public class AuthController {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 			}
 			User user = userServiceImpl.findByEmail(loginRequest.getEmail());
-			if(user == null) {
+			if (user == null) {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username not found");
 			}
-			if(!user.isEnabled()) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You need to verify your email before login.");			}
+			if (!user.isEnabled()) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body("You need to verify your email before login.");
+			}
 			Authentication authentication = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
@@ -140,8 +142,7 @@ public class AuthController {
 			System.out.println(errors);
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 		}
-		String email = forgotPasswordRequest.getEmail();
-		ResponseEntity<?> response = forgotPassService.forgotPassword(email);
+		ResponseEntity<?> response = forgotPassService.forgotPassword(forgotPasswordRequest);
 		return response;
 
 	}
@@ -161,17 +162,28 @@ public class AuthController {
 		}
 	}
 
+	@DeleteMapping("/password-reset-tokens/{token}")
+    public ResponseEntity<String> deletePasswordResetToken(@PathVariable String token) {
+        passwordResetTokenService.deleteTokenByTokenValue(token);
+        return new ResponseEntity<>("Token deleted successfully", HttpStatus.OK);
+    }
+	
 	@PutMapping("/reset-password")
 	public ResponseEntity<?> resetPass(@RequestBody @Valid ResetPasswordRequest passwordRequest, BindingResult result) {
 		if (result.hasErrors()) {
-			String errors = result.getFieldErrors().stream().map(error -> error.getField())
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining("\n"));
-
+			System.out.println(errors);
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 		}
 		String password = passwordRequest.getPassword();
 		String token = passwordRequest.getToken();
 		String confirmPassword = passwordRequest.getConfirmPassword();
+		String oldPassword = userServiceImpl.getUserPasswordByResetToken(token);
+		if (password.equals(oldPassword)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("New password must be different from the old password.");
+        }
 		if (!password.equals(confirmPassword)) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password not match");
 		}

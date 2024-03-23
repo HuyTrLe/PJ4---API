@@ -24,10 +24,10 @@ public class PasswordResetToken{
     private long id;
     private String token;
     private LocalDateTime expiry;
-    private LocalDateTime createdAt;
-    private boolean isEnabled;
+    private LocalDateTime createdAt;	
+    private LocalDateTime confirmedAt;
 
-    @OneToOne(cascade = CascadeType.ALL, targetEntity = User.class)
+    @OneToOne(cascade = CascadeType.PERSIST, targetEntity = User.class)
     private User user;
     
     public PasswordResetToken(String token, LocalDateTime createdAt, LocalDateTime expiry, User user) {
