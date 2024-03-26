@@ -1,6 +1,7 @@
 package com.mytech.api.models.bill;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 import com.mytech.api.models.recurrence.RecurrenceDTO;
@@ -23,11 +24,11 @@ public class BillDTO {
 
 	private BigDecimal amount;
 
-	private Date dueDate;
+	private LocalDate dueDate;
 
 	private RecurrenceDTO recurrence;
 
-	public BillDTO(int billId, UserDTO user, String billName, BigDecimal amount, Date dueDate,
+	public BillDTO(int billId, UserDTO user, String billName, BigDecimal amount, LocalDate dueDate,
 			RecurrenceDTO recurrence) {
 		this.billId = billId;
 		this.user = user;

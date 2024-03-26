@@ -1,6 +1,9 @@
 package com.mytech.api.controllers.bill;
 
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -47,40 +50,43 @@ public class BillController {
 
 	@PostMapping
 	public ResponseEntity<?> addNewBill(@RequestBody BillDTO billDTO) {
-	    UserDTO userDTO = billDTO.getUser();
-	    if (userDTO == null || userDTO.getId() == null) {
-	        return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
-	    }
+		UserDTO userDTO = billDTO.getUser();
+		if (userDTO == null || userDTO.getId() == null) {
+			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
+		}
 
-	    Optional<User> existingUser = userRepository.findById(userDTO.getId());
-	    if (!existingUser.isPresent()) {
-	        return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
-	    }
+		Optional<User> existingUser = userRepository.findById(userDTO.getId());
+		if (!existingUser.isPresent()) {
+			return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+		}
 
-	    Bill bill = modelMapper.map(billDTO, Bill.class);
-	    bill.setUser(existingUser.get());
+		Bill bill = modelMapper.map(billDTO, Bill.class);
+		bill.setUser(existingUser.get());
 
-	    if (billDTO.getRecurrence() != null) {
-	    	//Already have recurrence
-	        if (billDTO.getRecurrence().getRecurrenceId() > 0) {
-	            Recurrence existingRecurrence = recurrenceService.findRecurrenceById(billDTO.getRecurrence().getRecurrenceId());
-	            if (existingRecurrence == null) {
-	                return new ResponseEntity<>("Recurrence not found with id: " + billDTO.getRecurrence().getRecurrenceId(), HttpStatus.NOT_FOUND);
-	            }
-	            bill.setRecurrence(existingRecurrence);
-	        } else {
-	        	//create new recurrence also
-	            Recurrence newRecurrence = modelMapper.map(billDTO.getRecurrence(), Recurrence.class);
-	            newRecurrence.setUser(existingUser.get());
-	            Recurrence savedRecurrence = recurrenceService.saveRecurrence(newRecurrence);
-	            bill.setRecurrence(savedRecurrence);
-	        }
-	    }
+		if (billDTO.getRecurrence() != null) {
+			// Already have recurrence
+			if (billDTO.getRecurrence().getRecurrenceId() > 0) {
+				Recurrence existingRecurrence = recurrenceService
+						.findRecurrenceById(billDTO.getRecurrence().getRecurrenceId());
+				if (existingRecurrence == null) {
+					return new ResponseEntity<>(
+							"Recurrence not found with id: " + billDTO.getRecurrence().getRecurrenceId(),
+							HttpStatus.NOT_FOUND);
+				}
+				bill.setRecurrence(existingRecurrence);
+			} else {
+				// create new recurrence also
+				Recurrence newRecurrence = modelMapper.map(billDTO.getRecurrence(), Recurrence.class);
+				newRecurrence.setUser(existingUser.get());
+				Recurrence savedRecurrence = recurrenceService.saveRecurrence(newRecurrence);
+				bill.setRecurrence(savedRecurrence);
+			}
+		}
 
-	    Bill createdBill = billService.addNewBill(bill);
-	    BillDTO createdBillDTO = modelMapper.map(createdBill, BillDTO.class);
+		Bill createdBill = billService.addNewBill(bill);
+		BillDTO createdBillDTO = modelMapper.map(createdBill, BillDTO.class);
 
-	    return new ResponseEntity<>(createdBillDTO, HttpStatus.CREATED);
+		return new ResponseEntity<>(createdBillDTO, HttpStatus.CREATED);
 	}
 
 	@GetMapping("/{billId}")
@@ -94,14 +100,31 @@ public class BillController {
 	}
 
 	@GetMapping("/users/{userId}/bills")
-	public ResponseEntity<Page<BillDTO>> getAllBillsForUser(@PathVariable int userId, @RequestParam(defaultValue = "0") int page,
-		    @RequestParam(defaultValue = "10") int size) {
-		
-		PageRequest pageable = PageRequest.of(page, size);
-	    Page<Bill> bills = billService.findAllBillByUserId(userId, pageable);
-	    Page<BillDTO> billDTOs = bills.map(bill -> modelMapper.map(bill, BillDTO.class));
-		return billDTOs.isEmpty() ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
-				: new ResponseEntity<>(billDTOs, HttpStatus.OK);
+	public ResponseEntity<Map<String, Page<BillDTO>>> getAllBillsForUser(@PathVariable int userId,
+			@RequestParam(defaultValue = "0") int overduePage, @RequestParam(defaultValue = "10") int overdueSize,
+			@RequestParam(defaultValue = "0") int dueIn3DaysPage, @RequestParam(defaultValue = "10") int dueIn3DaysSize,
+			@RequestParam(defaultValue = "0") int futureDuePage, @RequestParam(defaultValue = "10") int futureDueSize) {
+		PageRequest overduePageable = PageRequest.of(overduePage, overdueSize);
+		PageRequest dueIn3DaysPageable = PageRequest.of(dueIn3DaysPage, dueIn3DaysSize);
+		PageRequest futureDuePageable = PageRequest.of(futureDuePage, futureDueSize);
+
+		LocalDate currentDate = LocalDate.now();
+		LocalDate dueDate = currentDate.plusDays(3);
+
+		LocalDate overdueDueDate = currentDate;
+		LocalDate futureDueDueDate = currentDate.plusDays(4);
+
+		Page<Bill> overdueBillsPage = billService.findOverdueBillsByUserId(userId, overdueDueDate, overduePageable);
+		Page<Bill> dueIn3DaysBillsPage = billService.findBillsDueIn3DaysByUserId(userId, dueDate, dueIn3DaysPageable);
+		Page<Bill> futureDueBillsPage = billService.findFutureDueBillsByUserId(userId, futureDueDueDate,
+				futureDuePageable);
+
+		Map<String, Page<BillDTO>> billPages = new HashMap<>();
+		billPages.put("overdueBills", overdueBillsPage.map(bill -> modelMapper.map(bill, BillDTO.class)));
+		billPages.put("dueIn3DaysBills", dueIn3DaysBillsPage.map(bill -> modelMapper.map(bill, BillDTO.class)));
+		billPages.put("futureDueBills", futureDueBillsPage.map(bill -> modelMapper.map(bill, BillDTO.class)));
+
+		return new ResponseEntity<>(billPages, HttpStatus.OK);
 	}
 
 	@PutMapping("/{billId}")

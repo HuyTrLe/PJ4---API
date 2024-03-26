@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 import com.mytech.api.models.recurrence.Recurrence;
@@ -35,7 +36,7 @@ public class Bill {
 
     @Column(nullable = false)
     @Temporal(TemporalType.DATE)
-    private Date dueDate;
+    private LocalDate dueDate;
     
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "recurrence_id")
