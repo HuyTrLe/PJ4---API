@@ -22,7 +22,7 @@ public interface BillService {
 
 	Page<Bill> findOverdueBillsByUserId(int userId, LocalDate overdueDueDate, Pageable pageable);
 
-	Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate dueDate, Pageable pageable);
+	Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate currentDate, LocalDate dueDate, Pageable pageable);
 
 	Page<Bill> findFutureDueBillsByUserId(int userId, LocalDate futureDueDueDate, Pageable pageable);
 }

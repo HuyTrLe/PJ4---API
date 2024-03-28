@@ -2,7 +2,6 @@ package com.mytech.api.models.bill;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 
 import com.mytech.api.models.recurrence.RecurrenceDTO;
 import com.mytech.api.models.user.UserDTO;

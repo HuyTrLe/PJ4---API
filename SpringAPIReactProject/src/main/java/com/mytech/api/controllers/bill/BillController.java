@@ -2,10 +2,8 @@ package com.mytech.api.controllers.bill;
 
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -104,19 +102,19 @@ public class BillController {
 			@RequestParam(defaultValue = "0") int overduePage, @RequestParam(defaultValue = "10") int overdueSize,
 			@RequestParam(defaultValue = "0") int dueIn3DaysPage, @RequestParam(defaultValue = "10") int dueIn3DaysSize,
 			@RequestParam(defaultValue = "0") int futureDuePage, @RequestParam(defaultValue = "10") int futureDueSize) {
+
 		PageRequest overduePageable = PageRequest.of(overduePage, overdueSize);
 		PageRequest dueIn3DaysPageable = PageRequest.of(dueIn3DaysPage, dueIn3DaysSize);
 		PageRequest futureDuePageable = PageRequest.of(futureDuePage, futureDueSize);
 
 		LocalDate currentDate = LocalDate.now();
-		LocalDate dueDate = currentDate.plusDays(3);
+		LocalDate dueIn3DaysDate = currentDate.plusDays(3);
+		LocalDate futureDueDate = currentDate.plusDays(4);
 
-		LocalDate overdueDueDate = currentDate;
-		LocalDate futureDueDueDate = currentDate.plusDays(4);
-
-		Page<Bill> overdueBillsPage = billService.findOverdueBillsByUserId(userId, overdueDueDate, overduePageable);
-		Page<Bill> dueIn3DaysBillsPage = billService.findBillsDueIn3DaysByUserId(userId, dueDate, dueIn3DaysPageable);
-		Page<Bill> futureDueBillsPage = billService.findFutureDueBillsByUserId(userId, futureDueDueDate,
+		Page<Bill> overdueBillsPage = billService.findOverdueBillsByUserId(userId, currentDate, overduePageable);
+		Page<Bill> dueIn3DaysBillsPage = billService.findBillsDueIn3DaysByUserId(userId, currentDate, dueIn3DaysDate,
+				dueIn3DaysPageable);
+		Page<Bill> futureDueBillsPage = billService.findFutureDueBillsByUserId(userId, futureDueDate,
 				futureDuePageable);
 
 		Map<String, Page<BillDTO>> billPages = new HashMap<>();

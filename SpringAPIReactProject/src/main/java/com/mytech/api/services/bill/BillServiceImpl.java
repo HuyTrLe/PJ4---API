@@ -62,8 +62,8 @@ public class BillServiceImpl implements BillService {
 	}
 
 	@Override
-	public Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate dueDate, Pageable pageable) {
-		return billRepository.findBillsDueIn3DaysByUserId(userId, dueDate, pageable);
+	public Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate currentDate, LocalDate dueDate, Pageable pageable) {
+	    return billRepository.findBillsDueIn3DaysByUserId(userId, currentDate, dueDate, pageable);
 	}
 
 	@Override
