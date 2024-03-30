@@ -98,32 +98,32 @@ public class BillController {
 	}
 
 	@GetMapping("/users/{userId}/bills")
-	public ResponseEntity<Map<String, Page<BillDTO>>> getAllBillsForUser(@PathVariable int userId,
-			@RequestParam(defaultValue = "0") int overduePage, @RequestParam(defaultValue = "10") int overdueSize,
-			@RequestParam(defaultValue = "0") int dueIn3DaysPage, @RequestParam(defaultValue = "10") int dueIn3DaysSize,
-			@RequestParam(defaultValue = "0") int futureDuePage, @RequestParam(defaultValue = "10") int futureDueSize) {
+	public ResponseEntity<Map<String, Page<BillDTO>>> getAllBillsForUser(
+	        @PathVariable int userId,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size
+	) {
+	    PageRequest pageable = PageRequest.of(page, size);
 
-		PageRequest overduePageable = PageRequest.of(overduePage, overdueSize);
-		PageRequest dueIn3DaysPageable = PageRequest.of(dueIn3DaysPage, dueIn3DaysSize);
-		PageRequest futureDuePageable = PageRequest.of(futureDuePage, futureDueSize);
+	    LocalDate currentDate = LocalDate.now();
+	    LocalDate dueIn3DaysDate = currentDate.plusDays(3);
+	    LocalDate futureDueDate = currentDate.plusDays(4);
 
-		LocalDate currentDate = LocalDate.now();
-		LocalDate dueIn3DaysDate = currentDate.plusDays(3);
-		LocalDate futureDueDate = currentDate.plusDays(4);
+	    Page<BillDTO> overdueBillsPage = billService.findOverdueBillsByUserId(userId, currentDate, pageable)
+	            .map(bill -> modelMapper.map(bill, BillDTO.class));
+	    Page<BillDTO> dueIn3DaysBillsPage = billService.findBillsDueIn3DaysByUserId(userId, currentDate, dueIn3DaysDate, pageable)
+	            .map(bill -> modelMapper.map(bill, BillDTO.class));
+	    Page<BillDTO> futureDueBillsPage = billService.findFutureDueBillsByUserId(userId, futureDueDate, pageable)
+	            .map(bill -> modelMapper.map(bill, BillDTO.class));
 
-		Page<Bill> overdueBillsPage = billService.findOverdueBillsByUserId(userId, currentDate, overduePageable);
-		Page<Bill> dueIn3DaysBillsPage = billService.findBillsDueIn3DaysByUserId(userId, currentDate, dueIn3DaysDate,
-				dueIn3DaysPageable);
-		Page<Bill> futureDueBillsPage = billService.findFutureDueBillsByUserId(userId, futureDueDate,
-				futureDuePageable);
+	    Map<String, Page<BillDTO>> billPages = new HashMap<>();
+	    billPages.put("overdueBills", overdueBillsPage);
+	    billPages.put("dueIn3DaysBills", dueIn3DaysBillsPage);
+	    billPages.put("futureDueBills", futureDueBillsPage);
 
-		Map<String, Page<BillDTO>> billPages = new HashMap<>();
-		billPages.put("overdueBills", overdueBillsPage.map(bill -> modelMapper.map(bill, BillDTO.class)));
-		billPages.put("dueIn3DaysBills", dueIn3DaysBillsPage.map(bill -> modelMapper.map(bill, BillDTO.class)));
-		billPages.put("futureDueBills", futureDueBillsPage.map(bill -> modelMapper.map(bill, BillDTO.class)));
-
-		return new ResponseEntity<>(billPages, HttpStatus.OK);
+	    return new ResponseEntity<>(billPages, HttpStatus.OK);
 	}
+
 
 	@PutMapping("/{billId}")
 	public ResponseEntity<?> updateBill(@PathVariable int billId, @RequestBody BillDTO billDTO) {
