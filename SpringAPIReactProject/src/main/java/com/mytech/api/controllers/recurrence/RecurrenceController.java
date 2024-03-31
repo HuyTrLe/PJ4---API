@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,8 @@ import com.mytech.api.models.recurrence.RecurrenceType;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.services.recurrence.RecurrenceService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/recurrences")
@@ -42,7 +45,13 @@ public class RecurrenceController {
 
     // Schedule a new recurring transaction/bill
     @PostMapping
-    public ResponseEntity<?> createRecurrence(@RequestBody RecurrenceDTO recurrenceDTO) {
+    public ResponseEntity<?> createRecurrence(@RequestBody @Valid RecurrenceDTO recurrenceDTO, BindingResult result) {
+    	if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
         validateRecurrenceType(recurrenceDTO.getRecurrenceType());
 
         // Find the user based on the ID set in the Recurrence's User object

@@ -4,10 +4,10 @@ import java.util.Date;
 
 import com.mytech.api.models.user.UserDTO;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,7 +22,8 @@ public class RecurrenceDTO {
 
 	private RecurrenceType recurrenceType;
 
-	@Column(nullable = false)
+	@NotNull(message = "Start date cannot be null")
+    @FutureOrPresent(message = "Start date must be in the present or future")
 	@Temporal(TemporalType.DATE)
 	private Date startDate;
 

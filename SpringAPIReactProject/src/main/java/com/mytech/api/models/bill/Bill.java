@@ -8,7 +8,6 @@ import lombok.Setter;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.user.User;

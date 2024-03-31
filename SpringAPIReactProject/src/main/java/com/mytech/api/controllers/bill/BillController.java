@@ -4,12 +4,14 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +31,8 @@ import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.services.bill.BillService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/bills")
 public class BillController {
@@ -47,7 +51,13 @@ public class BillController {
 	}
 
 	@PostMapping
-	public ResponseEntity<?> addNewBill(@RequestBody BillDTO billDTO) {
+	public ResponseEntity<?> addNewBill(@RequestBody @Valid BillDTO billDTO, BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
 		UserDTO userDTO = billDTO.getUser();
 		if (userDTO == null || userDTO.getId() == null) {
 			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
