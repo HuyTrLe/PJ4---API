@@ -6,6 +6,7 @@ import com.mytech.api.models.user.UserDTO;
 
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -22,11 +23,11 @@ public class RecurrenceDTO {
 
 	private RecurrenceType recurrenceType;
 
-	@NotNull(message = "Start date cannot be null")
     @FutureOrPresent(message = "Start date must be in the present or future")
 	@Temporal(TemporalType.DATE)
 	private Date startDate;
 
+    @Future(message = "End date must be in the future")
 	@Temporal(TemporalType.DATE)
 	private Date endDate;
 
