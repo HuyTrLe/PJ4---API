@@ -59,7 +59,11 @@ public class SecurityConfig {
 						.permitAll().requestMatchers("/api/bills/**").permitAll()
 						.requestMatchers("/api/wallet_types/**").permitAll().requestMatchers("/api/wallets/**")
 						.permitAll().requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
-						.permitAll().anyRequest().authenticated()
+						.permitAll()
+						.requestMatchers("/api/debts/**").permitAll()
+						.requestMatchers("/api/savinggoals/**").permitAll()
+						.requestMatchers("/api/notifications/**").permitAll()
+						.anyRequest().authenticated()
 
 				).exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPointJwt));
 		http.authenticationProvider(authenticationProvider());
