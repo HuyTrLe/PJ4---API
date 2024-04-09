@@ -37,7 +37,16 @@ public class Bill {
     @Temporal(TemporalType.DATE)
     private LocalDate dueDate;
     
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "recurrence_id")
     private Recurrence recurrence;
+    
+    public Bill(Bill bill) {
+        this.billId = bill.getBillId();
+        this.user = bill.getUser();
+        this.billName = bill.getBillName();
+        this.amount = bill.getAmount();
+        this.dueDate = bill.getDueDate();
+        this.recurrence = bill.getRecurrence();
+    }
 }

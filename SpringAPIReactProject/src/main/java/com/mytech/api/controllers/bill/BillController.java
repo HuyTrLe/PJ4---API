@@ -108,32 +108,29 @@ public class BillController {
 	}
 
 	@GetMapping("/users/{userId}/bills")
-	public ResponseEntity<Map<String, Page<BillDTO>>> getAllBillsForUser(
-	        @PathVariable int userId,
-	        @RequestParam(defaultValue = "0") int page,
-	        @RequestParam(defaultValue = "10") int size
-	) {
-	    PageRequest pageable = PageRequest.of(page, size);
+	public ResponseEntity<Map<String, Page<BillDTO>>> getAllBillsForUser(@PathVariable int userId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+		PageRequest pageable = PageRequest.of(page, size);
 
-	    LocalDate currentDate = LocalDate.now();
-	    LocalDate dueIn3DaysDate = currentDate.plusDays(3);
-	    LocalDate futureDueDate = currentDate.plusDays(4);
+		LocalDate currentDate = LocalDate.now();
+		LocalDate dueIn3DaysDate = currentDate.plusDays(3);
+		LocalDate futureDueDate = currentDate.plusDays(4);
 
-	    Page<BillDTO> overdueBillsPage = billService.findOverdueBillsByUserId(userId, currentDate, pageable)
-	            .map(bill -> modelMapper.map(bill, BillDTO.class));
-	    Page<BillDTO> dueIn3DaysBillsPage = billService.findBillsDueIn3DaysByUserId(userId, currentDate, dueIn3DaysDate, pageable)
-	            .map(bill -> modelMapper.map(bill, BillDTO.class));
-	    Page<BillDTO> futureDueBillsPage = billService.findFutureDueBillsByUserId(userId, futureDueDate, pageable)
-	            .map(bill -> modelMapper.map(bill, BillDTO.class));
+		Page<BillDTO> overdueBillsPage = billService.findOverdueBillsByUserId(userId, currentDate, pageable)
+				.map(bill -> modelMapper.map(bill, BillDTO.class));
+		Page<BillDTO> dueIn3DaysBillsPage = billService
+				.findBillsDueIn3DaysByUserId(userId, currentDate, dueIn3DaysDate, pageable)
+				.map(bill -> modelMapper.map(bill, BillDTO.class));
+		Page<BillDTO> futureDueBillsPage = billService.findFutureDueBillsByUserId(userId, futureDueDate, pageable)
+				.map(bill -> modelMapper.map(bill, BillDTO.class));
 
-	    Map<String, Page<BillDTO>> billPages = new HashMap<>();
-	    billPages.put("overdueBills", overdueBillsPage);
-	    billPages.put("dueIn3DaysBills", dueIn3DaysBillsPage);
-	    billPages.put("futureDueBills", futureDueBillsPage);
+		Map<String, Page<BillDTO>> billPages = new HashMap<>();
+		billPages.put("overdueBills", overdueBillsPage);
+		billPages.put("dueIn3DaysBills", dueIn3DaysBillsPage);
+		billPages.put("futureDueBills", futureDueBillsPage);
 
-	    return new ResponseEntity<>(billPages, HttpStatus.OK);
+		return new ResponseEntity<>(billPages, HttpStatus.OK);
 	}
-
 
 	@PutMapping("/{billId}")
 	public ResponseEntity<?> updateBill(@PathVariable int billId, @RequestBody BillDTO billDTO) {
@@ -175,4 +172,56 @@ public class BillController {
 		}
 		return ResponseEntity.notFound().build();
 	}
+
+//	@Scheduled(cron = "00 37 18 * * *")
+//	@Transactional
+//	public void createNewBillsForDueDate() {
+//		LocalDate currentDate = LocalDate.now();
+//		List<BillDTO> billsDueToday = billService.findBillsDueToday(currentDate).stream().map(this::mapBillToDTO)
+//				.collect(Collectors.toList());
+//
+//		for (BillDTO billDTO : billsDueToday) {
+//			RecurrenceDTO originalRecurrence = billDTO.getRecurrence();
+//			if (originalRecurrence != null) {
+//				LocalDate endDate = originalRecurrence.getEndDate();
+//				if (endDate != null && currentDate.isAfter(endDate)) {
+//					break;
+//				}
+//
+//				Recurrence originalRecurrenceEntity = recurrenceService
+//						.findRecurrenceById(originalRecurrence.getRecurrenceId());
+//				if (originalRecurrenceEntity != null) {
+//					LocalDate nextDueDate = calculateNextDueDate(originalRecurrence, currentDate);
+//					Bill newBill = new Bill();
+//					newBill.setUser(modelMapper.map(billDTO.getUser(), User.class));
+//					newBill.setBillName(billDTO.getBillName());
+//					newBill.setAmount(billDTO.getAmount());
+//					newBill.setDueDate(nextDueDate);
+//					newBill.setRecurrence(originalRecurrenceEntity);
+//					billService.addNewBill(newBill);
+//				}
+//			}
+//		}
+//	}
+//
+//	private LocalDate calculateNextDueDate(RecurrenceDTO recurrence, LocalDate currentDueDate) {
+//	    switch (recurrence.getRecurrenceType()) {
+//	        case DAILY:
+//	            return currentDueDate.plusDays(recurrence.getIntervalAmount());
+//	        case WEEKLY:
+//	            return currentDueDate.plusWeeks(recurrence.getIntervalAmount());
+//	        case MONTHLY:
+//	            return currentDueDate.plusMonths(recurrence.getIntervalAmount());
+//	        case ANNUALLY:
+//	            return currentDueDate.plusYears(recurrence.getIntervalAmount());
+//	        default:
+//	            throw new IllegalArgumentException("Unsupported recurrence type: " + recurrence.getRecurrenceType());
+//	    }
+//	}
+//
+//	private BillDTO mapBillToDTO(Bill bill) {
+//		BillDTO billDTO = modelMapper.map(bill, BillDTO.class);
+//		return billDTO;
+//	}
+
 }

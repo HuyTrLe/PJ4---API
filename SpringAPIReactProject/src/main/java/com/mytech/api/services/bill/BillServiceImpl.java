@@ -55,6 +55,12 @@ public class BillServiceImpl implements BillService {
 	public void deleteBill(int billId) {
 		billRepository.deleteById(billId);
 	}
+	
+	@Override
+	public void deleteBillsByRecurrence(int recurrenceId) {
+        List<Bill> bills = billRepository.findByRecurrence_RecurrenceId(recurrenceId);
+        billRepository.deleteAll(bills);
+    }
 
 	@Override
 	public Page<Bill> findOverdueBillsByUserId(int userId, LocalDate overdueDueDate, Pageable pageable) {
@@ -62,13 +68,19 @@ public class BillServiceImpl implements BillService {
 	}
 
 	@Override
-	public Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate currentDate, LocalDate dueDate, Pageable pageable) {
-	    return billRepository.findBillsDueIn3DaysByUserId(userId, currentDate, dueDate, pageable);
+	public Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate currentDate, LocalDate dueDate,
+			Pageable pageable) {
+		return billRepository.findBillsDueIn3DaysByUserId(userId, currentDate, dueDate, pageable);
 	}
 
 	@Override
 	public Page<Bill> findFutureDueBillsByUserId(int userId, LocalDate futureDueDueDate, Pageable pageable) {
 		return billRepository.findFutureDueBillsByUserId(userId, futureDueDueDate, pageable);
 	}
+	
+	@Override
+    public List<Bill> findBillsDueToday(LocalDate dueDate) {
+        return billRepository.findByDueDate(dueDate);
+    }
 
 }

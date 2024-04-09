@@ -113,7 +113,7 @@ public class RecurrenceController {
         existingRecurrence.setStartDate(recurrenceDTO.getStartDate());
         existingRecurrence.setEndDate(recurrenceDTO.getEndDate());
         existingRecurrence.setIntervalAmount(recurrenceDTO.getIntervalAmount());
-
+        
         validateRecurrenceType(existingRecurrence.getRecurrenceType());
 
         Recurrence updatedRecurrence = recurrenceService.saveRecurrence(existingRecurrence);
