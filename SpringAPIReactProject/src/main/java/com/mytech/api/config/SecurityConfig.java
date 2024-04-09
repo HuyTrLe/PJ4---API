@@ -23,7 +23,7 @@ import com.mytech.api.auth.services.UserDetailServiceImpl;
 public class SecurityConfig {
 	@Autowired
 	UserDetailServiceImpl userDetailServiceImpl;
-	
+
 	@Autowired
 	AuthEntryPointJwt authEntryPointJwt;
 
@@ -57,8 +57,9 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
 						.requestMatchers("/api/recurrences/**").permitAll().requestMatchers("/api/categories/**")
 						.permitAll().requestMatchers("/api/bills/**").permitAll()
-						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-						.anyRequest().authenticated()
+						.requestMatchers("/api/wallet_types/**").permitAll().requestMatchers("/api/wallets/**")
+						.permitAll().requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
+						.permitAll().anyRequest().authenticated()
 
 				).exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPointJwt));
 		http.authenticationProvider(authenticationProvider());
