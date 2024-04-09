@@ -8,13 +8,13 @@ import com.mytech.api.models.wallet.WalletType;
 import com.mytech.api.repositories.wallet.WalletTypeRepository;
 
 @Service
-public class WalletTypeServiceImpl implements WalletTypeService{
+public class WalletTypeServiceImpl implements WalletTypeService {
 	private final WalletTypeRepository typeRepository;
-	
+
 	public WalletTypeServiceImpl(WalletTypeRepository typeRepository) {
 		this.typeRepository = typeRepository;
 	}
-	
+
 	@Override
 	public List<WalletType> findAllWalletTypes() {
 		return typeRepository.findAll();
