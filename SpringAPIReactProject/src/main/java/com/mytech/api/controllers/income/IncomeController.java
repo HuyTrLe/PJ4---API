@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.BindingResult;
 
-import com.mytech.api.models.expense.ExpenseDTO;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.income.IncomeDTO;
 import com.mytech.api.services.income.IncomeService;
@@ -40,7 +39,7 @@ public class IncomeController {
         return ResponseEntity.ok(savedIncomeDTO); 
     }
 
-    @GetMapping("/{expenseId}")
+    @GetMapping("/{incomeId}")
     public ResponseEntity<?> getIncomeById(@PathVariable int incomeId) {
         Income income = incomeService.getIncomeById(incomeId);
         if (income != null) {
@@ -54,12 +53,12 @@ public class IncomeController {
     public ResponseEntity<List<IncomeDTO>> getIncomesByUserId(@PathVariable int userId) {
         List<Income> incomes = incomeService.getIncomesByUserId(userId);
         List<IncomeDTO> incomeDTOs = incomes.stream()
-                .map(expense -> modelMapper.map(expense, IncomeDTO.class))
+                .map(income -> modelMapper.map(income, IncomeDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(incomeDTOs);
     }
 
-    @PutMapping("/{expenseId}")
+    @PutMapping("/{incomeId}")
     public ResponseEntity<?> updateIncome(@PathVariable int incomeId, @RequestBody @Valid IncomeDTO incomeDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -68,14 +67,14 @@ public class IncomeController {
         }
         Income updatedIncome = modelMapper.map(incomeDTO, Income.class);
         updatedIncome = incomeService.saveIncome(updatedIncome);
-        ExpenseDTO updatedExpenseDTO = modelMapper.map(updatedIncome, ExpenseDTO.class);
-        return ResponseEntity.ok(updatedExpenseDTO);
+        IncomeDTO updatedIncomeDTO = modelMapper.map(updatedIncome, IncomeDTO.class);
+        return ResponseEntity.ok(updatedIncomeDTO);
     }
 
-    @DeleteMapping("/{expenseId}")
+    @DeleteMapping("/{incomeId}")
     public ResponseEntity<?> deleteIncome(@PathVariable int incomeId) {
-        Income existingExpense = incomeService.getIncomeById(incomeId);
-        if (existingExpense == null) {
+        Income existingIncome = incomeService.getIncomeById(incomeId);
+        if (existingIncome == null) {
             return ResponseEntity.notFound().build();
         }
         incomeService.deleteIncome(incomeId);
