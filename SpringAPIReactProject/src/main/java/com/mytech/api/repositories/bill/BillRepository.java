@@ -1,6 +1,7 @@
 package com.mytech.api.repositories.bill;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,4 +26,8 @@ public interface BillRepository extends JpaRepository<Bill, Integer> {
 
     @Query("SELECT b FROM Bill b WHERE b.user.id = :userId AND b.dueDate > :futureDueDate")
     Page<Bill> findFutureDueBillsByUserId(@Param("userId") int userId, @Param("futureDueDate") LocalDate futureDueDate, Pageable pageable);
+    
+    List<Bill> findByDueDate(LocalDate dueDate);
+    
+    List<Bill> findByRecurrence_RecurrenceId(int recurrenceId);
 }

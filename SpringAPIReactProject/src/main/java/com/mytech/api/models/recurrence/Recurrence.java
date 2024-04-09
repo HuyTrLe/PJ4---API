@@ -6,10 +6,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.user.User;
 
 @Entity
@@ -33,10 +35,13 @@ public class Recurrence {
 
     @Column(nullable = false)
     @Temporal(TemporalType.DATE)
-    private Date startDate;
+    private LocalDate startDate;
 
     @Temporal(TemporalType.DATE)
-    private Date endDate;
-
+    private LocalDate endDate;
+    
     private Integer intervalAmount;
+    
+    @OneToMany(mappedBy = "recurrence", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Bill> bills = new ArrayList<>();
 }

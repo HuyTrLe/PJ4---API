@@ -1,14 +1,13 @@
 package com.mytech.api.models.recurrence;
 
-import java.util.Date;
-
+import java.time.LocalDate;
 import com.mytech.api.models.user.UserDTO;
 
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,15 +24,16 @@ public class RecurrenceDTO {
 
     @FutureOrPresent(message = "Start date must be in the present or future")
 	@Temporal(TemporalType.DATE)
-	private Date startDate;
+	private LocalDate startDate;
 
     @Future(message = "End date must be in the future")
 	@Temporal(TemporalType.DATE)
-	private Date endDate;
+	private LocalDate endDate;
 
-	private Integer intervalAmount;
+    @Min(value = 1, message = "Interval amount must be at least 1")
+    private Integer intervalAmount;
 
-	public RecurrenceDTO(int recurrenceId, UserDTO user, Date startDate, Date endDate, Integer intervalAmount,
+	public RecurrenceDTO(int recurrenceId, UserDTO user, LocalDate startDate, LocalDate endDate, Integer intervalAmount,
 			RecurrenceType recurrenceType) {
 		this.recurrenceId = recurrenceId;
 		this.user = user;
