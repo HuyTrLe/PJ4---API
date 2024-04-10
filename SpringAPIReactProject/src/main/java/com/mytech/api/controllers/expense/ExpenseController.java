@@ -28,7 +28,7 @@ public class ExpenseController {
 
     @PostMapping
     public ResponseEntity<?> createExpense(@RequestBody @Valid ExpenseDTO expenseDTO, BindingResult result) {
-        if (result.hasErrors()) {
+    	if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
                     .map(error -> error.getDefaultMessage())
                     .collect(Collectors.joining(", ")));
@@ -36,7 +36,7 @@ public class ExpenseController {
         Expense expense = modelMapper.map(expenseDTO, Expense.class);
         Expense savedExpense = expenseService.saveExpense(expense);
         ExpenseDTO savedExpenseDTO = modelMapper.map(savedExpense, ExpenseDTO.class);
-        return ResponseEntity.ok(savedExpenseDTO); // You might want to return ResponseEntity.created()
+        return ResponseEntity.ok(savedExpenseDTO);
     }
 
     @GetMapping("/{expenseId}")
