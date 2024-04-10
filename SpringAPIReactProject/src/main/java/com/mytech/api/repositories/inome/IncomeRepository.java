@@ -12,7 +12,7 @@ import com.mytech.api.models.income.Income;
 public interface IncomeRepository extends JpaRepository<Income, Integer>{
 	List<Income> findByUserId(int userId);
 
-    List<Income> findByUserIdAndIcomeDateBetween(int userId, Date startDate, Date endDate);
+    List<Income> findByUserIdAndIncomeDateBetween(int userId, Date startDate, Date endDate);
 
     List<Income> findByCategoryId(int categoryId);
 }

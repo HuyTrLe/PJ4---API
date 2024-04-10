@@ -43,7 +43,7 @@ public class Income {
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal amount;
 
-	@Column(name = "expense_date", nullable = false)
+	@Column(name = "income_date", nullable = false)
 	private LocalDate incomeDate;
 
 	@ManyToOne
