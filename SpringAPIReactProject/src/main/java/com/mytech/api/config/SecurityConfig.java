@@ -60,9 +60,14 @@ public class SecurityConfig {
 						.requestMatchers("/api/wallet_types/**").permitAll().requestMatchers("/api/wallets/**")
 						.permitAll().requestMatchers("/api/expenses/**").permitAll().requestMatchers("/api/debts/**")
 						.permitAll().requestMatchers("/api/savinggoals/**").permitAll()
+<<<<<<< HEAD
 						.requestMatchers("/api/incomes/**").permitAll()
 						.requestMatchers("/api/budgets/**").permitAll()
 						.requestMatchers("/api/notifications/**").permitAll()
+=======
+						.requestMatchers("/api/incomes/**").permitAll().requestMatchers("/api/notifications/**")
+						.permitAll().requestMatchers("/api/transactions/**").permitAll()
+>>>>>>> 3de10fa75c2eea84ff38245efd9f4f7846b368cc
 						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 						.anyRequest().authenticated()
 

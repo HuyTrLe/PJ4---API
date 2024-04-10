@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.income.Income;
-import com.mytech.api.repositories.inome.IncomeRepository;
+import com.mytech.api.repositories.income.IncomeRepository;
 
 @Service
 public class IncomeServiceImpl implements IncomeService{
