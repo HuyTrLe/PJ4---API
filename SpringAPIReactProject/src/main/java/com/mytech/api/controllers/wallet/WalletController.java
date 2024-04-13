@@ -1,6 +1,8 @@
 package com.mytech.api.controllers.wallet;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.models.wallet.WalletDTO;
+import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.wallet.WalletService;
 
 import jakarta.validation.Valid;
@@ -20,11 +23,13 @@ import jakarta.validation.Valid;
 public class WalletController {
 
     private final WalletService walletService;
+    private final WalletRepository walletRepository;
     private final ModelMapper modelMapper;
 
-    public WalletController(WalletService walletService, ModelMapper modelMapper) {
+    public WalletController(WalletService walletService, WalletRepository walletRepository, ModelMapper modelMapper) {
         this.walletService = walletService;
         this.modelMapper = modelMapper;
+        this.walletRepository = walletRepository;
     }
 
     @PostMapping
@@ -102,5 +107,11 @@ public class WalletController {
         
         walletService.deleteWallet(walletId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+    
+    @GetMapping("/total-balance/{userId}")
+    public ResponseEntity<BigDecimal> getTotalBalance(@PathVariable int userId) {
+        BigDecimal totalBalance = walletRepository.getTotalBalanceForUser(userId);
+        return ResponseEntity.ok().body(totalBalance);
     }
 }
