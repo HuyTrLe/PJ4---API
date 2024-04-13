@@ -3,6 +3,7 @@ package com.mytech.api.services.category;
 import java.util.List;
 
 import com.mytech.api.models.category.Cat_IconDTO;
+import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.user.User;
 
@@ -23,5 +24,5 @@ public interface CategoryService {
 	
 	List<Cat_IconDTO> getAllIcons();
 	
-	CategoryDTO getByCateId(Long categoryId);
+	Category getByCateId(Long categoryId);
 }

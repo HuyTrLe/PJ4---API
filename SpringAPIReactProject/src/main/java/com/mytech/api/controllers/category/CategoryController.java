@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.models.category.Cat_IconDTO;
+import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.services.category.CategoryService;
 
@@ -81,8 +82,8 @@ private final CategoryService categoryService;
     }
 	
 	@GetMapping("/{categoryId}")
-    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long categoryId) {
-        CategoryDTO category = categoryService.getByCateId(categoryId);
+    public ResponseEntity<Category> getCategoryById(@PathVariable Long categoryId) {
+        Category category = categoryService.getByCateId(categoryId);
         if (category != null) {
             return ResponseEntity.ok(category);
         } else {

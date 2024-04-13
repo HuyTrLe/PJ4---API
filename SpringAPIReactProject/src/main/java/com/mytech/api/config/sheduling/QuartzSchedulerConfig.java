@@ -1,4 +1,4 @@
-package com.mytech.api.config;
+package com.mytech.api.config.sheduling;
 
 import org.quartz.JobDetail;
 import org.quartz.Trigger;
@@ -27,7 +27,7 @@ public class QuartzSchedulerConfig {
 	            .forJob(createNewBillsJobDetail())
 	            .withIdentity("createNewBillsJobTrigger")
 	            .withDescription("Trigger for create new bills job")
-	            .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(19, 15))
+	            .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(16, 37))
 	            .build();
 	}
 }

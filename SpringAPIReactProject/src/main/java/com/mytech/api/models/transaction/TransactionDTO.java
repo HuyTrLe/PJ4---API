@@ -3,22 +3,46 @@ package com.mytech.api.models.transaction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import lombok.AllArgsConstructor;
+import com.mytech.api.models.category.CategoryDTO;
+import com.mytech.api.models.recurrence.RecurrenceDTO;
+import com.mytech.api.models.user.UserDTO;
+import com.mytech.api.models.wallet.WalletDTO;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter @Setter
-@AllArgsConstructor
 @NoArgsConstructor
 public class TransactionDTO {
 	private Integer transactionId;
-    private Integer userId;
-    private Integer walletId;
+    private UserDTO user;
+    private WalletDTO wallet;
+    
+    @NotNull(message = "Amount cannot be null")
     private BigDecimal amount;
+    
+    @NotNull(message = "Date cannot be null")
     private LocalDate transactionDate;
-    private Integer categoryId;
+    
+    private CategoryDTO category;
     private String notes;
-    private Integer recurrenceId;
+    private RecurrenceDTO recurrence;
+    
+    @NotBlank(message = "Currency cannot be blank")
     private String currency;
+    
+    public TransactionDTO(Integer transactionId, UserDTO user, WalletDTO wallet, BigDecimal amount, LocalDate transactionDate, CategoryDTO category, String notes, RecurrenceDTO recurrence, String currency) {
+    	this.transactionId = transactionId;
+    	this.user = user;
+    	this.wallet = wallet;
+    	this.amount = amount;
+    	this.transactionDate = transactionDate;
+    	this.category = category;
+    	this.notes = notes;
+    	this.recurrence = recurrence;
+    	this.currency = currency;
+    }
 }

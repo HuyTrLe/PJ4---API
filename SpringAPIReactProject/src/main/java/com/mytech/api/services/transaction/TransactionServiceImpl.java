@@ -1,7 +1,8 @@
 package com.mytech.api.services.transaction;
 
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.transaction.Transaction;
@@ -27,8 +28,8 @@ public class TransactionServiceImpl implements TransactionService{
     }
 
     @Override
-    public List<Transaction> getAllTransactionsByUserId(Integer userId) {
-        return transactionRepository.findByUserId(userId);
+    public Page<Transaction>  getAllTransactionsByUserId(Integer userId, Pageable pageable) {
+    	 return transactionRepository.findByUserId(userId, pageable);
     }
 
     @Override

@@ -160,13 +160,13 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
-	public CategoryDTO getByCateId(Long categoryId) {
+	public Category getByCateId(Long categoryId) {
 		Optional<Category> categoryOptional = categoryRepository.findById(categoryId);
 
 		if (categoryOptional.isPresent()) {
 			Category category = categoryOptional.get();
 
-			CategoryDTO resultCategoryDTO = new CategoryDTO();
+			Category resultCategoryDTO = new Category();
 			resultCategoryDTO.setId(category.getId());
 			resultCategoryDTO.setName(category.getName());
 
@@ -176,5 +176,6 @@ public class CategoryServiceImpl implements CategoryService {
 
 		}
 	}
+	
 
 }
