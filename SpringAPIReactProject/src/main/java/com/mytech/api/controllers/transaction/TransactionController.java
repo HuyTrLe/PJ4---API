@@ -1,5 +1,6 @@
 package com.mytech.api.controllers.transaction;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -165,6 +166,18 @@ public class TransactionController {
 		TransactionDTO updatedTransactionDTO = modelMapper.map(updatedTransaction, TransactionDTO.class);
 		return ResponseEntity.ok(updatedTransactionDTO);
 	}
+	
+	@GetMapping("/income/{userId}")
+    public ResponseEntity<BigDecimal> getTotalIncomeByUserId(@PathVariable Integer userId) {
+        BigDecimal totalIncome = transactionService.getTotalIncomeByUserId(userId);
+        return ResponseEntity.ok(totalIncome);
+    }
+
+    @GetMapping("/expense/{userId}")
+    public ResponseEntity<BigDecimal> getTotalExpenseByUserId(@PathVariable Integer userId) {
+        BigDecimal totalExpense = transactionService.getTotalExpenseByUserId(userId);
+        return ResponseEntity.ok(totalExpense);
+    }
 
 	@DeleteMapping("/{transactionId}")
 	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
