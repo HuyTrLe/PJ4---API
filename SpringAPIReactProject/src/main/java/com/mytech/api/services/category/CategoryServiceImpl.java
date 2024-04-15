@@ -84,7 +84,19 @@ public class CategoryServiceImpl implements CategoryService {
 				new Category("Education", CateTypeENum.EXPENSE, icons.get(6), user),
 				new Category("Entertainment", CateTypeENum.EXPENSE, icons.get(7), user),
 				new Category("Extra Income", CateTypeENum.INCOME, icons.get(8), user),
-				new Category("Gift", CateTypeENum.EXPENSE, icons.get(9), user));
+				new Category("Gift", CateTypeENum.INCOME, icons.get(9), user),
+				new Category("Grocery", CateTypeENum.EXPENSE, icons.get(10), user),
+				new Category("Home", CateTypeENum.EXPENSE, icons.get(11), user),
+				new Category("Home Bill", CateTypeENum.EXPENSE, icons.get(12), user),
+				new Category("Loan", CateTypeENum.DEBT, icons.get(13), user),
+				new Category("Other Income", CateTypeENum.INCOME, icons.get(14), user),
+				new Category("Phone Bill", CateTypeENum.EXPENSE, icons.get(15), user),
+				new Category("Salary", CateTypeENum.INCOME, icons.get(16), user),
+				new Category("Shopping", CateTypeENum.EXPENSE, icons.get(17), user),
+				new Category("Transport", CateTypeENum.EXPENSE, icons.get(18), user),
+				new Category("Travel", CateTypeENum.EXPENSE, icons.get(19), user),
+				new Category("Water Bill", CateTypeENum.EXPENSE, icons.get(20), user));
+
 	}
 
 	@Override
@@ -176,6 +188,5 @@ public class CategoryServiceImpl implements CategoryService {
 
 		}
 	}
-	
 
 }

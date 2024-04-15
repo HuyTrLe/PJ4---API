@@ -186,7 +186,24 @@ public class TransactionController {
 
 	@DeleteMapping("/{transactionId}")
 	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
-		transactionService.deleteTransaction(transactionId);
-		return ResponseEntity.noContent().build();
+	    Transaction transaction = transactionService.getTransactionById(transactionId);
+	    
+	    if (transaction == null) {
+	        return ResponseEntity.notFound().build();
+	    }
+
+	    Wallet wallet = transaction.getWallet();
+
+	    BigDecimal newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), transaction.getAmount(), BigDecimal.ZERO);
+	    wallet.setBalance(newBalance); 
+	    walletService.saveWallet(wallet);
+
+	    transactionService.deleteTransaction(transactionId);
+	    return ResponseEntity.noContent().build();
 	}
+
+	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount, BigDecimal newAmount) {
+	    return currentBalance.add(oldAmount);
+	}
+
 }
