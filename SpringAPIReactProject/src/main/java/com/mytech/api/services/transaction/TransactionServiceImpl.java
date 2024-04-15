@@ -1,6 +1,7 @@
 package com.mytech.api.services.transaction;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,6 +51,11 @@ public class TransactionServiceImpl implements TransactionService {
     public BigDecimal getTotalExpenseByUserId(int userId) {
         return transactionRepository.getTotalExpenseByUserId(userId, CateTypeENum.EXPENSE) != null ? 
                transactionRepository.getTotalExpenseByUserId(userId, CateTypeENum.EXPENSE) : BigDecimal.ZERO;
+    }
+    
+    @Override
+    public List<Transaction> getTransactionsByCategoryId(Integer categoryId) {
+        return transactionRepository.findByCategoryId(categoryId);
     }
 
 }

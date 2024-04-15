@@ -1,6 +1,7 @@
 package com.mytech.api.controllers.transaction;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -205,5 +206,15 @@ public class TransactionController {
 	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount, BigDecimal newAmount) {
 	    return currentBalance.add(oldAmount);
 	}
+	
+	@GetMapping("/category/{categoryId}")
+	public ResponseEntity<List<TransactionDTO>> getTransactionsByCategoryId(@PathVariable Integer categoryId) {
+	    List<Transaction> transactions = transactionService.getTransactionsByCategoryId(categoryId);
+	    List<TransactionDTO> transactionDTOs = transactions.stream()
+	            .map(transaction -> modelMapper.map(transaction, TransactionDTO.class))
+	            .collect(Collectors.toList());
+	    return ResponseEntity.ok(transactionDTOs);
+	}
+
 
 }

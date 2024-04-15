@@ -13,6 +13,7 @@ import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.saving_goals.SavingGoal;
+import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.wallet.Wallet;
 
 import jakarta.persistence.CascadeType;
@@ -63,6 +64,9 @@ public class User {
 	
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Income>  incomes = new ArrayList<>();
+	
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Transaction> transaction  = new ArrayList<>();
 	
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Budget>  budgets = new ArrayList<>();

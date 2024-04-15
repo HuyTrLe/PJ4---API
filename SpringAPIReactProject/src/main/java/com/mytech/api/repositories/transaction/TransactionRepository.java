@@ -1,6 +1,7 @@
 package com.mytech.api.repositories.transaction;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,4 +23,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
 	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.category.type = :expenseType")
 	BigDecimal getTotalExpenseByUserId(int userId, CateTypeENum expenseType);
+	
+	List<Transaction> findByCategoryId(Integer categoryId);
+
 }

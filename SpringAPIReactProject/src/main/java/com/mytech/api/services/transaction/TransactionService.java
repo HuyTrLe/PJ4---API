@@ -2,6 +2,7 @@ package com.mytech.api.services.transaction;
 
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,4 +21,6 @@ public interface TransactionService {
     BigDecimal getTotalIncomeByUserId(int userId);
     
     BigDecimal getTotalExpenseByUserId(int userId);
+
+	List<Transaction> getTransactionsByCategoryId(Integer categoryId);
 }

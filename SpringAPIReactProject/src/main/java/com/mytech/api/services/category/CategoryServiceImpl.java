@@ -143,22 +143,32 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	@Transactional
 	public CategoryDTO updateCategory(Long categoryId, CategoryDTO updateCategoryDTO) {
-		Category existingCategory = categoryRepository.findById(categoryId)
-				.orElseThrow(() -> new IllegalArgumentException("Category not found"));
+		try {
+			Category existingCategory = categoryRepository.findById(categoryId)
+					.orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
-		modelMapper.map(updateCategoryDTO, existingCategory);
+			// Check if the categoryType is being updated
+			if (!existingCategory.getType().equals(updateCategoryDTO.getType())) {
+				throw new IllegalArgumentException("Cannot update category type");
+			}
 
-		User user = userRepository.findById(updateCategoryDTO.getUserId())
-				.orElseThrow(() -> new IllegalArgumentException("User not found"));
-		Cat_Icon catIcon = catIconRepository.findById(updateCategoryDTO.getIcon().getId())
-				.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
+			// Copy the fields that can be updated
+			existingCategory.setName(updateCategoryDTO.getName());
 
-		existingCategory.setUser(user);
-		existingCategory.setIcon(catIcon);
+			User user = userRepository.findById(updateCategoryDTO.getUserId())
+					.orElseThrow(() -> new IllegalArgumentException("User not found"));
+			Cat_Icon catIcon = catIconRepository.findById(updateCategoryDTO.getIcon().getId())
+					.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
 
-		Category updatedCategory = categoryRepository.save(existingCategory);
+			existingCategory.setUser(user);
+			existingCategory.setIcon(catIcon);
 
-		return modelMapper.map(updatedCategory, CategoryDTO.class);
+			Category updatedCategory = categoryRepository.save(existingCategory);
+
+			return modelMapper.map(updatedCategory, CategoryDTO.class);
+		} catch (Exception e) {
+			throw new RuntimeException("Error updating category", e);
+		}
 	}
 
 	@Override

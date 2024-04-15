@@ -1,7 +1,12 @@
 package com.mytech.api.models.category;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.user.User;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,6 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,6 +42,9 @@ public class Category {
 	@ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+	
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Transaction> transaction  = new ArrayList<>();
 
 	public Category(String name, CateTypeENum type, Cat_Icon icon, User user) {
 		this.name = name;
