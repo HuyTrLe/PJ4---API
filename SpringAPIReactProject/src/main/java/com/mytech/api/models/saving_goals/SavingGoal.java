@@ -1,6 +1,8 @@
+
 package com.mytech.api.models.saving_goals;
 
 import com.mytech.api.models.user.User;
+import com.mytech.api.models.wallet.Wallet;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -48,8 +50,13 @@ public class SavingGoal {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "wallet_id", nullable = false)
+    private Wallet wallet;
+    
+
 	public SavingGoal(Long id, String name, BigDecimal targetAmount, BigDecimal currentAmount, LocalDate startDate,
-			LocalDate endDate, User user) {
+			LocalDate endDate, User user, Wallet wallet) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -58,6 +65,7 @@ public class SavingGoal {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.user = user;
+		this.wallet = wallet;
 	}
 
     

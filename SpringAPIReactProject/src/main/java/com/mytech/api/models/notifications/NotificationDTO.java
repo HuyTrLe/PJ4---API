@@ -1,3 +1,4 @@
+
 package com.mytech.api.models.notifications;
 
 import lombok.Getter;
@@ -10,22 +11,23 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 public class NotificationDTO {
-    private Long id;
+	private Long id;
+    private Long userId;
+    private String notificationType;
+    
     private String message;
-    private LocalDateTime createdAt;
-    private boolean isread;
-    
-    
-	public NotificationDTO(Long id, String message, LocalDateTime createdAt, boolean isread) {
-		super();
-		this.id = id;
-		this.message = message;
-		this.createdAt = createdAt;
-		this.isread = isread;
-	}
-    
-    
-	
+    private boolean read;
+    private LocalDateTime timestamp;
 
-    
+    public NotificationDTO(Long id, Long userId, String notificationType, String message, boolean read, LocalDateTime timestamp) {
+        this.id = id;
+        this.userId = userId;
+        this.notificationType = notificationType;
+        
+        this.message = message;
+        this.read = read;
+        this.timestamp = timestamp;
+    }
+
+	
 }

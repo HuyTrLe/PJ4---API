@@ -1,3 +1,4 @@
+
 package com.mytech.api.models.saving_goals;
 
 import lombok.Getter;
@@ -18,10 +19,11 @@ public class SavingGoalDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private Long userId;
+    private Long walletId;
     
     
 	public SavingGoalDTO(Long id, String name, BigDecimal targetAmount, BigDecimal currentAmount, LocalDate startDate,
-			LocalDate endDate, Long userId) {
+			LocalDate endDate, Long userId, Long walletId) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -30,7 +32,6 @@ public class SavingGoalDTO {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.userId = userId;
-	}
-
-    
+		this.walletId = walletId;
+	}    
 }

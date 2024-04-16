@@ -1,5 +1,8 @@
+
 package com.mytech.api.models.debt;
 
+import com.mytech.api.models.category.Category;
+import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.user.User;
 
 import jakarta.persistence.Column;
@@ -27,32 +30,51 @@ public class Debt {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    
     private Long id;
 
-    @Column(nullable = false)
+	@Column(nullable = false)
     private String name;
-
-    @Column(nullable = false)
-    private BigDecimal amount;
-
-    @Column(nullable = false)
-    private LocalDate startDate;
-
-    @Column(nullable = false)
-    private LocalDate endDate;
-
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-	public Debt(Long id, String name, BigDecimal amount, LocalDate startDate, LocalDate endDate, User user) {
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @ManyToOne
+    @JoinColumn(name = "recurrence_id", nullable = false)
+    private Recurrence recurrence;
+
+    @Column(name = "creditor", nullable = false)
+    private String creditor;
+
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
+
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
+    @Column(name = "notes")
+    private String notes;
+
+	public Debt(Long id, String name, User user, Category category, Recurrence recurrence, String creditor,
+			BigDecimal amount, LocalDate startDate, LocalDate endDate, String notes) {
 		super();
 		this.id = id;
 		this.name = name;
+		this.user = user;
+		this.category = category;
+		this.recurrence = recurrence;
+		this.creditor = creditor;
 		this.amount = amount;
 		this.startDate = startDate;
 		this.endDate = endDate;
-		this.user = user;
+		this.notes = notes;
 	}
 
     

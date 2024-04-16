@@ -1,5 +1,7 @@
+
 package com.mytech.api.services.notification;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import java.util.stream.Collectors;
@@ -48,13 +50,14 @@ public class NotificationServiceImpl implements NotificationService {
         Notification existingNotification = notificationRepository.findById(id).orElse(null);
         if (existingNotification != null) {
             existingNotification.setMessage(notificationDTO.getMessage());
-            existingNotification.setCreatedAt(notificationDTO.getCreatedAt());
             existingNotification.setRead(false);
+            existingNotification.setTimestamp(LocalDateTime.now()); // Thay đổi từ createdAt sang timestamp
             existingNotification = notificationRepository.save(existingNotification);
             return modelMapper.map(existingNotification, NotificationDTO.class);
         }
         return null;
     }
+
 
     @Override
     public void deleteNotification(Long id) {
