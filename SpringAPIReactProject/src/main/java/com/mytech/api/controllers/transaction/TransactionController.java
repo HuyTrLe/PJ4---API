@@ -155,6 +155,9 @@ public class TransactionController {
 		Wallet wallet = updatedTransaction.getWallet();
 		BigDecimal newBalance = calculateNewWalletBalance(wallet.getBalance(), transactionDTO.getAmount(),
 				transactionDTO.getAmount());
+		if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+			return ResponseEntity.badRequest().body("Insufficient funds in the wallet");
+		}
 		wallet.setBalance(newBalance); // setBalance accepts BigDecimal
 		walletService.saveWallet(wallet);
 
@@ -187,34 +190,34 @@ public class TransactionController {
 
 	@DeleteMapping("/{transactionId}")
 	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
-	    Transaction transaction = transactionService.getTransactionById(transactionId);
-	    
-	    if (transaction == null) {
-	        return ResponseEntity.notFound().build();
-	    }
+		Transaction transaction = transactionService.getTransactionById(transactionId);
 
-	    Wallet wallet = transaction.getWallet();
+		if (transaction == null) {
+			return ResponseEntity.notFound().build();
+		}
 
-	    BigDecimal newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), transaction.getAmount(), BigDecimal.ZERO);
-	    wallet.setBalance(newBalance); 
-	    walletService.saveWallet(wallet);
+		Wallet wallet = transaction.getWallet();
 
-	    transactionService.deleteTransaction(transactionId);
-	    return ResponseEntity.noContent().build();
+		BigDecimal newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), transaction.getAmount(),
+				BigDecimal.ZERO);
+		wallet.setBalance(newBalance);
+		walletService.saveWallet(wallet);
+
+		transactionService.deleteTransaction(transactionId);
+		return ResponseEntity.noContent().build();
 	}
 
-	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount, BigDecimal newAmount) {
-	    return currentBalance.add(oldAmount);
+	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount,
+			BigDecimal newAmount) {
+		return currentBalance.add(oldAmount);
 	}
-	
+
 	@GetMapping("/category/{categoryId}")
 	public ResponseEntity<List<TransactionDTO>> getTransactionsByCategoryId(@PathVariable Integer categoryId) {
-	    List<Transaction> transactions = transactionService.getTransactionsByCategoryId(categoryId);
-	    List<TransactionDTO> transactionDTOs = transactions.stream()
-	            .map(transaction -> modelMapper.map(transaction, TransactionDTO.class))
-	            .collect(Collectors.toList());
-	    return ResponseEntity.ok(transactionDTOs);
+		List<Transaction> transactions = transactionService.getTransactionsByCategoryId(categoryId);
+		List<TransactionDTO> transactionDTOs = transactions.stream()
+				.map(transaction -> modelMapper.map(transaction, TransactionDTO.class)).collect(Collectors.toList());
+		return ResponseEntity.ok(transactionDTOs);
 	}
-
 
 }
