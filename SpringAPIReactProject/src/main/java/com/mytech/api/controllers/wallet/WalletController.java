@@ -99,14 +99,9 @@ public class WalletController {
     }
 
     @DeleteMapping("/{walletId}")
-    public ResponseEntity<?> deleteWallet(@PathVariable int walletId) {
-        Wallet wallet = walletService.getWalletById(walletId);
-        if (wallet == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet not found with id: " + walletId);
-        }
-
+    public ResponseEntity<String> deleteCategory(@PathVariable int walletId) {
         walletService.deleteWallet(walletId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.ok("Wallets deleted successfully");
     }
 
 }
