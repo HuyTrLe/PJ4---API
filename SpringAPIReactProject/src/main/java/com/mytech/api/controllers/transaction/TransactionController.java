@@ -139,6 +139,19 @@ public class TransactionController {
 		return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
 	}
 
+	@GetMapping("/users/wallets/{userId}")
+	public ResponseEntity<List<TransactionDTO>> getAllTransactionsForAllWallet(@PathVariable int userId) {
+		List<TransactionDTO> transactions = transactionService.getAllTransactionsByAllWallet(userId)
+				.stream()
+				.map(transaction -> {
+					TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
+					return transactionDTO;
+				})
+				.collect(Collectors.toList());
+
+		return new ResponseEntity<>(transactions, HttpStatus.OK);
+	}
+
 	@PutMapping("/{transactionId}")
 	public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
 			@RequestBody @Valid TransactionDTO transactionDTO, BindingResult result) {
@@ -188,6 +201,20 @@ public class TransactionController {
 		return ResponseEntity.ok(totalExpense);
 	}
 
+	@GetMapping("/income/{userId}/{walletId}")
+	public ResponseEntity<BigDecimal> getTotalIncomeByWalletId(@PathVariable Integer userId,
+			@PathVariable Integer walletId) {
+		BigDecimal totalIncome = transactionService.getTotalIncomeByWalletId(userId, walletId);
+		return ResponseEntity.ok(totalIncome);
+	}
+
+	@GetMapping("/expense/{userId}/{walletId}")
+	public ResponseEntity<BigDecimal> getTotalExpenseByWalletId(@PathVariable Integer userId,
+			@PathVariable Integer walletId) {
+		BigDecimal totalExpense = transactionService.getTotalExpenseByWalletId(userId, walletId);
+		return ResponseEntity.ok(totalExpense);
+	}
+
 	@DeleteMapping("/{transactionId}")
 	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
 		Transaction transaction = transactionService.getTransactionById(transactionId);
@@ -212,11 +239,13 @@ public class TransactionController {
 		return currentBalance.add(oldAmount);
 	}
 
-	@GetMapping("/category/{categoryId}")
-	public ResponseEntity<List<TransactionDTO>> getTransactionsByCategoryId(@PathVariable Integer categoryId) {
-		List<Transaction> transactions = transactionService.getTransactionsByCategoryId(categoryId);
+	@GetMapping("/{userId}/{walletId}")
+	public ResponseEntity<List<TransactionDTO>> getTransactionsByWalletId(@PathVariable int userId,
+			@PathVariable Integer walletId) {
+		List<Transaction> transactions = transactionService.getTransactionsByWalletId(userId, walletId);
 		List<TransactionDTO> transactionDTOs = transactions.stream()
-				.map(transaction -> modelMapper.map(transaction, TransactionDTO.class)).collect(Collectors.toList());
+				.map(transaction -> modelMapper.map(transaction, TransactionDTO.class))
+				.collect(Collectors.toList());
 		return ResponseEntity.ok(transactionDTOs);
 	}
 

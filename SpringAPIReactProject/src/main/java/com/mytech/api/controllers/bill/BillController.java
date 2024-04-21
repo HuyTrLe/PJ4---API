@@ -25,10 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.bill.BillDTO;
+import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.services.bill.BillService;
+import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 
 import jakarta.validation.Valid;
@@ -41,13 +43,15 @@ public class BillController {
 	private final UserRepository userRepository;
 	private final RecurrenceService recurrenceService;
 	private final ModelMapper modelMapper;
+	private final CategoryService categoryService;
 
 	public BillController(BillService billService, UserRepository userRepository, RecurrenceService recurrenceService,
-			ModelMapper modelMapper) {
+			ModelMapper modelMapper, CategoryService categoryService) {
 		this.billService = billService;
 		this.userRepository = userRepository;
 		this.modelMapper = modelMapper;
 		this.recurrenceService = recurrenceService;
+		this.categoryService = categoryService;
 	}
 
 	@PostMapping
@@ -71,6 +75,12 @@ public class BillController {
 		Bill bill = modelMapper.map(billDTO, Bill.class);
 		bill.setUser(existingUser.get());
 
+		Category existingCategory = categoryService.getByCateId(billDTO.getCategory().getId());
+		if (existingCategory == null) {
+			return new ResponseEntity<>("Category not found with id: " + billDTO.getCategory().getId(),
+					HttpStatus.NOT_FOUND);
+		}
+
 		if (billDTO.getRecurrence() != null) {
 			// Already have recurrence
 			if (billDTO.getRecurrence().getRecurrenceId() > 0) {
@@ -90,6 +100,7 @@ public class BillController {
 				bill.setRecurrence(savedRecurrence);
 			}
 		}
+		bill.setCategory(existingCategory);
 
 		Bill createdBill = billService.addNewBill(bill);
 		BillDTO createdBillDTO = modelMapper.map(createdBill, BillDTO.class);
@@ -133,34 +144,48 @@ public class BillController {
 	}
 
 	@PutMapping("/{billId}")
-	public ResponseEntity<?> updateBill(@PathVariable int billId, @RequestBody BillDTO billDTO) {
-		Optional<User> userOptional = userRepository.findById(billDTO.getUser().getId());
-		if (!userOptional.isPresent()) {
-			return new ResponseEntity<>("User not found with id: " + billDTO.getUser().getId(), HttpStatus.NOT_FOUND);
+	public ResponseEntity<?> updateBill(@PathVariable int billId, @RequestBody @Valid BillDTO billDTO,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining(", "));
+			return ResponseEntity.badRequest().body(errors);
 		}
 
-		Optional<Bill> existingBillOptional = Optional.ofNullable(billService.findBillById(billId));
-		if (!existingBillOptional.isPresent()) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
+		Bill updatedBill = modelMapper.map(billDTO, Bill.class);
+		updatedBill.setBillId(billId);
 
-		Bill existingBill = existingBillOptional.get();
-		existingBill.setBillName(billDTO.getBillName());
-		existingBill.setAmount(billDTO.getAmount());
-		existingBill.setDueDate(billDTO.getDueDate());
-
-		// Recurrence update, if needed
-		// if (billDTO.getRecurrence() != null) {
-		// existingBill.setRecurrence(modelMapper.map(billDTO.getRecurrence(),
-		// Recurrence.class));
+		// Optional<User> userOptional =
+		// userRepository.findById(billDTO.getUser().getId());
+		// if (!userOptional.isPresent()) {
+		// return new ResponseEntity<>("User not found with id: " +
+		// billDTO.getUser().getId(), HttpStatus.NOT_FOUND);
 		// }
 
-		existingBill.setUser(userOptional.get());
+		// Optional<Bill> existingBillOptional =
+		// Optional.ofNullable(billService.findBillById(billId));
+		// if (!existingBillOptional.isPresent()) {
+		// return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		// }
 
-		Bill updatedBill = billService.addNewBill(existingBill);
+		// Bill existingBill = existingBillOptional.get();
+		// existingBill.setBillName(billDTO.getBillName());
+		// existingBill.setAmount(billDTO.getAmount());
+		// existingBill.setDueDate(billDTO.getDueDate());
+		// // Recurrence update, if needed
+		// // if (billDTO.getRecurrence() != null) {
+		// // existingBill.setRecurrence(modelMapper.map(billDTO.getRecurrence(),
+		// // Recurrence.class));
+		// // }
+
+		// existingBill.setUser(userOptional.get());
+
+		// Bill updatedBill = billService.addNewBill(existingBill);
+		// BillDTO updatedBillDTO = modelMapper.map(updatedBill, BillDTO.class);
+		updatedBill = billService.addNewBill(updatedBill);
 		BillDTO updatedBillDTO = modelMapper.map(updatedBill, BillDTO.class);
 
-		return new ResponseEntity<>(updatedBillDTO, HttpStatus.OK);
+		return ResponseEntity.ok(updatedBillDTO);
 	}
 
 	@DeleteMapping("/{billId}")
@@ -173,55 +198,59 @@ public class BillController {
 		return ResponseEntity.notFound().build();
 	}
 
-//	@Scheduled(cron = "00 37 18 * * *")
-//	@Transactional
-//	public void createNewBillsForDueDate() {
-//		LocalDate currentDate = LocalDate.now();
-//		List<BillDTO> billsDueToday = billService.findBillsDueToday(currentDate).stream().map(this::mapBillToDTO)
-//				.collect(Collectors.toList());
-//
-//		for (BillDTO billDTO : billsDueToday) {
-//			RecurrenceDTO originalRecurrence = billDTO.getRecurrence();
-//			if (originalRecurrence != null) {
-//				LocalDate endDate = originalRecurrence.getEndDate();
-//				if (endDate != null && currentDate.isAfter(endDate)) {
-//					break;
-//				}
-//
-//				Recurrence originalRecurrenceEntity = recurrenceService
-//						.findRecurrenceById(originalRecurrence.getRecurrenceId());
-//				if (originalRecurrenceEntity != null) {
-//					LocalDate nextDueDate = calculateNextDueDate(originalRecurrence, currentDate);
-//					Bill newBill = new Bill();
-//					newBill.setUser(modelMapper.map(billDTO.getUser(), User.class));
-//					newBill.setBillName(billDTO.getBillName());
-//					newBill.setAmount(billDTO.getAmount());
-//					newBill.setDueDate(nextDueDate);
-//					newBill.setRecurrence(originalRecurrenceEntity);
-//					billService.addNewBill(newBill);
-//				}
-//			}
-//		}
-//	}
-//
-//	private LocalDate calculateNextDueDate(RecurrenceDTO recurrence, LocalDate currentDueDate) {
-//	    switch (recurrence.getRecurrenceType()) {
-//	        case DAILY:
-//	            return currentDueDate.plusDays(recurrence.getIntervalAmount());
-//	        case WEEKLY:
-//	            return currentDueDate.plusWeeks(recurrence.getIntervalAmount());
-//	        case MONTHLY:
-//	            return currentDueDate.plusMonths(recurrence.getIntervalAmount());
-//	        case ANNUALLY:
-//	            return currentDueDate.plusYears(recurrence.getIntervalAmount());
-//	        default:
-//	            throw new IllegalArgumentException("Unsupported recurrence type: " + recurrence.getRecurrenceType());
-//	    }
-//	}
-//
-//	private BillDTO mapBillToDTO(Bill bill) {
-//		BillDTO billDTO = modelMapper.map(bill, BillDTO.class);
-//		return billDTO;
-//	}
+	// @Scheduled(cron = "00 37 18 * * *")
+	// @Transactional
+	// public void createNewBillsForDueDate() {
+	// LocalDate currentDate = LocalDate.now();
+	// List<BillDTO> billsDueToday =
+	// billService.findBillsDueToday(currentDate).stream().map(this::mapBillToDTO)
+	// .collect(Collectors.toList());
+	//
+	// for (BillDTO billDTO : billsDueToday) {
+	// RecurrenceDTO originalRecurrence = billDTO.getRecurrence();
+	// if (originalRecurrence != null) {
+	// LocalDate endDate = originalRecurrence.getEndDate();
+	// if (endDate != null && currentDate.isAfter(endDate)) {
+	// break;
+	// }
+	//
+	// Recurrence originalRecurrenceEntity = recurrenceService
+	// .findRecurrenceById(originalRecurrence.getRecurrenceId());
+	// if (originalRecurrenceEntity != null) {
+	// LocalDate nextDueDate = calculateNextDueDate(originalRecurrence,
+	// currentDate);
+	// Bill newBill = new Bill();
+	// newBill.setUser(modelMapper.map(billDTO.getUser(), User.class));
+	// newBill.setBillName(billDTO.getBillName());
+	// newBill.setAmount(billDTO.getAmount());
+	// newBill.setDueDate(nextDueDate);
+	// newBill.setRecurrence(originalRecurrenceEntity);
+	// billService.addNewBill(newBill);
+	// }
+	// }
+	// }
+	// }
+	//
+	// private LocalDate calculateNextDueDate(RecurrenceDTO recurrence, LocalDate
+	// currentDueDate) {
+	// switch (recurrence.getRecurrenceType()) {
+	// case DAILY:
+	// return currentDueDate.plusDays(recurrence.getIntervalAmount());
+	// case WEEKLY:
+	// return currentDueDate.plusWeeks(recurrence.getIntervalAmount());
+	// case MONTHLY:
+	// return currentDueDate.plusMonths(recurrence.getIntervalAmount());
+	// case ANNUALLY:
+	// return currentDueDate.plusYears(recurrence.getIntervalAmount());
+	// default:
+	// throw new IllegalArgumentException("Unsupported recurrence type: " +
+	// recurrence.getRecurrenceType());
+	// }
+	// }
+	//
+	// private BillDTO mapBillToDTO(Bill bill) {
+	// BillDTO billDTO = modelMapper.map(bill, BillDTO.class);
+	// return billDTO;
+	// }
 
 }

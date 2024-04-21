@@ -164,13 +164,13 @@ public class AuthController {
 
 	@DeleteMapping("/password-reset-tokens/{token}")
 	public ResponseEntity<String> deletePasswordResetToken(@PathVariable String token) {
-	    Optional<PasswordResetToken> optionalToken = passwordResetTokenService.getToken(token);
-	    if (optionalToken.isPresent()) {
-	        passwordResetTokenService.deleteTokenByTokenValue(token);
-	        return ResponseEntity.ok("Password reset token deleted successfully");
-	    } else {
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token not found");
-	    }
+		Optional<PasswordResetToken> optionalToken = passwordResetTokenService.getToken(token);
+		if (optionalToken.isPresent()) {
+			passwordResetTokenService.deleteTokenByTokenValue(token);
+			return ResponseEntity.ok("Password reset token deleted successfully");
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token not found");
+		}
 	}
 
 	@PutMapping("/reset-password")

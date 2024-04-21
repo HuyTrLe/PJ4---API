@@ -7,8 +7,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mytech.api.models.user.User;
 
-public class MyUserDetails implements UserDetails{
-	
+public class MyUserDetails implements UserDetails {
+
 	private static final long serialVersionUID = 1L;
 
 	private Long id;
@@ -19,36 +19,35 @@ public class MyUserDetails implements UserDetails{
 
 	@JsonIgnore
 	private String password;
-	
+
 	private Boolean isEnabled;
 
 	public MyUserDetails(Long id, String username, String email, String password, boolean isEnabled) {
 		this.id = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.isEnabled = isEnabled;
-    }
-	 public static MyUserDetails build(User user) {
-	        return new MyUserDetails(
-	                user.getId(),
-	                user.getUsername(),
-	                user.getEmail(),
-	                user.getPassword(), 
-	        		user.isEnabled());
-	        
-	        		
+		this.username = username;
+		this.email = email;
+		this.password = password;
+		this.isEnabled = isEnabled;
 	}
 
-	
-	 public Long getId() {
-		return id;
-	 }
+	public static MyUserDetails build(User user) {
+		return new MyUserDetails(
+				user.getId(),
+				user.getUsername(),
+				user.getEmail(),
+				user.getPassword(),
+				user.isEnabled());
 
-	 public String getEmail() {
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public String getEmail() {
 		return email;
-	 }
-	
+	}
+
 	@Override
 	public String getPassword() {
 		return password;
@@ -58,7 +57,6 @@ public class MyUserDetails implements UserDetails{
 	public String getUsername() {
 		return username;
 	}
-	
 
 	@Override
 	public boolean isAccountNonExpired() {
@@ -79,15 +77,17 @@ public class MyUserDetails implements UserDetails{
 	public boolean isEnabled() {
 		return isEnabled;
 	}
+
 	@Override
-	  public boolean equals(Object o) {
-	    if (this == o)
-	      return true;
-	    if (o == null || getClass() != o.getClass())
-	      return false;
-	    MyUserDetails user = (MyUserDetails) o;
-	    return Objects.equals(id, user.id);
-	  }
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		MyUserDetails user = (MyUserDetails) o;
+		return Objects.equals(id, user.id);
+	}
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return Collections.emptyList();
