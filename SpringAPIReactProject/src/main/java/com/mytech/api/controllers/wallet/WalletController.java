@@ -109,22 +109,4 @@ public class WalletController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping("/total-balance/{userId}")
-    public ResponseEntity<BigDecimal> getTotalBalance(@PathVariable int userId) {
-        BigDecimal totalBalance = walletRepository.getTotalBalanceForUser(userId);
-
-        List<Wallet> wallets = walletRepository.getWalletsByUserId(userId);
-
-        BigDecimal usdToVndRate = new BigDecimal("23000"); // assume 1 USD = 23,000 VND
-
-        for (Wallet wallet : wallets) {
-            if ("USD".equals(wallet.getCurrency())) {
-                BigDecimal convertedUsdToVnd = wallet.getBalance().multiply(usdToVndRate);
-                totalBalance = totalBalance.add(convertedUsdToVnd);
-            }
-        }
-
-        return ResponseEntity.ok().body(totalBalance);
-    }
-
 }
