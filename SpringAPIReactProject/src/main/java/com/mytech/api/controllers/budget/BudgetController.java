@@ -33,7 +33,7 @@ public class BudgetController {
         this.modelMapper = modelMapper;
     }
 
-    @PostMapping("/update/create")
+    @PostMapping("/create")
     public ResponseEntity<?> createBudget(@RequestBody @Valid BudgetDTO budgetDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
