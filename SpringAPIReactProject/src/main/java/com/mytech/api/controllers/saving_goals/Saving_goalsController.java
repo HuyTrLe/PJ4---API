@@ -38,7 +38,7 @@ public class Saving_goalsController {
         return new ResponseEntity<>(savingGoals, HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete/{savingGoalId}")
+    @DeleteMapping("/{savingGoalId}")
     public ResponseEntity<String> deleteSavingGoal(@PathVariable Long savingGoalId) {
         if (savingGoalsService.existsSavingGoalById(savingGoalId)) {
             savingGoalsService.deleteSavingGoalById(savingGoalId);
