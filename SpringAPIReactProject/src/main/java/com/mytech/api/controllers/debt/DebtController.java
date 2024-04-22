@@ -37,7 +37,20 @@ public class DebtController {
         }
         return new ResponseEntity<>(debts, HttpStatus.OK);
     }
-
+    
+    @GetMapping("/{debtId}")
+    public ResponseEntity<DebtDTO> getDebtById(@PathVariable Long debtId) {
+        try {
+            DebtDTO debtDTO = debtService.getDebtById(debtId);
+            return ResponseEntity.ok(debtDTO); // Return the found DebtDTO with an OK status
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // Return a NOT FOUND status if the debt is not found
+        } catch (Exception e) {
+            System.out.println(e); // Consider using a logger instead of System.out.println
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // Return an INTERNAL SERVER ERROR status for any other exceptions
+        }
+    }
+    
     @DeleteMapping("/delete/{debtId}")
     public ResponseEntity<String> deleteDebt(@PathVariable Long debtId) {
         if (debtService.existsDebtById(debtId)) {
