@@ -42,12 +42,12 @@ public class DebtController {
     public ResponseEntity<DebtDTO> getDebtById(@PathVariable Long debtId) {
         try {
             DebtDTO debtDTO = debtService.getDebtById(debtId);
-            return ResponseEntity.ok(debtDTO); // Return the found DebtDTO with an OK status
+            return ResponseEntity.ok(debtDTO); 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // Return a NOT FOUND status if the debt is not found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); 
         } catch (Exception e) {
-            System.out.println(e); // Consider using a logger instead of System.out.println
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // Return an INTERNAL SERVER ERROR status for any other exceptions
+            System.out.println(e); 
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
     
