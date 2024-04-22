@@ -33,7 +33,7 @@ public class Saving_goalsController {
     public ResponseEntity<List<SavingGoalDTO>> getAllSavingGoalsByUser(@PathVariable Long userId) {
         List<SavingGoalDTO> savingGoals = savingGoalsService.getSavingGoalsByUserId(userId);
         if (savingGoals.isEmpty()) {
-            return new ResponseEntity<>(savingGoals, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(savingGoals, HttpStatus.OK);
     }

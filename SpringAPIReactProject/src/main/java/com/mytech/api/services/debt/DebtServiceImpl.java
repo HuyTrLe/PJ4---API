@@ -9,15 +9,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.models.category.Category;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
-
+import com.mytech.api.models.user.User;
+import com.mytech.api.repositories.categories.CategoryRepository;
 import com.mytech.api.repositories.debt.DebtsRepository;
 
 @Service
 public class DebtServiceImpl implements DebtService {
     @Autowired
     DebtsRepository debtRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     ModelMapper modelMapper;
@@ -55,14 +62,28 @@ public class DebtServiceImpl implements DebtService {
     @Override
     @Transactional
     public DebtDTO updateDebt(Long debtId, DebtDTO updateDebtDTO) {
-        Optional<Debt> existingDebtOptional = debtRepository.findById(debtId);
-        if (!existingDebtOptional.isPresent()) {
-            throw new IllegalArgumentException("Debt not found with ID: " + debtId);
-        }
-        Debt existingDebt = existingDebtOptional.get();
-        modelMapper.map(updateDebtDTO, existingDebt);
-        existingDebt = debtRepository.save(existingDebt);
-        return modelMapper.map(existingDebt, DebtDTO.class);
+        Debt existingDebt = debtRepository.findById(debtId)
+                .orElseThrow(() -> new IllegalArgumentException("Debt not found with ID: " + debtId));
+
+        existingDebt.setName(updateDebtDTO.getName());
+        existingDebt.setAmount(updateDebtDTO.getAmount());
+        existingDebt.setDueDate(updateDebtDTO.getDueDate());
+        existingDebt.setPaidDate(updateDebtDTO.getPaidDate());
+        existingDebt.setIsPaid(updateDebtDTO.getIsPaid());
+        existingDebt.setCreditor(updateDebtDTO.getCreditor());
+        existingDebt.setNotes(updateDebtDTO.getNotes());
+
+        Category category = categoryRepository.findById(updateDebtDTO.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + updateDebtDTO.getCategoryId()));
+        existingDebt.setCategory(category);
+
+        User user = userRepository.findById(updateDebtDTO.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + updateDebtDTO.getUserId()));
+        existingDebt.setUser(user);
+
+        Debt updatedDebt = debtRepository.save(existingDebt);
+
+        return modelMapper.map(updatedDebt, DebtDTO.class);
     }
 
     @Override

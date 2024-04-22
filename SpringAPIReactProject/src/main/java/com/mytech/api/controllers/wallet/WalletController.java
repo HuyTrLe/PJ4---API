@@ -72,7 +72,7 @@ public class WalletController {
         return ResponseEntity.ok(walletDTOs);
     }
 
-    @PutMapping("/{walletId}")
+    @PutMapping("update/{walletId}")
     public ResponseEntity<?> updateWallet(@PathVariable int walletId, @RequestBody @Valid WalletDTO walletDTO, BindingResult result) {
         if (result.hasErrors()) {
             String errors = result.getFieldErrors().stream()
@@ -98,7 +98,7 @@ public class WalletController {
         return ResponseEntity.ok(updatedWalletDTO);
     }
 
-    @DeleteMapping("/{walletId}")
+    @DeleteMapping("delete/{walletId}")
     public ResponseEntity<?> deleteWallet(@PathVariable int walletId) {
         Wallet wallet = walletService.getWalletById(walletId);
         if (wallet == null) {
