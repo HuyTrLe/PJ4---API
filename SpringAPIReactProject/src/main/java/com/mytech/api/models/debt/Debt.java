@@ -42,10 +42,9 @@ public class Debt {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
-
-    @ManyToOne
-    @JoinColumn(name = "recurrence_id", nullable = false)
-    private Recurrence recurrence;
+    
+    @Column(name = "is_paid")
+    private Boolean isPaid;
 
     @Column(name = "creditor", nullable = false)
     private String creditor;
@@ -53,29 +52,12 @@ public class Debt {
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate;
 
-    @Column(name = "end_date")
-    private LocalDate endDate;
+    @Column(name = "paid_date")
+    private LocalDate paidDate;
 
     @Column(name = "notes")
-    private String notes;
-
-	public Debt(Long id, String name, User user, Category category, Recurrence recurrence, String creditor,
-			BigDecimal amount, LocalDate startDate, LocalDate endDate, String notes) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.user = user;
-		this.category = category;
-		this.recurrence = recurrence;
-		this.creditor = creditor;
-		this.amount = amount;
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.notes = notes;
-	}
-
-    
+    private String notes;  
 }
