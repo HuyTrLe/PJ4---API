@@ -26,7 +26,7 @@ public class IncomeController {
         this.modelMapper = modelMapper;
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<?> createIncome(@RequestBody @Valid IncomeDTO incomeDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -36,7 +36,7 @@ public class IncomeController {
         Income income = modelMapper.map(incomeDTO, Income.class);
         Income savedIncome = incomeService.saveIncome(income);
         IncomeDTO savedIncomeDTO = modelMapper.map(savedIncome, IncomeDTO.class);
-        return ResponseEntity.ok(savedIncomeDTO); 
+        return ResponseEntity.ok(savedIncomeDTO);
     }
 
     @GetMapping("/{incomeId}")
@@ -58,8 +58,9 @@ public class IncomeController {
         return ResponseEntity.ok(incomeDTOs);
     }
 
-    @PutMapping("/{incomeId}")
-    public ResponseEntity<?> updateIncome(@PathVariable int incomeId, @RequestBody @Valid IncomeDTO incomeDTO, BindingResult result) {
+    @PutMapping("/update/{incomeId}")
+    public ResponseEntity<?> updateIncome(@PathVariable int incomeId, @RequestBody @Valid IncomeDTO incomeDTO,
+            BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
                     .map(error -> error.getDefaultMessage())
@@ -71,7 +72,7 @@ public class IncomeController {
         return ResponseEntity.ok(updatedIncomeDTO);
     }
 
-    @DeleteMapping("/{incomeId}")
+    @DeleteMapping("/delete/{incomeId}")
     public ResponseEntity<?> deleteIncome(@PathVariable int incomeId) {
         Income existingIncome = incomeService.getIncomeById(incomeId);
         if (existingIncome == null) {

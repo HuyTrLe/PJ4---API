@@ -32,26 +32,27 @@ import jakarta.validation.Valid;
 public class RecurrenceController {
 
     private final RecurrenceService recurrenceService;
-    
+
     private final UserRepository userRepository;
-    
+
     private final ModelMapper modelMapper;
 
-    public RecurrenceController(RecurrenceService recurrenceService, UserRepository userRepository, ModelMapper modelMapper) {
+    public RecurrenceController(RecurrenceService recurrenceService, UserRepository userRepository,
+            ModelMapper modelMapper) {
         this.recurrenceService = recurrenceService;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
     }
 
     // Schedule a new recurring transaction/bill
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<?> createRecurrence(@RequestBody @Valid RecurrenceDTO recurrenceDTO, BindingResult result) {
-    	if (result.hasErrors()) {
-			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
-					.collect(Collectors.joining("\n"));
-			System.out.println(errors);
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
-		}
+        if (result.hasErrors()) {
+            String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining("\n"));
+            System.out.println(errors);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+        }
         validateRecurrenceType(recurrenceDTO.getRecurrenceType());
 
         // Find the user based on the ID set in the Recurrence's User object
@@ -59,7 +60,7 @@ public class RecurrenceController {
         if (userDTO == null || userDTO.getId() == null) {
             return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
         }
-        
+
         User user = modelMapper.map(userDTO, User.class);
 
         Optional<User> existingUser = userRepository.findById(user.getId());
@@ -67,12 +68,12 @@ public class RecurrenceController {
             return new ResponseEntity<>("User not found with id: " + user.getId(), HttpStatus.NOT_FOUND);
         }
         Recurrence recurrence = modelMapper.map(recurrenceDTO, Recurrence.class);
-        
+
         // Associate the existing user with the recurrence
         recurrence.setUser(existingUser.get());
 
-        //save new
-        Recurrence newRecurrence = recurrenceService.saveRecurrence(recurrence);   
+        // save new
+        Recurrence newRecurrence = recurrenceService.saveRecurrence(recurrence);
         RecurrenceDTO newRecurrenceDTO = modelMapper.map(newRecurrence, RecurrenceDTO.class);
         return new ResponseEntity<>(newRecurrenceDTO, HttpStatus.CREATED);
     }
@@ -90,18 +91,21 @@ public class RecurrenceController {
     }
 
     // Update recurrence details
-    @PutMapping("/{recurrenceId}")
-    public ResponseEntity<?> updateRecurrence(@PathVariable int recurrenceId, @RequestBody RecurrenceDTO recurrenceDTO) {
+    @PutMapping("/update/{recurrenceId}")
+    public ResponseEntity<?> updateRecurrence(@PathVariable int recurrenceId,
+            @RequestBody RecurrenceDTO recurrenceDTO) {
         if (recurrenceDTO.getUser() == null || recurrenceDTO.getUser().getId() == null) {
             return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
         }
 
         Optional<User> user = userRepository.findById(recurrenceDTO.getUser().getId());
         if (!user.isPresent()) {
-            return new ResponseEntity<>("User not found with id: " + recurrenceDTO.getUser().getId(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("User not found with id: " + recurrenceDTO.getUser().getId(),
+                    HttpStatus.NOT_FOUND);
         }
 
-        Optional<Recurrence> existingRecurrenceOpt = Optional.ofNullable(recurrenceService.findRecurrenceById(recurrenceId));
+        Optional<Recurrence> existingRecurrenceOpt = Optional
+                .ofNullable(recurrenceService.findRecurrenceById(recurrenceId));
         if (!existingRecurrenceOpt.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -113,20 +117,18 @@ public class RecurrenceController {
         existingRecurrence.setStartDate(recurrenceDTO.getStartDate());
         existingRecurrence.setEndDate(recurrenceDTO.getEndDate());
         existingRecurrence.setIntervalAmount(recurrenceDTO.getIntervalAmount());
-        
+
         validateRecurrenceType(existingRecurrence.getRecurrenceType());
 
         Recurrence updatedRecurrence = recurrenceService.saveRecurrence(existingRecurrence);
         return new ResponseEntity<>(updatedRecurrence, HttpStatus.OK);
     }
 
-
-    
-    //Get all recurrences for a specific user
+    // Get all recurrences for a specific user
     @GetMapping("/userRecurrence/{userId}")
     public ResponseEntity<List<RecurrenceDTO>> getAllRecurrencesByUser(@PathVariable Long userId) {
         List<Recurrence> recurrences = recurrenceService.findRecurrencesByUserId(userId);
-        
+
         if (recurrences.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
@@ -139,12 +141,12 @@ public class RecurrenceController {
     }
 
     // Delete a recurrence
-    @DeleteMapping("/{recurrenceId}")
+    @DeleteMapping("/delete/{recurrenceId}")
     public ResponseEntity<Void> deleteRecurrence(@PathVariable int recurrenceId) {
         // Check if recurrence exists
         Recurrence existingRecurrence = recurrenceService.findRecurrenceById(recurrenceId);
         if (existingRecurrence == null) {
-        	//404
+            // 404
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
             recurrenceService.deleteRecurrenceById(recurrenceId);

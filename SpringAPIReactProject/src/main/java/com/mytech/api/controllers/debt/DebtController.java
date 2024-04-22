@@ -24,7 +24,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/debts")
 public class DebtController {
     private final DebtService debtService;
-    
+
     public DebtController(DebtService debtService) {
         this.debtService = debtService;
     }
@@ -37,8 +37,8 @@ public class DebtController {
         }
         return new ResponseEntity<>(debts, HttpStatus.OK);
     }
-    
-    @DeleteMapping("/{debtId}")
+
+    @DeleteMapping("/delete/{debtId}")
     public ResponseEntity<String> deleteDebt(@PathVariable Long debtId) {
         if (debtService.existsDebtById(debtId)) {
             debtService.deleteDebtById(debtId);
@@ -47,7 +47,7 @@ public class DebtController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Debt not found");
         }
     }
-    
+
     @PostMapping("/create")
     public ResponseEntity<?> createDebt(@Valid @RequestBody DebtDTO debtRequest, BindingResult result) {
         if (result.hasErrors()) {
@@ -59,9 +59,9 @@ public class DebtController {
         DebtDTO createdDebtDTO = debtService.createDebt(debtRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDebtDTO);
     }
-    
-    @PutMapping("/{debtId}")
-    public ResponseEntity<DebtDTO> updateDebt (@PathVariable Long debtId, @RequestBody DebtDTO updatedDebtDTO) {
+
+    @PutMapping("/update/{debtId}")
+    public ResponseEntity<DebtDTO> updateDebt(@PathVariable Long debtId, @RequestBody DebtDTO updatedDebtDTO) {
         try {
             DebtDTO updatedDebt = debtService.updateDebt(debtId, updatedDebtDTO);
             return ResponseEntity.ok(updatedDebt);

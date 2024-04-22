@@ -17,7 +17,7 @@ public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<NotificationDTO>> getAllNotifications() {
         List<NotificationDTO> notifications = notificationService.getAllNotifications();
         return new ResponseEntity<>(notifications, HttpStatus.OK);
@@ -29,14 +29,15 @@ public class NotificationController {
         return new ResponseEntity<>(notifications, HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<NotificationDTO> createNotification(@RequestBody NotificationDTO notificationDTO) {
         NotificationDTO createdNotification = notificationService.createNotification(notificationDTO);
         return new ResponseEntity<>(createdNotification, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<NotificationDTO> updateNotification(@PathVariable Long id, @RequestBody NotificationDTO notificationDTO) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<NotificationDTO> updateNotification(@PathVariable Long id,
+            @RequestBody NotificationDTO notificationDTO) {
         NotificationDTO updatedNotification = notificationService.updateNotification(id, notificationDTO);
         if (updatedNotification != null) {
             return new ResponseEntity<>(updatedNotification, HttpStatus.OK);
@@ -45,7 +46,7 @@ public class NotificationController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         notificationService.deleteNotification(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

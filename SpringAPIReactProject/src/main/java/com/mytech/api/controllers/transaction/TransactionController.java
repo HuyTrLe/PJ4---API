@@ -51,7 +51,7 @@ public class TransactionController {
 		this.modelMapper = modelMapper;
 	}
 
-	@PostMapping
+	@PostMapping("/create")
 	public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionDTO transactionDTO,
 			BindingResult result) {
 		if (result.hasErrors()) {
@@ -139,7 +139,7 @@ public class TransactionController {
 		return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
 	}
 
-	@GetMapping("/users/wallets/{userId}")
+	@GetMapping("/users/allWallets/{userId}")
 	public ResponseEntity<List<TransactionDTO>> getAllTransactionsForAllWallet(@PathVariable int userId) {
 		List<TransactionDTO> transactions = transactionService.getAllTransactionsByAllWallet(userId)
 				.stream()
@@ -152,7 +152,7 @@ public class TransactionController {
 		return new ResponseEntity<>(transactions, HttpStatus.OK);
 	}
 
-	@PutMapping("/{transactionId}")
+	@PutMapping("/update/{transactionId}")
 	public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
 			@RequestBody @Valid TransactionDTO transactionDTO, BindingResult result) {
 		if (result.hasErrors()) {
@@ -189,33 +189,33 @@ public class TransactionController {
 		}
 	}
 
-	@GetMapping("/income/{userId}")
+	@GetMapping("/allIncome/users/{userId}")
 	public ResponseEntity<BigDecimal> getTotalIncomeByUserId(@PathVariable Integer userId) {
 		BigDecimal totalIncome = transactionService.getTotalIncomeByUserId(userId);
 		return ResponseEntity.ok(totalIncome);
 	}
 
-	@GetMapping("/expense/{userId}")
+	@GetMapping("/allExpense/users/{userId}")
 	public ResponseEntity<BigDecimal> getTotalExpenseByUserId(@PathVariable Integer userId) {
 		BigDecimal totalExpense = transactionService.getTotalExpenseByUserId(userId);
 		return ResponseEntity.ok(totalExpense);
 	}
 
-	@GetMapping("/income/{userId}/{walletId}")
+	@GetMapping("/income/users/{userId}/wallets/{walletId}")
 	public ResponseEntity<BigDecimal> getTotalIncomeByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
 		BigDecimal totalIncome = transactionService.getTotalIncomeByWalletId(userId, walletId);
 		return ResponseEntity.ok(totalIncome);
 	}
 
-	@GetMapping("/expense/{userId}/{walletId}")
+	@GetMapping("/expense/users/{userId}/wallets/{walletId}")
 	public ResponseEntity<BigDecimal> getTotalExpenseByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
 		BigDecimal totalExpense = transactionService.getTotalExpenseByWalletId(userId, walletId);
 		return ResponseEntity.ok(totalExpense);
 	}
 
-	@DeleteMapping("/{transactionId}")
+	@DeleteMapping("/delete/{transactionId}")
 	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
 		Transaction transaction = transactionService.getTransactionById(transactionId);
 

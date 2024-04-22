@@ -26,9 +26,9 @@ public class ExpenseController {
         this.modelMapper = modelMapper;
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<?> createExpense(@RequestBody @Valid ExpenseDTO expenseDTO, BindingResult result) {
-    	if (result.hasErrors()) {
+        if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
                     .map(error -> error.getDefaultMessage())
                     .collect(Collectors.joining(", ")));
@@ -58,8 +58,9 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseDTOs);
     }
 
-    @PutMapping("/{expenseId}")
-    public ResponseEntity<?> updateExpense(@PathVariable int expenseId, @RequestBody @Valid ExpenseDTO expenseDTO, BindingResult result) {
+    @PutMapping("/update/{expenseId}")
+    public ResponseEntity<?> updateExpense(@PathVariable int expenseId, @RequestBody @Valid ExpenseDTO expenseDTO,
+            BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
                     .map(error -> error.getDefaultMessage())
@@ -71,7 +72,7 @@ public class ExpenseController {
         return ResponseEntity.ok(updatedExpenseDTO);
     }
 
-    @DeleteMapping("/{expenseId}")
+    @DeleteMapping("/delete/{expenseId}")
     public ResponseEntity<?> deleteExpense(@PathVariable int expenseId) {
         Expense existingExpense = expenseService.getExpenseById(expenseId);
         if (existingExpense == null) {

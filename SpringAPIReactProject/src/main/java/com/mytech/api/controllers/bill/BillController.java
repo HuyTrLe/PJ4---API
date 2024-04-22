@@ -54,7 +54,7 @@ public class BillController {
 		this.categoryService = categoryService;
 	}
 
-	@PostMapping
+	@PostMapping("/create")
 	public ResponseEntity<?> addNewBill(@RequestBody @Valid BillDTO billDTO, BindingResult result) {
 		if (result.hasErrors()) {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
@@ -143,7 +143,7 @@ public class BillController {
 		return new ResponseEntity<>(billPages, HttpStatus.OK);
 	}
 
-	@PutMapping("/{billId}")
+	@PutMapping("/update/{billId}")
 	public ResponseEntity<?> updateBill(@PathVariable int billId, @RequestBody @Valid BillDTO billDTO,
 			BindingResult result) {
 		if (result.hasErrors()) {
@@ -188,7 +188,7 @@ public class BillController {
 		return ResponseEntity.ok(updatedBillDTO);
 	}
 
-	@DeleteMapping("/{billId}")
+	@DeleteMapping("/delete/{billId}")
 	public ResponseEntity<Void> deleteBill(@PathVariable int billId) {
 		Bill bill = billService.findBillById(billId);
 		if (bill != null) {

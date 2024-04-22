@@ -33,7 +33,7 @@ public class BudgetController {
         this.modelMapper = modelMapper;
     }
 
-    @PostMapping
+    @PostMapping("/update/create")
     public ResponseEntity<?> createBudget(@RequestBody @Valid BudgetDTO budgetDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -43,14 +43,14 @@ public class BudgetController {
         Budget budget = modelMapper.map(budgetDTO, Budget.class);
         Budget savedBudget = budgetService.saveBudget(budget);
         BudgetDTO savedBudgetDTO = modelMapper.map(savedBudget, BudgetDTO.class);
-        return ResponseEntity.ok(savedBudgetDTO); 
+        return ResponseEntity.ok(savedBudgetDTO);
     }
 
     @GetMapping("/{budgetId}")
     public ResponseEntity<?> getBudgetById(@PathVariable int budgetId) {
-    	Budget budget = budgetService.getBudgetById(budgetId);
+        Budget budget = budgetService.getBudgetById(budgetId);
         if (budget != null) {
-        	BudgetDTO budgetDTO = modelMapper.map(budget, BudgetDTO.class);
+            BudgetDTO budgetDTO = modelMapper.map(budget, BudgetDTO.class);
             return ResponseEntity.ok(budgetDTO);
         }
         return ResponseEntity.notFound().build();
@@ -65,8 +65,9 @@ public class BudgetController {
         return ResponseEntity.ok(budgetDTOs);
     }
 
-    @PutMapping("/{budgetId}")
-    public ResponseEntity<?> updateBudget(@PathVariable int budgetId, @RequestBody @Valid BudgetDTO budgetDTO, BindingResult result) {
+    @PutMapping("/update/{budgetId}")
+    public ResponseEntity<?> updateBudget(@PathVariable int budgetId, @RequestBody @Valid BudgetDTO budgetDTO,
+            BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
                     .map(error -> error.getDefaultMessage())
@@ -78,9 +79,9 @@ public class BudgetController {
         return ResponseEntity.ok(updatedBudgetDTO);
     }
 
-    @DeleteMapping("/{budgetId}")
+    @DeleteMapping("/delete/{budgetId}")
     public ResponseEntity<?> deleteBudget(@PathVariable int budgetId) {
-    	Budget existingBudget = budgetService.getBudgetById(budgetId);
+        Budget existingBudget = budgetService.getBudgetById(budgetId);
         if (existingBudget == null) {
             return ResponseEntity.notFound().build();
         }
@@ -88,4 +89,3 @@ public class BudgetController {
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 }
-

@@ -24,7 +24,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/savinggoals")
 public class Saving_goalsController {
     private final SavingGoalsService savingGoalsService;
-    
+
     public Saving_goalsController(SavingGoalsService savingGoalService) {
         this.savingGoalsService = savingGoalService;
     }
@@ -37,19 +37,20 @@ public class Saving_goalsController {
         }
         return new ResponseEntity<>(savingGoals, HttpStatus.OK);
     }
-    
-    @DeleteMapping("/{savingGoalId}")
+
+    @DeleteMapping("/delete/{savingGoalId}")
     public ResponseEntity<String> deleteSavingGoal(@PathVariable Long savingGoalId) {
         if (savingGoalsService.existsSavingGoalById(savingGoalId)) {
-        	savingGoalsService.deleteSavingGoalById(savingGoalId);
+            savingGoalsService.deleteSavingGoalById(savingGoalId);
             return ResponseEntity.ok("Saving goal deleted successfully");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Saving goal not found");
         }
     }
-    
+
     @PostMapping("/create")
-    public ResponseEntity<?> createSavingGoal(@Valid @RequestBody SavingGoalDTO savingGoalRequest, BindingResult result) {
+    public ResponseEntity<?> createSavingGoal(@Valid @RequestBody SavingGoalDTO savingGoalRequest,
+            BindingResult result) {
         if (result.hasErrors()) {
             String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
                     .collect(Collectors.joining("\n"));
@@ -59,9 +60,10 @@ public class Saving_goalsController {
         SavingGoalDTO createdSavingGoalDTO = savingGoalsService.createSavingGoal(savingGoalRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSavingGoalDTO);
     }
-    
-    @PutMapping("/{savingGoalId}")
-    public ResponseEntity<SavingGoalDTO> updateSavingGoal (@PathVariable Long savingGoalId, @RequestBody SavingGoalDTO updatedSavingGoalDTO) {
+
+    @PutMapping("/update/{savingGoalId}")
+    public ResponseEntity<SavingGoalDTO> updateSavingGoal(@PathVariable Long savingGoalId,
+            @RequestBody SavingGoalDTO updatedSavingGoalDTO) {
         try {
             SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);
             return ResponseEntity.ok(updatedSavingGoal);
