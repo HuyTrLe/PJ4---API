@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.user.User;
 
@@ -40,6 +41,10 @@ public class Bill {
     @ManyToOne
     @JoinColumn(name = "recurrence_id")
     private Recurrence recurrence;
+
+    @ManyToOne
+	@JoinColumn(name = "category_id")
+	private Category category;
     
     public Bill(Bill bill) {
         this.billId = bill.getBillId();

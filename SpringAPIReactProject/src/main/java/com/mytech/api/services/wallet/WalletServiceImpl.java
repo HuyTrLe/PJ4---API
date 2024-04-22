@@ -8,14 +8,13 @@ import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.wallet.WalletRepository;
 
 @Service
-public class WalletServiceImpl implements WalletService{
-	
+public class WalletServiceImpl implements WalletService {
+
 	private final WalletRepository walletRepository;
-	
+
 	public WalletServiceImpl(WalletRepository walletRepository) {
 		this.walletRepository = walletRepository;
 	}
-	
 
 	@Override
 	public Wallet saveWallet(Wallet wallet) {

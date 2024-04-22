@@ -22,12 +22,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "transactions")
 public class Transaction {
-	@Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int transactionId;
 
@@ -56,6 +57,4 @@ public class Transaction {
     @JoinColumn(name = "recurrence_id")
     private Recurrence recurrence;
 
-    @Column(nullable = false, length = 3)
-    private String currency;
 }

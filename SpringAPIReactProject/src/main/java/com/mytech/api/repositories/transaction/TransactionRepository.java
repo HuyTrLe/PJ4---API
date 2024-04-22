@@ -18,12 +18,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 	@Query("SELECT t FROM Transaction t WHERE t.user.id = :userId")
 	Page<Transaction> findByUserId(Integer userId, Pageable pageable);
 
+	@Query("SELECT t FROM Transaction t WHERE t.user.id = :userId")
+	List<Transaction> getByUserId(Integer userId);
+
 	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.category.type = :categoryType")
 	BigDecimal getTotalAmountByUserIdAndCategoryType(int userId, CateTypeENum categoryType);
 
 	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.category.type = :expenseType")
 	BigDecimal getTotalExpenseByUserId(int userId, CateTypeENum expenseType);
-	
-	List<Transaction> findByCategoryId(Integer categoryId);
+
+	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.wallet.id = :walletId AND t.category.type = :categoryType")
+	BigDecimal getTotalAmountByUserIdAndWalletId(int userId, int walletId, CateTypeENum categoryType);
+
+	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.wallet.id = :walletId AND t.category.type = :expenseType")
+	BigDecimal getTotalExpenseByUserIdAndWalletId(int userId, int walletId, CateTypeENum expenseType);
+
+	List<Transaction> findByUserIdAndWallet_WalletId(int userId, Integer walletId);
 
 }

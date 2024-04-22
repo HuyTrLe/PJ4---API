@@ -3,6 +3,8 @@ package com.mytech.api.models.category;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mytech.api.models.bill.Bill;
+import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.user.User;
 
@@ -45,6 +47,12 @@ public class Category {
 	
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Transaction> transaction  = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Budget> budget  = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Bill> bill  = new ArrayList<>();
 
 	public Category(String name, CateTypeENum type, Cat_Icon icon, User user) {
 		this.name = name;

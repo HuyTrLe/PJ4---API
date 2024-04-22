@@ -2,7 +2,6 @@ package com.mytech.api.controllers.wallet;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -41,7 +40,7 @@ public class WalletController {
             System.out.println(errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
-        
+
         Wallet wallet = modelMapper.map(walletDTO, Wallet.class);
         Wallet savedWallet = walletService.saveWallet(wallet);
         WalletDTO savedWalletDTO = modelMapper.map(savedWallet, WalletDTO.class);
@@ -54,7 +53,7 @@ public class WalletController {
         if (wallet == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet not found with id: " + walletId);
         }
-        
+
         WalletDTO walletDTO = modelMapper.map(wallet, WalletDTO.class);
         return ResponseEntity.ok(walletDTO);
     }
@@ -65,7 +64,7 @@ public class WalletController {
         if (wallets.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
-        
+
         List<WalletDTO> walletDTOs = wallets.stream()
                 .map(w -> modelMapper.map(w, WalletDTO.class))
                 .collect(Collectors.toList());
@@ -80,12 +79,12 @@ public class WalletController {
                     .collect(Collectors.joining("; "));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
-        
+
         Wallet existingWallet = walletService.getWalletById(walletId);
         if (existingWallet == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet not found with id: " + walletId);
         }
-        
+
         // Map fields from the WalletDTO to the existing Wallet entity
         modelMapper.map(walletDTO, existingWallet);
 
@@ -106,12 +105,7 @@ public class WalletController {
         }
         
         walletService.deleteWallet(walletId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.ok("Wallets deleted successfully");
     }
-    
-    @GetMapping("/total-balance/{userId}")
-    public ResponseEntity<BigDecimal> getTotalBalance(@PathVariable int userId) {
-        BigDecimal totalBalance = walletRepository.getTotalBalanceForUser(userId);
-        return ResponseEntity.ok().body(totalBalance);
-    }
+
 }

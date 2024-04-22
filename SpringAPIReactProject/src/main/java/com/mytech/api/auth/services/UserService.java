@@ -37,18 +37,17 @@ public class UserService {
 	@Autowired
 	PasswordEncoder encoder;
 
-	
 	public ResponseEntity<?> deleteUser(Long userId) {
 		Optional<User> userOptional = userRepository.findById(userId);
-	    if (userOptional.isPresent()) {
-	        userRepository.deleteById(userId);
-	        return ResponseEntity.ok("User deleted successfully.");
-	    } else {
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
-	    }
+		if (userOptional.isPresent()) {
+			userRepository.deleteById(userId);
+			return ResponseEntity.ok("User deleted successfully.");
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+		}
 	}
 
-	public ResponseEntity<?> updateUser( Long userId, UserDTO userDTO) {
+	public ResponseEntity<?> updateUser(Long userId, UserDTO userDTO) {
 		User existingUser = userRepository.findById(userId)
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
 		String newUsername = userDTO.getUsername();
@@ -75,7 +74,7 @@ public class UserService {
 				EmailUpdateConfirmationToken newToken = new EmailUpdateConfirmationToken(token, LocalDateTime.now(),
 						LocalDateTime.now().plusMinutes(15), existingUser);
 				newToken.setOldEmail(existingUser.getEmail());
-			    newToken.setNewEmail(newEmail); 
+				newToken.setNewEmail(newEmail);
 				emailUpdateConfirmationTokenService.save(newToken);
 
 				String link = "http://localhost:8080/api/auth/update/confirm?token=" + token;
@@ -88,33 +87,33 @@ public class UserService {
 						.body("Failed to send confirmation email");
 			}
 		} else {
-			updateUserEmail(existingUser.getEmail(), newEmail); 
+			updateUserEmail(existingUser.getEmail(), newEmail);
 			return ResponseEntity.ok("User updated successfully.");
 		}
 	}
 
 	@Transactional
 	public ResponseEntity<String> confirmToken(String token) {
-	    EmailUpdateConfirmationToken confirmationToken = emailUpdateConfirmationTokenService.getToken(token)
-	            .orElseThrow(() -> new IllegalStateException("Token not found"));
+		EmailUpdateConfirmationToken confirmationToken = emailUpdateConfirmationTokenService.getToken(token)
+				.orElseThrow(() -> new IllegalStateException("Token not found"));
 
-	    if (confirmationToken.getConfirmedAt() != null) {
-	        String alertScript = "<script>alert('Email already confirmed'); window.location.href='http://localhost:3000/user';</script>";
-	        return ResponseEntity.ok(alertScript);
-	    }
+		if (confirmationToken.getConfirmedAt() != null) {
+			String alertScript = "<script>alert('Email already confirmed'); window.location.href='http://localhost:3000/user';</script>";
+			return ResponseEntity.ok(alertScript);
+		}
 
-	    LocalDateTime expiredAt = confirmationToken.getExpiresAt();
-	    if (expiredAt.isBefore(LocalDateTime.now())) {
-	        String alertScript = "<script>alert('Token expired'); window.location.href='http://localhost:3000/user';</script>";
-	        return ResponseEntity.ok(alertScript);
-	    }
+		LocalDateTime expiredAt = confirmationToken.getExpiresAt();
+		if (expiredAt.isBefore(LocalDateTime.now())) {
+			String alertScript = "<script>alert('Token expired'); window.location.href='http://localhost:3000/user';</script>";
+			return ResponseEntity.ok(alertScript);
+		}
 
-	    confirmationToken.setConfirmedAt(LocalDateTime.now());
-	    emailUpdateConfirmationTokenService.save(confirmationToken);
+		confirmationToken.setConfirmedAt(LocalDateTime.now());
+		emailUpdateConfirmationTokenService.save(confirmationToken);
 
-	    String redirectScript = "<script>alert('Email update success');window.location.href='http://localhost:3000/user';</script>";
-	    updateUserEmail(confirmationToken.getOldEmail(), confirmationToken.getNewEmail());
-	    return ResponseEntity.ok(redirectScript);
+		String redirectScript = "<script>alert('Email update success');window.location.href='http://localhost:3000/user';</script>";
+		updateUserEmail(confirmationToken.getOldEmail(), confirmationToken.getNewEmail());
+		return ResponseEntity.ok(redirectScript);
 	}
 
 	private void updateUserEmail(String currentEmail, String newEmail) {

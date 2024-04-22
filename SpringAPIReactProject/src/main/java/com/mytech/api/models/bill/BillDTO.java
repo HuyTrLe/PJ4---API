@@ -3,6 +3,7 @@ package com.mytech.api.models.bill;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.recurrence.RecurrenceDTO;
 import com.mytech.api.models.user.UserDTO;
 
@@ -39,13 +40,16 @@ public class BillDTO {
 
 	private RecurrenceDTO recurrence;
 
+	private CategoryDTO category;
+
 	public BillDTO(int billId, UserDTO user, String billName, BigDecimal amount, LocalDate dueDate,
-			RecurrenceDTO recurrence) {
+			RecurrenceDTO recurrence, CategoryDTO category) {
 		this.billId = billId;
 		this.user = user;
 		this.billName = billName;
 		this.amount = amount;
 		this.dueDate = dueDate;
 		this.recurrence = recurrence;
+		this.category = category;
 	}
 }
