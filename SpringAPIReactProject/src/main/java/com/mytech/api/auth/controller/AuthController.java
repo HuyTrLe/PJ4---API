@@ -31,6 +31,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.UpdateUser.Password.UpdatePasswordService;
+import com.mytech.api.auth.UpdateUser.Password.DTO.PasswordChangeRequestDTO;
+import com.mytech.api.auth.UpdateUser.Password.DTO.PasswordDTO;
+import com.mytech.api.auth.UpdateUser.Password.DTO.VerifyOTPDTO;
 import com.mytech.api.auth.jwt.JwtUtils;
 import com.mytech.api.auth.password.ForgotPasswordRequest;
 import com.mytech.api.auth.password.ForgotPasswordService;
@@ -85,6 +89,9 @@ public class AuthController {
 
 	@Autowired
 	UserDetailServiceImpl userServiceImpl;
+
+	@Autowired
+	UpdatePasswordService updatePasswordService;
 
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
@@ -217,13 +224,31 @@ public class AuthController {
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@PutMapping("/update/{userId}")
-	public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
-		return userService.updateUser(userId, userDTO);
+	@PostMapping("/updateProfile/updatePassword")
+	public ResponseEntity<?> updateUserPassword(@Valid @RequestBody PasswordDTO passwordDTO,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
+		try {
+			ResponseEntity<?> response = updatePasswordService.updateUserPassword(passwordDTO);
+			return response;
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body("Internal Server Error");
+		}
 	}
 
-	@GetMapping("/update/confirm")
-	public ResponseEntity<?> confirmUpdate(@RequestParam("token") String token) {
-		return userService.confirmToken(token);
+	@PostMapping("/updateProfile/changePasswordWithOTP")
+	public ResponseEntity<?> changePasswordWithOTP(@RequestBody PasswordChangeRequestDTO requestDTO) {
+		try {
+			ResponseEntity<?> response = updatePasswordService.changePasswordWithOTP(requestDTO);
+			return response;
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
+		}
 	}
+
 }

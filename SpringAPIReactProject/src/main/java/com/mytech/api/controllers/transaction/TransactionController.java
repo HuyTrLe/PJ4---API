@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -225,8 +226,15 @@ public class TransactionController {
 
 		Wallet wallet = transaction.getWallet();
 
-		BigDecimal newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), transaction.getAmount(),
-				BigDecimal.ZERO);
+		BigDecimal newBalance;
+		if ("INCOME".equalsIgnoreCase(transaction.getCategory().getType().toString())) {
+			newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), transaction.getAmount(),
+					BigDecimal.ZERO);
+		} else {
+			newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), BigDecimal.ZERO,
+					transaction.getAmount());
+		}
+
 		wallet.setBalance(newBalance);
 		walletService.saveWallet(wallet);
 
@@ -234,9 +242,9 @@ public class TransactionController {
 		return ResponseEntity.noContent().build();
 	}
 
-	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount,
-			BigDecimal newAmount) {
-		return currentBalance.add(oldAmount);
+	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal incomeAmount,
+			BigDecimal expenseAmount) {
+		return currentBalance.subtract(incomeAmount).add(expenseAmount);
 	}
 
 	@GetMapping("/{userId}/{walletId}")

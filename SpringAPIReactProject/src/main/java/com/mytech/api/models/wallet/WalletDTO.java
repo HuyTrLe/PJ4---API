@@ -29,10 +29,7 @@ public class WalletDTO {
 
 		if ("INCOME".equalsIgnoreCase(transactionType)) {
 			this.balance = this.balance.add(amountTransaction);
-		} else if ("EXPENSE".equalsIgnoreCase(transactionType)) {
-			this.balance = this.balance.subtract(amountTransaction);
 		}
-
 		if (this.balance.compareTo(BigDecimal.ZERO) < 0) {
 			throw new RuntimeException("Balance is not enough");
 		}
