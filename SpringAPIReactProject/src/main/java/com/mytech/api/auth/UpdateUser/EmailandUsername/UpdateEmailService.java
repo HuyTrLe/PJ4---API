@@ -1,4 +1,4 @@
-package com.mytech.api.auth.UpdateUser;
+package com.mytech.api.auth.UpdateUser.EmailandUsername;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
+import com.mytech.api.auth.UpdateUser.EmailandUsername.DTO.UserProfileDTO;
 import com.mytech.api.auth.email.EmailSender;
 import com.mytech.api.auth.payload.request.token.emailupdate.EmailUpdateConfirmationToken;
 import com.mytech.api.auth.payload.request.token.emailupdate.EmailUpdateConfirmationTokenService;
@@ -19,6 +21,7 @@ import com.mytech.api.models.user.UserDTO;
 
 import jakarta.transaction.Transactional;
 
+@Service
 public class UpdateEmailService {
     @Autowired
     UserRepository userRepository;
@@ -35,19 +38,32 @@ public class UpdateEmailService {
     @Autowired
     PasswordEncoder encoder;
 
-    public ResponseEntity<?> updateUser(Long userId, UserDTO userDTO) {
+    public ResponseEntity<?> updateUser(Long userId, UserProfileDTO userDTO) {
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        String newUsername = userDTO.getUsername();
         String newEmail = userDTO.getEmail();
+
+        // Check if new email is different and already exists
         Optional<User> existingUserWithEmail = userRepository.findByEmail(newEmail);
         if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(existingUser.getId())) {
             return ResponseEntity.badRequest().body("Email is already taken");
         }
 
+        // Check if new email is different
         if (!newEmail.equals(existingUser.getEmail())) {
             userDTO.setConfirmNewEmail(true);
         }
+
+        // Check if only username is updated
+        if (newUsername != null && !newUsername.equals(existingUser.getUsername())
+                && newEmail.equals(existingUser.getEmail())) {
+            updateUserUsername(existingUser, newUsername);
+            return ResponseEntity.ok("Username updated successfully.");
+        }
+
+        // Check if email is updated
         if (userDTO.isConfirmNewEmail()) {
             try {
                 String token = UUID.randomUUID().toString();
@@ -57,7 +73,7 @@ public class UpdateEmailService {
                 newToken.setNewEmail(newEmail);
                 emailUpdateConfirmationTokenService.save(newToken);
 
-                String link = "http://localhost:8080/api/auth/update/confirm?token=" + token;
+                String link = "http://localhost:8080/api/auth/updateEmailUsernameProfile/confirmToken?token=" + token;
                 emailSender.send(newEmail, buildEmail(existingUser.getUsername(), link));
                 return ResponseEntity
                         .ok("Email confirmation required. Confirmation link sent to your new email address.");
@@ -67,9 +83,15 @@ public class UpdateEmailService {
                         .body("Failed to send confirmation email");
             }
         } else {
+            // Update email
             updateUserEmail(existingUser.getEmail(), newEmail);
             return ResponseEntity.ok("User updated successfully.");
         }
+    }
+
+    private void updateUserUsername(User existingUser, String newUsername) {
+        existingUser.setUsername(newUsername);
+        userRepository.save(existingUser);
     }
 
     @Transactional

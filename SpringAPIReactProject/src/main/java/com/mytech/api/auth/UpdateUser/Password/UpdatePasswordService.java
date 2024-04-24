@@ -61,6 +61,11 @@ public class UpdatePasswordService {
             return ResponseEntity.badRequest().body("Old password is incorrect");
         }
 
+        if (!validateNewPassword(passwordDTO.getNewPassword(), passwordDTO.getOldPassword())) {
+                
+            return ResponseEntity.badRequest().body("New passwords do not match or the new password is the same as the old one");
+        }
+
         String pin = generateAndStoreOTP(user.getEmail());
         emailSenderPin.send(user.getEmail(), buildSend(user.getUsername(), pin));
 
