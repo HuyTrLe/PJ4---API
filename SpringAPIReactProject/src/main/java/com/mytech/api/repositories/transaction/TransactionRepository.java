@@ -21,17 +21,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 	@Query("SELECT t FROM Transaction t WHERE t.user.id = :userId")
 	List<Transaction> getByUserId(Integer userId);
 
-	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.category.type = :categoryType")
-	BigDecimal getTotalAmountByUserIdAndCategoryType(int userId, CateTypeENum categoryType);
+	List<Transaction> getIncomeByUserIdAndCategoryType(int userId, Enum type);
 
-	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.category.type = :expenseType")
-	BigDecimal getTotalExpenseByUserId(int userId, CateTypeENum expenseType);
+	List<Transaction> getExpenseByUserIdAndCategoryType(int userId, Enum type);
 
-	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.wallet.id = :walletId AND t.category.type = :categoryType")
-	BigDecimal getTotalAmountByUserIdAndWalletId(int userId, int walletId, CateTypeENum categoryType);
+	List<Transaction> getTotalAmountByUserIdAndWallet_WalletIdAndCategoryType(int userId, int walletId, Enum type);
 
-	@Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId AND t.wallet.id = :walletId AND t.category.type = :expenseType")
-	BigDecimal getTotalExpenseByUserIdAndWalletId(int userId, int walletId, CateTypeENum expenseType);
+	List<Transaction> getTotalExpenseByUserIdAndWallet_WalletIdAndCategoryType(int userId, int walletId, Enum type);
 
 	List<Transaction> findByUserIdAndWallet_WalletId(int userId, Integer walletId);
 
