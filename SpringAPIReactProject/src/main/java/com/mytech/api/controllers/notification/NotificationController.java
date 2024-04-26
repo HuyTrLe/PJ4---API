@@ -7,7 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.mytech.api.models.notifications.Notification;
 import com.mytech.api.models.notifications.NotificationDTO;
+import com.mytech.api.models.notifications.NotificationType;
+import com.mytech.api.repositories.notification.NotificationsRepository;
 import com.mytech.api.services.notification.NotificationService;
 
 @RestController
@@ -16,6 +19,8 @@ public class NotificationController {
 
     @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private NotificationsRepository notificationsRepository;
 
     @GetMapping("/all")
     public ResponseEntity<List<NotificationDTO>> getAllNotifications() {
@@ -50,5 +55,14 @@ public class NotificationController {
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         notificationService.deleteNotification(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/check/{eventId}/{notificationType}")
+    public ResponseEntity<Boolean> checkNotificationExists(
+            @PathVariable Long eventId,
+            @PathVariable NotificationType notificationType) {
+        Notification existingNotification = notificationsRepository.checkExistNotification(eventId, notificationType);
+        boolean exists = existingNotification != null;
+        return ResponseEntity.ok(exists);
     }
 }

@@ -10,4 +10,6 @@ public interface NotificationService {
     NotificationDTO createNotification(NotificationDTO notificationDTO);
     NotificationDTO updateNotification(Long id, NotificationDTO notificationDTO);
     void deleteNotification(Long id);
+    
+    void sendNotification(NotificationDTO notificationDTO);
 }
