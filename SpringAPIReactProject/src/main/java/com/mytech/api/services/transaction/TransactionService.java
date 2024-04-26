@@ -19,13 +19,13 @@ public interface TransactionService {
 
     void deleteTransaction(Integer transactionId);
 
-    BigDecimal getTotalIncomeByUserId(int userId);
+    List<Transaction> getIncomeByUserIdAndCategoryType(int userId, Enum type);
 
-    BigDecimal getTotalExpenseByUserId(int userId);
+    List<Transaction> getExpenseByUserIdAndCategoryType(int userId, Enum type);
 
-    BigDecimal getTotalIncomeByWalletId(int userId, int walletId);
+    List<Transaction> getTotalIncomeByWalletId(int userId, int walletId, Enum type);
 
-    BigDecimal getTotalExpenseByWalletId(int userId, int walletId);
+    List<Transaction> getTotalExpenseByWalletId(int userId, int walletId, Enum type);
 
     List<Transaction> getTransactionsByWalletId(int userId, Integer walletId);
 }

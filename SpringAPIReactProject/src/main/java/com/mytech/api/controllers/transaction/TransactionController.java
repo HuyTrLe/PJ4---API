@@ -8,13 +8,13 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.transaction.Transaction;
@@ -140,19 +140,6 @@ public class TransactionController {
 		return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
 	}
 
-	@GetMapping("/users/allWallets/{userId}")
-	public ResponseEntity<List<TransactionDTO>> getAllTransactionsForAllWallet(@PathVariable int userId) {
-		List<TransactionDTO> transactions = transactionService.getAllTransactionsByAllWallet(userId)
-				.stream()
-				.map(transaction -> {
-					TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
-					return transactionDTO;
-				})
-				.collect(Collectors.toList());
-
-		return new ResponseEntity<>(transactions, HttpStatus.OK);
-	}
-
 	@PutMapping("/update/{transactionId}")
 	public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
 			@RequestBody @Valid TransactionDTO transactionDTO, BindingResult result) {
@@ -190,29 +177,80 @@ public class TransactionController {
 		}
 	}
 
+	@GetMapping("/users/allWallets/{userId}")
+	public ResponseEntity<List<TransactionDTO>> getAllTransactionsForAllWallet(@PathVariable int userId) {
+		List<TransactionDTO> transactions = transactionService.getAllTransactionsByAllWallet(userId)
+				.stream()
+				.map(transaction -> {
+					TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
+					return transactionDTO;
+				})
+				.collect(Collectors.toList());
+
+		return new ResponseEntity<>(transactions, HttpStatus.OK);
+	}
+
 	@GetMapping("/allIncome/users/{userId}")
-	public ResponseEntity<BigDecimal> getTotalIncomeByUserId(@PathVariable Integer userId) {
-		BigDecimal totalIncome = transactionService.getTotalIncomeByUserId(userId);
-		return ResponseEntity.ok(totalIncome);
+	public ResponseEntity<List<TransactionDTO>> getIncomeByUserId(@PathVariable Integer userId) {
+		List<TransactionDTO> incomeTransactions = transactionService.getIncomeByUserIdAndCategoryType(userId,
+				CateTypeENum.INCOME).stream()
+				.map(transaction -> {
+					TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
+					return transactionDTO;
+				})
+				.collect(Collectors.toList());
+		;
+		if (incomeTransactions.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(incomeTransactions);
 	}
 
 	@GetMapping("/allExpense/users/{userId}")
-	public ResponseEntity<BigDecimal> getTotalExpenseByUserId(@PathVariable Integer userId) {
-		BigDecimal totalExpense = transactionService.getTotalExpenseByUserId(userId);
-		return ResponseEntity.ok(totalExpense);
+	public ResponseEntity<List<TransactionDTO>> getExpenseByUserId(@PathVariable Integer userId) {
+		List<TransactionDTO> expenseTransactions = transactionService.getExpenseByUserIdAndCategoryType(userId,
+				CateTypeENum.EXPENSE).stream()
+				.map(transaction -> {
+					TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
+					return transactionDTO;
+				})
+				.collect(Collectors.toList());
+		if (expenseTransactions.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(expenseTransactions);
 	}
 
 	@GetMapping("/income/users/{userId}/wallets/{walletId}")
-	public ResponseEntity<BigDecimal> getTotalIncomeByWalletId(@PathVariable Integer userId,
+	public ResponseEntity<List<TransactionDTO>> getTotalIncomeByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
-		BigDecimal totalIncome = transactionService.getTotalIncomeByWalletId(userId, walletId);
+		List<TransactionDTO> totalIncome = transactionService.getTotalIncomeByWalletId(userId, walletId,
+				CateTypeENum.INCOME).stream()
+				.map(transaction -> {
+					TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
+					return transactionDTO;
+				})
+				.collect(Collectors.toList());
+		if (totalIncome.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
 		return ResponseEntity.ok(totalIncome);
 	}
 
 	@GetMapping("/expense/users/{userId}/wallets/{walletId}")
-	public ResponseEntity<BigDecimal> getTotalExpenseByWalletId(@PathVariable Integer userId,
+	public ResponseEntity<List<TransactionDTO>> getTotalExpenseByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
-		BigDecimal totalExpense = transactionService.getTotalExpenseByWalletId(userId, walletId);
+		List<TransactionDTO> totalExpense = transactionService
+				.getTotalExpenseByWalletId(userId, walletId, CateTypeENum.EXPENSE)
+				.stream()
+				.map(transaction -> {
+					TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
+					return transactionDTO;
+				})
+				.collect(Collectors.toList());
+		if (totalExpense.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
 		return ResponseEntity.ok(totalExpense);
 	}
 
@@ -247,7 +285,7 @@ public class TransactionController {
 		return currentBalance.subtract(incomeAmount).add(expenseAmount);
 	}
 
-	@GetMapping("/{userId}/{walletId}")
+	@GetMapping("/users/{userId}/wallets/{walletId}")
 	public ResponseEntity<List<TransactionDTO>> getTransactionsByWalletId(@PathVariable int userId,
 			@PathVariable Integer walletId) {
 		List<Transaction> transactions = transactionService.getTransactionsByWalletId(userId, walletId);

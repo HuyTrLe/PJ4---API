@@ -47,31 +47,35 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	@Override
-	public BigDecimal getTotalIncomeByUserId(int userId) {
-		return transactionRepository.getTotalAmountByUserIdAndCategoryType(userId, CateTypeENum.INCOME) != null
-				? transactionRepository.getTotalAmountByUserIdAndCategoryType(userId, CateTypeENum.INCOME)
-				: BigDecimal.ZERO;
+	public List<Transaction> getIncomeByUserIdAndCategoryType(int userId, Enum type) {
+		return transactionRepository.getIncomeByUserIdAndCategoryType(userId, CateTypeENum.INCOME) != null
+				? transactionRepository.getIncomeByUserIdAndCategoryType(userId, CateTypeENum.INCOME)
+				: null;
 	}
 
 	@Override
-	public BigDecimal getTotalExpenseByUserId(int userId) {
-		return transactionRepository.getTotalExpenseByUserId(userId, CateTypeENum.EXPENSE) != null
-				? transactionRepository.getTotalExpenseByUserId(userId, CateTypeENum.EXPENSE)
-				: BigDecimal.ZERO;
+	public List<Transaction> getExpenseByUserIdAndCategoryType(int userId, Enum type) {
+		return transactionRepository.getExpenseByUserIdAndCategoryType(userId, CateTypeENum.EXPENSE) != null
+				? transactionRepository.getExpenseByUserIdAndCategoryType(userId, CateTypeENum.EXPENSE)
+				: null;
 	}
 
 	@Override
-	public BigDecimal getTotalIncomeByWalletId(int userId, int walletId) {
-		return transactionRepository.getTotalAmountByUserIdAndWalletId(userId, walletId, CateTypeENum.INCOME) != null
-				? transactionRepository.getTotalAmountByUserIdAndWalletId(userId, walletId, CateTypeENum.INCOME)
-				: BigDecimal.ZERO;
+	public List<Transaction> getTotalIncomeByWalletId(int userId, int walletId, Enum type) {
+		return transactionRepository.getTotalAmountByUserIdAndWallet_WalletIdAndCategoryType(userId, walletId,
+				CateTypeENum.INCOME) != null
+						? transactionRepository.getTotalAmountByUserIdAndWallet_WalletIdAndCategoryType(userId,
+								walletId, CateTypeENum.INCOME)
+						: null;
 	}
 
 	@Override
-	public BigDecimal getTotalExpenseByWalletId(int userId, int walletId) {
-		return transactionRepository.getTotalAmountByUserIdAndWalletId(userId, walletId, CateTypeENum.EXPENSE) != null
-				? transactionRepository.getTotalAmountByUserIdAndWalletId(userId, walletId, CateTypeENum.EXPENSE)
-				: BigDecimal.ZERO;
+	public List<Transaction> getTotalExpenseByWalletId(int userId, int walletId, Enum type) {
+		return transactionRepository.getTotalExpenseByUserIdAndWallet_WalletIdAndCategoryType(userId, walletId,
+				CateTypeENum.EXPENSE) != null
+						? transactionRepository.getTotalExpenseByUserIdAndWallet_WalletIdAndCategoryType(userId,
+								walletId, CateTypeENum.EXPENSE)
+						: null;
 	}
 
 	@Override

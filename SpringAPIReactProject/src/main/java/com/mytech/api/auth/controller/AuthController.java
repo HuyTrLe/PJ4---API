@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.UpdateUser.EmailandUsername.UpdateEmailService;
+import com.mytech.api.auth.UpdateUser.EmailandUsername.DTO.UserProfileDTO;
 import com.mytech.api.auth.UpdateUser.Password.UpdatePasswordService;
 import com.mytech.api.auth.UpdateUser.Password.DTO.PasswordChangeRequestDTO;
 import com.mytech.api.auth.UpdateUser.Password.DTO.PasswordDTO;
@@ -92,6 +94,9 @@ public class AuthController {
 
 	@Autowired
 	UpdatePasswordService updatePasswordService;
+
+	@Autowired
+	UpdateEmailService updateEmailService;
 
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
@@ -212,7 +217,7 @@ public class AuthController {
 		return ResponseEntity.ok("Logout successful");
 	}
 
-	@DeleteMapping("/{userId}")
+	@DeleteMapping("/delete/{userId}")
 	public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
 		return userService.deleteUser(userId);
 	}
@@ -249,6 +254,23 @@ public class AuthController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
 		}
+	}
+
+	@PutMapping("/updateEmailUsernameProfile/{userId}")
+	public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UserProfileDTO userDTO,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
+		return updateEmailService.updateUser(userId, userDTO);
+	}
+
+	@GetMapping("/updateEmailUsernameProfile/confirmToken")
+	public ResponseEntity<String> confirmToken(@RequestParam String token) {
+		return updateEmailService.confirmToken(token);
 	}
 
 }
