@@ -19,15 +19,15 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 public class EmailUpdateConfirmationToken {
-	
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
     private String token;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     @ManyToOne
-    @JoinColumn(nullable = false , name = "user_id")
+    @JoinColumn(nullable = false, name = "user_id")
     private User user;
     private String oldEmail;
     private String newEmail;

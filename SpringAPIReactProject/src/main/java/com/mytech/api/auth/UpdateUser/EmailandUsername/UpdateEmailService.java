@@ -17,7 +17,6 @@ import com.mytech.api.auth.payload.request.token.emailupdate.EmailUpdateConfirma
 import com.mytech.api.auth.payload.request.token.emailupdate.EmailUpdateConfirmationTokenService;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
 
 import jakarta.transaction.Transactional;
 
@@ -38,7 +37,7 @@ public class UpdateEmailService {
     @Autowired
     PasswordEncoder encoder;
 
-    public ResponseEntity<?> updateUser(Long userId, UserProfileDTO userDTO) {
+    public ResponseEntity<?> updateUser(long userId, UserProfileDTO userDTO) {
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 

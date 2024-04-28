@@ -11,21 +11,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.models.user.User;
 
-
 @Repository
-public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long>{
-    Optional<PasswordResetToken> findByToken(String token);
-    
-    Optional<PasswordResetToken> findByUser(User user);
-    
-    void deleteByToken(String token);
-    
-    @Transactional
-    @Modifying
-    @Query("UPDATE PasswordResetToken c " +
-            "SET c.confirmedAt = ?2 " +
-            "WHERE c.token = ?1")
-    int updateConfirmedAt(String token,
-                          LocalDateTime confirmedAt);
- 
+public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
+        Optional<PasswordResetToken> findByToken(String token);
+
+        Optional<PasswordResetToken> findByUser(User user);
+
+        void deleteByToken(String token);
+
+        @Transactional
+        @Modifying
+        @Query("UPDATE PasswordResetToken c " +
+                        "SET c.confirmedAt = ?2 " +
+                        "WHERE c.token = ?1")
+        long updateConfirmedAt(String token,
+                        LocalDateTime confirmedAt);
+
 }

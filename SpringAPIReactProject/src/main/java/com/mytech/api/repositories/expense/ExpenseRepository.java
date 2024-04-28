@@ -9,8 +9,8 @@ import org.springframework.stereotype.Repository;
 import com.mytech.api.models.expense.Expense;
 
 @Repository
-public interface ExpenseRepository extends JpaRepository<Expense, Integer>{
-	List<Expense> findByUserId(int userId);
+public interface ExpenseRepository extends JpaRepository<Expense, Integer> {
+    List<Expense> findByUserId(int userId);
 
     List<Expense> findByUserIdAndExpenseDateBetween(int userId, Date startDate, Date endDate);
 

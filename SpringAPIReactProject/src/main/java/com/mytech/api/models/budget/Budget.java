@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.mytech.api.models.category.Category;
-import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.user.User;
 
 import jakarta.persistence.Column;
@@ -32,30 +31,26 @@ public class Budget {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int budgetId;
-	
+
 	@ManyToOne
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
-	
+
 	@ManyToOne
 	@JoinColumn(name = "category_id")
 	private Category category;
-	
+
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal amount;
-	
+
 	@Column(nullable = true, precision = 10, scale = 2)
 	private BigDecimal threshold_amount;
-	
-	@Column(nullable = false)
-    @Temporal(TemporalType.DATE)
-    private LocalDate period_start;
 
 	@Column(nullable = false)
-    @Temporal(TemporalType.DATE)
-    private LocalDate period_end;
-	
-	@ManyToOne
-	@JoinColumn(name = "recurrence_id")
-	private Recurrence recurrence;
+	@Temporal(TemporalType.DATE)
+	private LocalDate period_start;
+
+	@Column(nullable = false)
+	@Temporal(TemporalType.DATE)
+	private LocalDate period_end;
 }

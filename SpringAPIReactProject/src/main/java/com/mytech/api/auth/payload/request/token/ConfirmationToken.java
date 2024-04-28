@@ -18,16 +18,16 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-public class ConfirmationToken{
-	
-	@Id
+public class ConfirmationToken {
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private long id;
     private String token;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private LocalDateTime confirmedAt;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

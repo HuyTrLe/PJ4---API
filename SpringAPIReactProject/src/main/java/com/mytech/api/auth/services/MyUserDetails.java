@@ -1,17 +1,23 @@
 package com.mytech.api.auth.services;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mytech.api.models.user.User;
 
+import lombok.Setter;
+
+@Setter
 public class MyUserDetails implements UserDetails {
 
 	private static final long serialVersionUID = 1L;
 
-	private Long id;
+	private long id;
 
 	private String username;
 
@@ -22,7 +28,7 @@ public class MyUserDetails implements UserDetails {
 
 	private Boolean isEnabled;
 
-	public MyUserDetails(Long id, String username, String email, String password, boolean isEnabled) {
+	public MyUserDetails(long id, String username, String email, String password, boolean isEnabled) {
 		this.id = id;
 		this.username = username;
 		this.email = email;
@@ -40,7 +46,7 @@ public class MyUserDetails implements UserDetails {
 
 	}
 
-	public Long getId() {
+	public long getId() {
 		return id;
 	}
 

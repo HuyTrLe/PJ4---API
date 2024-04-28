@@ -1,6 +1,5 @@
 package com.mytech.api.repositories.transaction;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -9,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.transaction.Transaction;
 
 @Repository

@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.mytech.api.models.category.Category;
-import com.mytech.api.models.recurrence.Recurrence;
+import com.mytech.api.models.expense.Expense;
+import com.mytech.api.models.income.Income;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,7 +33,7 @@ import lombok.Setter;
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int transactionId;
+    private Integer transactionId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -53,8 +56,13 @@ public class Transaction {
     @Column
     private String notes;
 
-    @ManyToOne
-    @JoinColumn(name = "recurrence_id")
-    private Recurrence recurrence;
+    @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Income income;
 
+    @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Expense expense;
+
+    // @ManyToOne
+    // @JoinColumn(name = "transaction_recurring_id")
+    // private TransactionRecurring transactionRecurring;
 }

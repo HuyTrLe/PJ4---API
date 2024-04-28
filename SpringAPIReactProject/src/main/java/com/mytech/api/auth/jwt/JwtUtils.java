@@ -11,7 +11,11 @@ import org.springframework.stereotype.Component;
 
 import com.mytech.api.auth.services.MyUserDetails;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
@@ -26,24 +30,21 @@ public class JwtUtils {
   private int jwtExpirationMs;
 
   public String generateJwtToken(Authentication authentication) {
-
     MyUserDetails userPrincipal = (MyUserDetails) authentication.getPrincipal();
-
     return Jwts.builder()
-        .setSubject((userPrincipal.getUsername()))
-        .setIssuedAt(new Date())
+        .setSubject(userPrincipal.getEmail()) // Thay đổi từ getUsername() sang getEmail()
         .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
         .signWith(key(), SignatureAlgorithm.HS256)
         .compact();
   }
- 
+
   private Key key() {
     return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
   }
 
-  public String getUserNameFromJwtToken(String token) {
+  public String getEmailFromJwtToken(String token) {
     return Jwts.parserBuilder().setSigningKey(key()).build()
-               .parseClaimsJws(token).getBody().getSubject();
+        .parseClaimsJws(token).getBody().getSubject(); // Lấy Subject thay vì "email"
   }
 
   public boolean validateJwtToken(String authToken) {
@@ -59,7 +60,6 @@ public class JwtUtils {
     } catch (IllegalArgumentException e) {
       logger.error("JWT claims string is empty: {}", e.getMessage());
     }
-
     return false;
   }
 }

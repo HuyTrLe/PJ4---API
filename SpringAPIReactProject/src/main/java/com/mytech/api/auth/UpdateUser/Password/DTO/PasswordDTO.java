@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class PasswordDTO {
-    private Long userId;
+    private long userId;
 
     private String email;
 

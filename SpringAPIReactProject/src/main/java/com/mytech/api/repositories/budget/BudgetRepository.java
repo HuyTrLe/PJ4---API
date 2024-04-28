@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
 import com.mytech.api.models.budget.Budget;
 
 @Repository
-public interface BudgetRepository extends JpaRepository<Budget, Integer>{
+public interface BudgetRepository extends JpaRepository<Budget, Integer> {
 	List<Budget> findByUserId(int userId);
 }

@@ -1,12 +1,13 @@
 package com.mytech.api.auth.payload.request.token;
 
-import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.user.User;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
@@ -21,12 +22,12 @@ public class ConfirmationTokenService {
         return confirmationTokenRepository.findByToken(token);
     }
 
-    public int setConfirmedAt(String token) {
+    public long setConfirmedAt(String token) {
         return confirmationTokenRepository.updateConfirmedAt(
                 token, LocalDateTime.now());
     }
-    
+
     public Optional<ConfirmationToken> getTokenByUser(User user) {
-		return confirmationTokenRepository.findByUser(user);
-	}
+        return confirmationTokenRepository.findByUser(user);
+    }
 }

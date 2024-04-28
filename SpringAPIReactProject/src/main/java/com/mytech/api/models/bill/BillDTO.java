@@ -1,17 +1,13 @@
 package com.mytech.api.models.bill;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.recurrence.RecurrenceDTO;
 import com.mytech.api.models.user.UserDTO;
+import com.mytech.api.models.wallet.WalletDTO;
 
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,30 +22,23 @@ public class BillDTO {
 
 	private UserDTO user;
 
-	@NotBlank(message = "Bill name must not be blank")
-	private String billName;
-
 	@DecimalMin(value = "0.01", message = "Amount must be greater than 0")
 	@NotNull(message = "Amount must not be null")
 	private BigDecimal amount;
-
-	@NotNull(message = "Due date cannot be null")
-	@Temporal(TemporalType.DATE)
-	@Future(message = "Due date must be in the future")
-	private LocalDate dueDate;
 
 	private RecurrenceDTO recurrence;
 
 	private CategoryDTO category;
 
-	public BillDTO(int billId, UserDTO user, String billName, BigDecimal amount, LocalDate dueDate,
-			RecurrenceDTO recurrence, CategoryDTO category) {
+	private WalletDTO wallet;
+
+	public BillDTO(int billId, UserDTO user, BigDecimal amount,
+			RecurrenceDTO recurrence, CategoryDTO category, WalletDTO wallet) {
 		this.billId = billId;
 		this.user = user;
-		this.billName = billName;
 		this.amount = amount;
-		this.dueDate = dueDate;
 		this.recurrence = recurrence;
 		this.category = category;
+		this.wallet = wallet;
 	}
 }

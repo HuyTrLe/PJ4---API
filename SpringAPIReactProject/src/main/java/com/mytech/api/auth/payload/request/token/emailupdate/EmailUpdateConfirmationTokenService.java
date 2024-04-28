@@ -19,8 +19,9 @@ public class EmailUpdateConfirmationTokenService {
 	public Optional<EmailUpdateConfirmationToken> getToken(String token) {
 		return emailConfirmationTokenRepository.findByToken(token);
 	}
-	public int setConfirmedAt(String token) {
-        return emailConfirmationTokenRepository.updateConfirmedAt(
-                token, LocalDateTime.now());
-    }
+
+	public long setConfirmedAt(String token) {
+		return emailConfirmationTokenRepository.updateConfirmedAt(
+				token, LocalDateTime.now());
+	}
 }

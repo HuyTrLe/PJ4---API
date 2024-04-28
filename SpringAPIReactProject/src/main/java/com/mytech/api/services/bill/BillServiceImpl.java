@@ -40,14 +40,6 @@ public class BillServiceImpl implements BillService {
 
 	@Override
 	public Bill addNewBill(Bill bill) {
-		if (bill.getRecurrence() != null && bill.getRecurrence().getRecurrenceId() > 0) {
-			Recurrence recurrence = recurrenceService.findRecurrenceById(bill.getRecurrence().getRecurrenceId());
-			if (recurrence == null) {
-				throw new IllegalArgumentException(
-						"Recurrence with ID " + bill.getRecurrence().getRecurrenceId() + " does not exist.");
-			}
-			bill.setRecurrence(recurrence);
-		}
 		return billRepository.save(bill);
 	}
 
@@ -55,32 +47,11 @@ public class BillServiceImpl implements BillService {
 	public void deleteBill(int billId) {
 		billRepository.deleteById(billId);
 	}
-	
+
 	@Override
 	public void deleteBillsByRecurrence(int recurrenceId) {
-        List<Bill> bills = billRepository.findByRecurrence_RecurrenceId(recurrenceId);
-        billRepository.deleteAll(bills);
-    }
-
-	@Override
-	public Page<Bill> findOverdueBillsByUserId(int userId, LocalDate overdueDueDate, Pageable pageable) {
-		return billRepository.findOverdueBillsByUserId(userId, overdueDueDate, pageable);
+		List<Bill> bills = billRepository.findByRecurrence_RecurrenceId(recurrenceId);
+		billRepository.deleteAll(bills);
 	}
-
-	@Override
-	public Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate currentDate, LocalDate dueDate,
-			Pageable pageable) {
-		return billRepository.findBillsDueIn3DaysByUserId(userId, currentDate, dueDate, pageable);
-	}
-
-	@Override
-	public Page<Bill> findFutureDueBillsByUserId(int userId, LocalDate futureDueDueDate, Pageable pageable) {
-		return billRepository.findFutureDueBillsByUserId(userId, futureDueDueDate, pageable);
-	}
-	
-	@Override
-    public List<Bill> findBillsDueToday(LocalDate dueDate) {
-        return billRepository.findByDueDate(dueDate);
-    }
 
 }

@@ -1,8 +1,8 @@
 package com.mytech.api.models;
 
-import lombok.Data;
-
 import java.util.Map;
+
+import lombok.Data;
 
 @Data
 public class Mail {

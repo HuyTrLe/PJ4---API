@@ -28,14 +28,14 @@ public class PasswordResetTokenService {
 		return passwordResetTokenRepository.findByUser(user);
 	}
 
-	public int setConfirmedAt(String token) {
+	public long setConfirmedAt(String token) {
 		return passwordResetTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
 	}
 
 	@Transactional
-    public void deleteTokenByTokenValue(String tokenValue) {
-        Optional<PasswordResetToken> token = passwordResetTokenRepository.findByToken(tokenValue);
-        token.ifPresent(passwordResetTokenRepository::delete);
-    }
+	public void deleteTokenByTokenValue(String tokenValue) {
+		Optional<PasswordResetToken> token = passwordResetTokenRepository.findByToken(tokenValue);
+		token.ifPresent(passwordResetTokenRepository::delete);
+	}
 
 }

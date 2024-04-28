@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class WalletTypeDTO {
-	private int typeId;
+    private int typeId;
     private String typeName;
 }

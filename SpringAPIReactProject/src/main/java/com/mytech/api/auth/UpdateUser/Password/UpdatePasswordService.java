@@ -1,11 +1,12 @@
 package com.mytech.api.auth.UpdateUser.Password;
 
 import java.util.Random;
-import java.util.concurrent.*;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.HashMapChangeSet;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -62,8 +63,9 @@ public class UpdatePasswordService {
         }
 
         if (!validateNewPassword(passwordDTO.getNewPassword(), passwordDTO.getOldPassword())) {
-                
-            return ResponseEntity.badRequest().body("New passwords do not match or the new password is the same as the old one");
+
+            return ResponseEntity.badRequest()
+                    .body("New passwords do not match or the new password is the same as the old one");
         }
 
         String pin = generateAndStoreOTP(user.getEmail());
@@ -100,7 +102,7 @@ public class UpdatePasswordService {
 
     private String generateAndStoreOTP(String email) {
         Random random = new Random();
-        int pin = random.nextInt(90000) + 10000;
+        long pin = random.nextInt(90000) + 10000;
         String otp = String.valueOf(pin);
 
         long expiryTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5);

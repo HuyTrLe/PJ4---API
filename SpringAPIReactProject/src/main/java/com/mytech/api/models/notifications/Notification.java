@@ -1,11 +1,6 @@
 
 package com.mytech.api.models.notifications;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 import com.mytech.api.models.user.User;
@@ -20,6 +15,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "notification")
@@ -39,16 +38,16 @@ public class Notification {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "notification_type", nullable = false)
 	private NotificationType notificationType;
-	
+
 	@Column(name = "event_id")
-    private Long eventId;
+	private Long eventId;
 
 	@Column(name = "message", nullable = false)
 	private String message;
 
 	@Column(name = "is_read", nullable = false)
-    private boolean read = false;
+	private boolean read = false;
 
-    @Column(name = "timestamp", nullable = false, columnDefinition = "TIMESTAMP")
-    private LocalDateTime timestamp = LocalDateTime.now();
+	@Column(name = "timestamp", nullable = false, columnDefinition = "TIMESTAMP")
+	private LocalDateTime timestamp = LocalDateTime.now();
 }

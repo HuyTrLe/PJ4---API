@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.mytech.api.models.category.Category;
-import com.mytech.api.models.recurrence.Recurrence;
+import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 
@@ -15,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -50,10 +51,8 @@ public class Income {
 	@JoinColumn(name = "category_id")
 	private Category category;
 
-	@Column(columnDefinition = "TEXT")
-	private String notes;
+	@OneToOne
+	@JoinColumn(name = "transaction_id")
+	private Transaction transaction;
 
-	@ManyToOne
-	@JoinColumn(name = "recurrence_id")
-	private Recurrence recurrence;
 }

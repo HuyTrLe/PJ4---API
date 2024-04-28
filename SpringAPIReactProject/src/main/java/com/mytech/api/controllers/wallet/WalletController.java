@@ -1,15 +1,23 @@
 package com.mytech.api.controllers.wallet;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.models.wallet.WalletDTO;
 import com.mytech.api.repositories.wallet.WalletRepository;
@@ -21,15 +29,14 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/wallets")
 public class WalletController {
 
-    private final WalletService walletService;
-    private final WalletRepository walletRepository;
-    private final ModelMapper modelMapper;
-
-    public WalletController(WalletService walletService, WalletRepository walletRepository, ModelMapper modelMapper) {
-        this.walletService = walletService;
-        this.modelMapper = modelMapper;
-        this.walletRepository = walletRepository;
-    }
+    @Autowired
+    WalletService walletService;
+    @Autowired
+    WalletRepository walletRepository;
+    @Autowired
+    ModelMapper modelMapper;
+    @Autowired
+    UserRepository userRepository;
 
     @PostMapping("/create")
     public ResponseEntity<?> createWallet(@RequestBody @Valid WalletDTO walletDTO, BindingResult result) {
@@ -53,13 +60,13 @@ public class WalletController {
         if (wallet == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet not found with id: " + walletId);
         }
-
         WalletDTO walletDTO = modelMapper.map(wallet, WalletDTO.class);
         return ResponseEntity.ok(walletDTO);
     }
 
     @GetMapping("/users/{userId}")
     public ResponseEntity<?> getWalletsByUserId(@PathVariable int userId) {
+
         List<Wallet> wallets = walletService.getWalletsByUserId(userId);
         if (wallets.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
@@ -85,14 +92,8 @@ public class WalletController {
         if (existingWallet == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet not found with id: " + walletId);
         }
-
-        // Map fields from the WalletDTO to the existing Wallet entity
         modelMapper.map(walletDTO, existingWallet);
-
-        // The walletId is not part of the DTO, so we explicitly set it again
         existingWallet.setWalletId(walletId);
-
-        // Save the updated wallet using the wallet service
         Wallet updatedWallet = walletService.saveWallet(existingWallet);
         WalletDTO updatedWalletDTO = modelMapper.map(updatedWallet, WalletDTO.class);
         return ResponseEntity.ok(updatedWalletDTO);

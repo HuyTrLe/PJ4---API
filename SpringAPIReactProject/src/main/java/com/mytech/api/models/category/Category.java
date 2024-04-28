@@ -40,19 +40,19 @@ public class Category {
 	@ManyToOne
 	@JoinColumn(name = "icon_id")
 	private Cat_Icon icon;
-	
+
 	@ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-	
-	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Transaction> transaction  = new ArrayList<>();
+	@JoinColumn(name = "user_id")
+	private User user;
 
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Budget> budget  = new ArrayList<>();
+	private List<Transaction> transaction = new ArrayList<>();
 
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Bill> bill  = new ArrayList<>();
+	private List<Budget> budget = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Bill> bill = new ArrayList<>();
 
 	public Category(String name, CateTypeENum type, Cat_Icon icon, User user) {
 		this.name = name;

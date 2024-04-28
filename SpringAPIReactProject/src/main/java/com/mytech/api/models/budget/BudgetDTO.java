@@ -19,6 +19,5 @@ public class BudgetDTO {
 	private BigDecimal threshold_amount;
 	private LocalDate period_start;
 	private LocalDate period_end;
-	private Integer recurrenceId;
-	
+
 }

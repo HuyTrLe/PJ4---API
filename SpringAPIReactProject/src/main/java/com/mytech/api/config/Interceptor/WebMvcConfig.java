@@ -1,0 +1,35 @@
+package com.mytech.api.config.Interceptor;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private AccessControlInterceptor accessControlInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(accessControlInterceptor)
+                .addPathPatterns("/api/recurrences/userRecurrence/**")
+                .addPathPatterns("/api/categories/user/**")
+                .addPathPatterns("/api/bills/users/**")
+                .addPathPatterns("/api/wallets/users/**")
+                .addPathPatterns("/api/expenses/users/**")
+                .addPathPatterns("/api/debts/user/**")
+                .addPathPatterns("/api/savinggoals/user/**")
+                .addPathPatterns("/api/incomes/users/**")
+                .addPathPatterns("/api/budgets/users/**")
+                .addPathPatterns("/api/notifications/user/**")
+                .addPathPatterns("/api/transactions/allWallets/users/**")
+                .addPathPatterns("/api/transactions/allIncome/users/**")
+                .addPathPatterns("/api/transactions/allExpense/users/**")
+                .addPathPatterns("/api/transactions/income/users/**")
+                .addPathPatterns("/api/transactions/expense/users/**")
+                .addPathPatterns("/api/transactions/users/**");
+
+    }
+}

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.mytech.api.models.category.CategoryDTO;
-import com.mytech.api.models.recurrence.RecurrenceDTO;
 import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.models.wallet.WalletDTO;
 
@@ -28,11 +27,11 @@ public class TransactionDTO {
     private LocalDate transactionDate;
 
     private CategoryDTO category;
+
     private String notes;
-    private RecurrenceDTO recurrence;
 
     public TransactionDTO(Integer transactionId, UserDTO user, WalletDTO wallet, BigDecimal amount,
-            LocalDate transactionDate, CategoryDTO category, String notes, RecurrenceDTO recurrence) {
+            LocalDate transactionDate, CategoryDTO category, String notes) {
         this.transactionId = transactionId;
         this.user = user;
         this.wallet = wallet;
@@ -40,6 +39,5 @@ public class TransactionDTO {
         this.transactionDate = transactionDate;
         this.category = category;
         this.notes = notes;
-        this.recurrence = recurrence;
     }
 }

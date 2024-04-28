@@ -1,13 +1,14 @@
 package com.mytech.api.models.recurrence;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+
 import com.mytech.api.models.user.UserDTO;
 
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,29 +19,27 @@ import lombok.Setter;
 public class RecurrenceDTO {
 	private int recurrenceId;
 
-	private UserDTO user;
+	private int userId;
 
-	private RecurrenceType recurrenceType;
+	private String frequency; // repeat daily, repeat weekly, repeat monthly, repeat yearly
 
-    @FutureOrPresent(message = "Start date must be in the present or future")
+	private Integer every; // number of days/weeks/months/years
+
+	private DayOfWeek dayOfWeek; // Monday, Tuesday, ...
+
+	private String monthOption; // cùng ngày với start date, thứ 5 tuần thứ 4
+
+	private LocalDate dueDate;
+
+	private String endType; // forever, until, times
+
+	@Future(message = "End date must be in the future")
 	@Temporal(TemporalType.DATE)
-	private LocalDate startDate;
+	private LocalDate endDate; // if choosing until
 
-    @Future(message = "End date must be in the future")
+	private Integer times; // if choosing times
+
+	@FutureOrPresent(message = "Start date must be in the present or future")
 	@Temporal(TemporalType.DATE)
-	private LocalDate endDate;
-
-    @Min(value = 1, message = "Interval amount must be at least 1")
-    private Integer intervalAmount;
-
-	public RecurrenceDTO(int recurrenceId, UserDTO user, LocalDate startDate, LocalDate endDate, Integer intervalAmount,
-			RecurrenceType recurrenceType) {
-		this.recurrenceId = recurrenceId;
-		this.user = user;
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.intervalAmount = intervalAmount;
-		this.recurrenceType = recurrenceType;
-	}
-
+	private LocalDate startDate; // Start date: now and future
 }

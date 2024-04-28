@@ -19,10 +19,9 @@ public class Cat_Icon {
 	private long id;
 
 	private String path;
-	
+
 	public Cat_Icon(String path) {
 		this.path = path;
 	}
-	
-}
 
+}

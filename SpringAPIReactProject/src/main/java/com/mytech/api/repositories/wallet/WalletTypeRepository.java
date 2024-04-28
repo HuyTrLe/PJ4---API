@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import com.mytech.api.models.wallet.WalletType;
 
 @Repository
-public interface WalletTypeRepository extends JpaRepository<WalletType, Integer>{
+public interface WalletTypeRepository extends JpaRepository<WalletType, Integer> {
 
 }

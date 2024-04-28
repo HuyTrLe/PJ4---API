@@ -1,6 +1,5 @@
 package com.mytech.api.services.bill;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -19,14 +18,6 @@ public interface BillService {
 	Bill addNewBill(Bill bill);
 
 	void deleteBill(int billId);
-	
+
 	void deleteBillsByRecurrence(int recurrenceId);
-
-	Page<Bill> findOverdueBillsByUserId(int userId, LocalDate overdueDueDate, Pageable pageable);
-
-	Page<Bill> findBillsDueIn3DaysByUserId(int userId, LocalDate currentDate, LocalDate dueDate, Pageable pageable);
-
-	Page<Bill> findFutureDueBillsByUserId(int userId, LocalDate futureDueDueDate, Pageable pageable);
-	
-	List<Bill> findBillsDueToday(LocalDate dueDate);
 }

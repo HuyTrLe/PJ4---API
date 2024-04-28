@@ -1,6 +1,9 @@
 
 package com.mytech.api.models.saving_goals;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 
@@ -15,10 +18,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "saving_goals")
@@ -53,20 +52,18 @@ public class SavingGoal {
     @ManyToOne
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
-    
 
-	public SavingGoal(Long id, String name, BigDecimal targetAmount, BigDecimal currentAmount, LocalDate startDate,
-			LocalDate endDate, User user, Wallet wallet) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.targetAmount = targetAmount;
-		this.currentAmount = currentAmount;
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.user = user;
-		this.wallet = wallet;
-	}
+    public SavingGoal(Long id, String name, BigDecimal targetAmount, BigDecimal currentAmount, LocalDate startDate,
+            LocalDate endDate, User user, Wallet wallet) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.targetAmount = targetAmount;
+        this.currentAmount = currentAmount;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.user = user;
+        this.wallet = wallet;
+    }
 
-    
 }

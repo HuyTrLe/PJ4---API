@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CategoryDTO {
 	private Long id;
-	
+
 	@NotBlank(message = "Category name cannot be blank")
 	private String name;
 	private CateTypeENum type;

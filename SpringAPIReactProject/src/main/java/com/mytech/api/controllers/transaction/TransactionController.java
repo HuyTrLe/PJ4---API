@@ -6,17 +6,27 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
-import com.mytech.api.models.recurrence.Recurrence;
+import com.mytech.api.models.expense.Expense;
+import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.user.User;
@@ -33,24 +43,18 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/transactions")
 public class TransactionController {
-
-	private final TransactionService transactionService;
-	private final CategoryService categoryService;
-	private final UserRepository userRepository;
-	private final WalletService walletService;
-	private final RecurrenceService recurrenceService;
-	private final ModelMapper modelMapper;
-
-	public TransactionController(TransactionService transactionService, CategoryService categoryService,
-			WalletService walletService, RecurrenceService recurrenceService, UserRepository userRepository,
-			ModelMapper modelMapper) {
-		this.transactionService = transactionService;
-		this.userRepository = userRepository;
-		this.categoryService = categoryService;
-		this.walletService = walletService;
-		this.recurrenceService = recurrenceService;
-		this.modelMapper = modelMapper;
-	}
+	@Autowired
+	TransactionService transactionService;
+	@Autowired
+	CategoryService categoryService;
+	@Autowired
+	UserRepository userRepository;
+	@Autowired
+	WalletService walletService;
+	@Autowired
+	RecurrenceService recurrenceService;
+	@Autowired
+	ModelMapper modelMapper;
 
 	@PostMapping("/create")
 	public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionDTO transactionDTO,
@@ -61,56 +65,57 @@ public class TransactionController {
 			System.out.println(errors);
 			return ResponseEntity.badRequest().body(errors);
 		}
-
+		Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
 		UserDTO userDTO = transactionDTO.getUser();
 		if (userDTO == null || userDTO.getId() == null) {
 			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
 		}
-
 		Optional<User> existingUser = userRepository.findById(userDTO.getId());
 		if (!existingUser.isPresent()) {
 			return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
 		}
-
-		Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
-		Transaction savedTransaction = transactionService.saveTransaction(transaction);
-
 		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWallet().getWalletId());
 		if (existingWallet == null) {
 			return new ResponseEntity<>("Wallet not found with id: " + transactionDTO.getWallet().getWalletId(),
 					HttpStatus.NOT_FOUND);
 		}
-
 		WalletDTO existingWalletDTO = modelMapper.map(existingWallet, WalletDTO.class);
-
 		try {
 			existingWalletDTO.addTransactionBalance(transactionDTO);
 			walletService.saveWallet(modelMapper.map(existingWalletDTO, Wallet.class));
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>("Balance is not enough to complete this transaction", HttpStatus.BAD_REQUEST);
 		}
-
 		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategory().getId());
 		if (existingCategory == null) {
 			return new ResponseEntity<>("Category not found with id: " + transactionDTO.getCategory().getId(),
 					HttpStatus.NOT_FOUND);
 		}
-
-		if (transactionDTO.getRecurrence() != null) {
-			if (transactionDTO.getRecurrence().getRecurrenceId() > 0) {
-				Recurrence existingRecurrence = recurrenceService
-						.findRecurrenceById(transactionDTO.getRecurrence().getRecurrenceId());
-				if (existingRecurrence == null) {
-					return new ResponseEntity<>(
-							"Recurrence not found with id: " + transactionDTO.getRecurrence().getRecurrenceId(),
-							HttpStatus.NOT_FOUND);
-				}
-				transaction.setRecurrence(existingRecurrence);
-			}
-		}
-
 		transaction.setCategory(existingCategory);
-
+		transaction.setUser(existingUser.get());
+		transaction.setWallet(existingWallet);
+		transaction.setAmount(transaction.getAmount());
+		transaction.setTransactionDate(transaction.getTransactionDate());
+		if (existingCategory.getType() == CateTypeENum.INCOME) {
+			Income income = new Income();
+			income.setUser(existingUser.get());
+			income.setWallet(existingWallet);
+			income.setAmount(transaction.getAmount());
+			income.setIncomeDate(transaction.getTransactionDate());
+			income.setCategory(existingCategory);
+			income.setTransaction(transaction);
+			transaction.setIncome(income);
+		} else {
+			Expense expense = new Expense();
+			expense.setUser(existingUser.get());
+			expense.setWallet(existingWallet);
+			expense.setAmount(transaction.getAmount());
+			expense.setExpenseDate(transaction.getTransactionDate());
+			expense.setCategory(existingCategory);
+			expense.setTransaction(transaction);
+			transaction.setExpense(expense);
+		}
+		Transaction savedTransaction = transactionService.saveTransaction(transaction);
 		TransactionDTO savedTransactionDTO = modelMapper.map(savedTransaction, TransactionDTO.class);
 		return ResponseEntity.ok(savedTransactionDTO);
 	}
@@ -148,36 +153,79 @@ public class TransactionController {
 					.collect(Collectors.joining(", "));
 			return ResponseEntity.badRequest().body(errors);
 		}
+		Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
+		Transaction existingTransaction = transactionService.getTransactionById(transactionId);
+		if (existingTransaction == null) {
+			return ResponseEntity.notFound().build();
+		}
 
-		Transaction updatedTransaction = modelMapper.map(transactionDTO, Transaction.class);
-		updatedTransaction.setTransactionId(transactionId);
+		UserDTO userDTO = transactionDTO.getUser();
+		if (userDTO == null || userDTO.getId() == null) {
+			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
+		}
+		Optional<User> existingUser = userRepository.findById(userDTO.getId());
+		if (!existingUser.isPresent()) {
+			return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+		}
 
-		// Update wallet balance
-		Wallet wallet = updatedTransaction.getWallet();
-		BigDecimal newBalance = calculateNewWalletBalance(wallet.getBalance(), transactionDTO.getAmount(),
-				transactionDTO.getAmount());
+		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWallet().getWalletId());
+		if (existingWallet == null) {
+			return new ResponseEntity<>("Wallet not found with id: " + transactionDTO.getWallet().getWalletId(),
+					HttpStatus.NOT_FOUND);
+		}
+		Wallet wallet = existingTransaction.getWallet();
+		BigDecimal newBalance = calculateNewWalletBalance(wallet.getBalance(), existingTransaction.getAmount(),
+				transaction.getAmount());
 		if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
 			return ResponseEntity.badRequest().body("Insufficient funds in the wallet");
 		}
-		wallet.setBalance(newBalance); // setBalance accepts BigDecimal
+		wallet.setBalance(newBalance);
 		walletService.saveWallet(wallet);
 
-		updatedTransaction = transactionService.saveTransaction(updatedTransaction);
+		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategory().getId());
+		if (existingCategory == null) {
+			return new ResponseEntity<>("Category not found with id: " + transactionDTO.getCategory().getId(),
+					HttpStatus.NOT_FOUND);
+		}
 
+		existingTransaction.setCategory(existingCategory);
+		existingTransaction.setUser(existingUser.get());
+		existingTransaction.setWallet(existingWallet);
+		existingTransaction.setAmount(transaction.getAmount());
+		existingTransaction.setTransactionDate(transaction.getTransactionDate());
+		if (existingCategory.getType() == CateTypeENum.INCOME) {
+			Income income = new Income();
+			income.setUser(existingUser.get());
+			income.setWallet(existingWallet);
+			income.setAmount(transaction.getAmount());
+			income.setIncomeDate(transaction.getTransactionDate());
+			income.setCategory(existingCategory);
+			income.setTransaction(transaction);
+			transaction.setIncome(income);
+		} else {
+			Expense expense = new Expense();
+			expense.setUser(existingUser.get());
+			expense.setWallet(existingWallet);
+			expense.setAmount(transaction.getAmount());
+			expense.setExpenseDate(transaction.getTransactionDate());
+			expense.setCategory(existingCategory);
+			expense.setTransaction(transaction);
+			transaction.setExpense(expense);
+		}
+		Transaction updatedTransaction = transactionService.saveTransaction(existingTransaction);
 		TransactionDTO updatedTransactionDTO = modelMapper.map(updatedTransaction, TransactionDTO.class);
 		return ResponseEntity.ok(updatedTransactionDTO);
 	}
 
 	private BigDecimal calculateNewWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount,
 			BigDecimal newAmount) {
-		if (newAmount.compareTo(oldAmount) > 0) { // newAmount > oldAmount
-			return currentBalance.subtract(newAmount.subtract(oldAmount));
-		} else { // newAmount <= oldAmount
-			return currentBalance.add(oldAmount.subtract(newAmount));
-		}
+		BigDecimal transactionChange = newAmount.subtract(oldAmount);
+		BigDecimal newBalance = currentBalance.add(transactionChange);
+
+		return newBalance;
 	}
 
-	@GetMapping("/users/allWallets/{userId}")
+	@GetMapping("/allWallets/users/{userId}")
 	public ResponseEntity<List<TransactionDTO>> getAllTransactionsForAllWallet(@PathVariable int userId) {
 		List<TransactionDTO> transactions = transactionService.getAllTransactionsByAllWallet(userId)
 				.stream()

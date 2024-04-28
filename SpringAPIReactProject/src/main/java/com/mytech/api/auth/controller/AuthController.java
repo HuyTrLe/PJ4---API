@@ -1,9 +1,5 @@
 package com.mytech.api.auth.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,12 +27,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mytech.api.auth.UpdateUser.EmailandUsername.UpdateEmailService;
 import com.mytech.api.auth.UpdateUser.EmailandUsername.DTO.UserProfileDTO;
-import com.mytech.api.auth.UpdateUser.Password.UpdatePasswordService;
+import com.mytech.api.auth.UpdateUser.EmailandUsername.UpdateEmailService;
 import com.mytech.api.auth.UpdateUser.Password.DTO.PasswordChangeRequestDTO;
 import com.mytech.api.auth.UpdateUser.Password.DTO.PasswordDTO;
-import com.mytech.api.auth.UpdateUser.Password.DTO.VerifyOTPDTO;
+import com.mytech.api.auth.UpdateUser.Password.UpdatePasswordService;
 import com.mytech.api.auth.jwt.JwtUtils;
 import com.mytech.api.auth.password.ForgotPasswordRequest;
 import com.mytech.api.auth.password.ForgotPasswordService;
@@ -54,6 +49,10 @@ import com.mytech.api.auth.services.UserDetailServiceImpl;
 import com.mytech.api.auth.services.UserService;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -109,7 +108,7 @@ public class AuthController {
 			}
 			User user = userServiceImpl.findByEmail(loginRequest.getEmail());
 			if (user == null) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username not found");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email not found");
 			}
 			if (!user.isEnabled()) {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -117,6 +116,7 @@ public class AuthController {
 			}
 			Authentication authentication = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+
 			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 			String jwt = jwtUtils.generateJwtToken(authentication);
@@ -124,7 +124,7 @@ public class AuthController {
 			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(),
 					userDetails.getEmail(), userDetails.isEnabled()));
 		} catch (BadCredentialsException ex) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
 		}
 	}
 

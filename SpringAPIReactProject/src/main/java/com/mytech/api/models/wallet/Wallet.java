@@ -1,6 +1,9 @@
 package com.mytech.api.models.wallet;
 
-import com.mytech.api.models.saving_goals.SavingGoal;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.user.User;
 
@@ -15,14 +18,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter

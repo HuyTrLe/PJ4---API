@@ -1,8 +1,10 @@
 
 package com.mytech.api.models.debt;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import com.mytech.api.models.category.Category;
-import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.user.User;
 
 import jakarta.persistence.Column;
@@ -17,10 +19,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 @Entity
 @Table(name = "debts")
 @Getter
@@ -30,10 +28,10 @@ public class Debt {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    
+
     private Long id;
 
-	@Column(nullable = false)
+    @Column(nullable = false)
     private String name;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -42,7 +40,7 @@ public class Debt {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
-    
+
     @Column(name = "is_paid")
     private Boolean isPaid;
 
@@ -59,5 +57,5 @@ public class Debt {
     private LocalDate paidDate;
 
     @Column(name = "notes")
-    private String notes;  
+    private String notes;
 }

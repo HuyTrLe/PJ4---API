@@ -15,7 +15,7 @@ public class UserService {
 	@Autowired
 	UserRepository userRepository;
 
-	public ResponseEntity<?> deleteUser(Long userId) {
+	public ResponseEntity<?> deleteUser(long userId) {
 		Optional<User> userOptional = userRepository.findById(userId);
 		if (userOptional.isPresent()) {
 			userRepository.deleteById(userId);

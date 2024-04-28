@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.mytech.api.models.recurrence.Recurrence;
 
 @Repository
-public interface RecurrenceRepository extends JpaRepository<Recurrence, Integer>{
+public interface RecurrenceRepository extends JpaRepository<Recurrence, Integer> {
 
 	@Query("SELECT r FROM Recurrence r WHERE r.user.id = :userId")
 	List<Recurrence> findAllByUserId(Long userId);
