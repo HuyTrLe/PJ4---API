@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,7 @@ public class IncomeController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#incomeDTO.userId == authentication.principal.id")
     public ResponseEntity<?> createIncome(@RequestBody @Valid IncomeDTO incomeDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -66,6 +68,7 @@ public class IncomeController {
     }
 
     @PutMapping("/update/{incomeId}")
+    @PreAuthorize("#incomeDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateIncome(@PathVariable int incomeId, @RequestBody @Valid IncomeDTO incomeDTO,
             BindingResult result) {
         if (result.hasErrors()) {

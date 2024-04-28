@@ -8,6 +8,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -229,6 +229,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/updateProfile/updatePassword")
+	@PreAuthorize("#passwordDTO.userId == authentication.principal.id")
 	public ResponseEntity<?> updateUserPassword(@Valid @RequestBody PasswordDTO passwordDTO,
 			BindingResult result) {
 		if (result.hasErrors()) {
@@ -246,6 +247,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/updateProfile/changePasswordWithOTP")
+	@PreAuthorize("#requestDTO.passwordDTO.userId == authentication.principal.id")
 	public ResponseEntity<?> changePasswordWithOTP(@RequestBody PasswordChangeRequestDTO requestDTO) {
 		try {
 			ResponseEntity<?> response = updatePasswordService.changePasswordWithOTP(requestDTO);

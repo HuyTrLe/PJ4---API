@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,6 +56,7 @@ public class TransactionRecurringController {
     @Autowired
     RecurrenceConverter recurrenceConverter;
 
+    @PreAuthorize("#transactionRecurringDTO.user.id == authentication.principal.id")
     @PostMapping("/create")
     public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionRecurringDTO transactionRecurringDTO,
             BindingResult result) {
@@ -130,6 +132,7 @@ public class TransactionRecurringController {
         return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
     }
 
+    @PreAuthorize("#transactionRecurringDTO.user.id == authentication.principal.id")
     @PutMapping("/update/{transactionId}")
     public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
             @RequestBody @Valid TransactionRecurringDTO transactionRecurringDTO, BindingResult result) {
@@ -182,6 +185,7 @@ public class TransactionRecurringController {
         return ResponseEntity.ok(savedTransactionDTO);
     }
 
+    @PreAuthorize("#transactionRecurringDTO.user.id == authentication.principal.id")
     @DeleteMapping("/delete/{transactionId}")
     public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
         TransactionRecurring transactionRecurring = transactionRecurringService

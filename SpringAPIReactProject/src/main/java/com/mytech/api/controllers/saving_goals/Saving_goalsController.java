@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +50,7 @@ public class Saving_goalsController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#savingGoalRequest.userId == authentication.principal.id")
     public ResponseEntity<?> createSavingGoal(@Valid @RequestBody SavingGoalDTO savingGoalRequest,
             BindingResult result) {
         if (result.hasErrors()) {
@@ -62,6 +64,7 @@ public class Saving_goalsController {
     }
 
     @PutMapping("/update/{savingGoalId}")
+    @PreAuthorize("#savingGoalRequest.userId == authentication.principal.id")
     public ResponseEntity<SavingGoalDTO> updateSavingGoal(@PathVariable Long savingGoalId,
             @RequestBody SavingGoalDTO updatedSavingGoalDTO) {
         try {

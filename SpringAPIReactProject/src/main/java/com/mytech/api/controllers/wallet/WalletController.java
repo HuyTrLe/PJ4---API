@@ -7,6 +7,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +40,7 @@ public class WalletController {
     UserRepository userRepository;
 
     @PostMapping("/create")
+    @PreAuthorize("#walletDTO.userId == authentication.principal.id")
     public ResponseEntity<?> createWallet(@RequestBody @Valid WalletDTO walletDTO, BindingResult result) {
         if (result.hasErrors()) {
             String errors = result.getFieldErrors().stream()
@@ -79,6 +81,7 @@ public class WalletController {
     }
 
     @PutMapping("/update/{walletId}")
+    @PreAuthorize("#walletDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateWallet(@PathVariable int walletId, @RequestBody @Valid WalletDTO walletDTO,
             BindingResult result) {
         if (result.hasErrors()) {

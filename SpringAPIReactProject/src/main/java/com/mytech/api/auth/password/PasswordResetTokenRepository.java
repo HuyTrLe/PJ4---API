@@ -24,7 +24,7 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
         @Query("UPDATE PasswordResetToken c " +
                         "SET c.confirmedAt = ?2 " +
                         "WHERE c.token = ?1")
-        long updateConfirmedAt(String token,
+        int updateConfirmedAt(String token,
                         LocalDateTime confirmedAt);
 
 }

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,6 +57,7 @@ public class TransactionController {
 	@Autowired
 	ModelMapper modelMapper;
 
+	@PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
 	@PostMapping("/create")
 	public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionDTO transactionDTO,
 			BindingResult result) {
@@ -145,6 +147,7 @@ public class TransactionController {
 		return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
 	}
 
+	@PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
 	@PutMapping("/update/{transactionId}")
 	public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
 			@RequestBody @Valid TransactionDTO transactionDTO, BindingResult result) {

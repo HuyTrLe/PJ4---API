@@ -30,7 +30,7 @@ public class RecurrenceConverter {
                 break;
             case "repeat monthly":
                 recurrence.setFrequencyType(FrequencyType.MONTHLY);
-                recurrence.setMonthOption(MonthOption.valueOf(recurrenceRequestDTO.getMonthOption().toUpperCase()));
+                recurrence.setMonthOption(recurrenceRequestDTO.getMonthOption());
                 recurrence.setEvery(recurrenceRequestDTO.getEvery());
                 break;
             case "repeat yearly":
@@ -56,11 +56,6 @@ public class RecurrenceConverter {
         LocalDate dueDate = calculateDueDate(recurrenceRequestDTO);
         recurrence.setDueDate(dueDate);
 
-        if (recurrence.getFrequencyType() == FrequencyType.MONTHLY &&
-                recurrence.getMonthOption() == MonthOption.DAYOFWEEKOFMONTH) {
-            recurrence.setDueDate(calculateDueDateForWeekOfMonth(recurrenceRequestDTO));
-        }
-
         return recurrence;
     }
 
@@ -81,12 +76,13 @@ public class RecurrenceConverter {
                 nextDueDate = nextDueDate.plusDays(daysToAdd);
                 return nextDueDate;
             case "repeat monthly":
-                if ("SAMEDAY".equals(recurrenceRequestDTO.getMonthOption())) {
+                if (recurrenceRequestDTO.getMonthOption() == MonthOption.SAMEDAY) {
                     return startDate.plusMonths(recurrenceRequestDTO.getEvery());
-                } else if ("DAYOFWEEKOFMONTH".equals(recurrenceRequestDTO.getMonthOption())) {
+                } else if (recurrenceRequestDTO.getMonthOption() == MonthOption.DAYOFWEEKOFMONTH) {
                     return calculateDueDateForWeekOfMonth(recurrenceRequestDTO);
                 }
                 break;
+
             case "repeat yearly":
                 return startDate.plusYears(recurrenceRequestDTO.getEvery());
         }

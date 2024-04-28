@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,7 @@ public class ExpenseController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#expenseDTO.user.id == authentication.principal.id")
     public ResponseEntity<?> createExpense(@RequestBody @Valid ExpenseDTO expenseDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -66,6 +68,7 @@ public class ExpenseController {
     }
 
     @PutMapping("/update/{expenseId}")
+    @PreAuthorize("#expenseDTO.user.id == authentication.principal.id")
     public ResponseEntity<?> updateExpense(@PathVariable int expenseId, @RequestBody @Valid ExpenseDTO expenseDTO,
             BindingResult result) {
         if (result.hasErrors()) {

@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,6 +63,7 @@ public class DebtController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#debtRequest.userId == authentication.principal.id")
     public ResponseEntity<?> createDebt(@Valid @RequestBody DebtDTO debtRequest, BindingResult result) {
         if (result.hasErrors()) {
             String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
@@ -74,6 +76,7 @@ public class DebtController {
     }
 
     @PutMapping("/update/{debtId}")
+    @PreAuthorize("#debtRequest.userId == authentication.principal.id")
     public ResponseEntity<DebtDTO> updateDebt(@PathVariable Long debtId, @RequestBody DebtDTO updatedDebtDTO) {
         try {
             DebtDTO updatedDebt = debtService.updateDebt(debtId, updatedDebtDTO);

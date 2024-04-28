@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,7 @@ public class BudgetController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#budgetDTO.userId == authentication.principal.id")
     public ResponseEntity<?> createBudget(@RequestBody @Valid BudgetDTO budgetDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -66,6 +68,7 @@ public class BudgetController {
     }
 
     @PutMapping("/update/{budgetId}")
+    @PreAuthorize("#budgetDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateBudget(@PathVariable int budgetId, @RequestBody @Valid BudgetDTO budgetDTO,
             BindingResult result) {
         if (result.hasErrors()) {
