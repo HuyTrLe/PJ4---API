@@ -44,17 +44,18 @@ public class SignupService {
 		if (existingUserByEmail != null && existingUserByEmail.isEnabled()) {
 			errors.add("Email already taken");
 		}
-		if(!request.getPassword().equals(request.getConfirmPassword())) {
+		if (!request.getPassword().equals(request.getConfirmPassword())) {
 			errors.add("Password not match");
 		}
-		
+
 		if (!errors.isEmpty()) {
 			List<String> formattedErrors = new ArrayList<>();
-		    for (String error : errors) {
-		        formattedErrors.add(error);
-		    }
-		    System.out.println(formattedErrors);
-		    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(formattedErrors);
+			for (String error : errors) {
+				formattedErrors.add(error);
+			}
+			System.out.println(formattedErrors);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(formattedErrors); // Sử dụng mã trạng thái 400 Bad
+																						// Request
 		}
 		String token = userDetailServiceImpl
 				.signUpUser(new User(request.getUsername(), request.getEmail(), request.getPassword(), false));

@@ -55,7 +55,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/auth")
 public class AuthController {
 	@Autowired
@@ -134,13 +133,13 @@ public class AuthController {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining("\n"));
 			System.out.println(errors);
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
 		}
 		ResponseEntity<?> response = signupService.signUp(request);
 		return response;
 	}
 
-	@GetMapping(path = "/signup/confirm")
+	@GetMapping("/signup/confirm")
 	public ResponseEntity<?> confirm(@RequestParam("token") String token) {
 		return signupService.confirmToken(token);
 	}
@@ -222,7 +221,7 @@ public class AuthController {
 		return userService.deleteUser(userId);
 	}
 
-	@GetMapping("/{userId}")
+	@GetMapping("/users/{userId}")
 	public ResponseEntity<UserDTO> getUserId(@PathVariable Long userId) {
 		Optional<User> user = userRepository.findById(userId);
 		return user.map(u -> ResponseEntity.ok(modelMapper.map(u, UserDTO.class)))
