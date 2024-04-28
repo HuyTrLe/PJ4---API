@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.bill.BillDTO;
 import com.mytech.api.models.category.Category;
@@ -178,7 +180,7 @@ public class BillController {
 	}
 
 	@DeleteMapping("/delete/{billId}")
-	public ResponseEntity<Void> deleteBill(@PathVariable int billId) {
+	public ResponseEntity<?> deleteBill(@PathVariable int billId, Authentication authentication) {
 		Bill bill = billService.findBillById(billId);
 		if (bill != null) {
 			Recurrence recurrence = bill.getRecurrence();
@@ -186,6 +188,11 @@ public class BillController {
 				recurrenceService.deleteRecurrenceById(recurrence.getRecurrenceId());
 			}
 			billService.deleteBill(billId);
+			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+			if (!bill.getUser().getId().equals(userDetails.getId())) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN)
+						.body("You are not authorized to delete this transaction.");
+			}
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.notFound().build();

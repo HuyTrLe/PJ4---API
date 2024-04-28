@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.income.IncomeDTO;
 import com.mytech.api.services.income.IncomeService;
@@ -83,10 +86,15 @@ public class IncomeController {
     }
 
     @DeleteMapping("/delete/{incomeId}")
-    public ResponseEntity<?> deleteIncome(@PathVariable int incomeId) {
+    public ResponseEntity<?> deleteIncome(@PathVariable int incomeId, Authentication authentication) {
         Income existingIncome = incomeService.getIncomeById(incomeId);
         if (existingIncome == null) {
             return ResponseEntity.notFound().build();
+        }
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        if (!existingIncome.getUser().getId().equals(userDetails.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to delete this transaction.");
         }
         incomeService.deleteIncome(incomeId);
         return ResponseEntity.noContent().build(); // 204 No Content

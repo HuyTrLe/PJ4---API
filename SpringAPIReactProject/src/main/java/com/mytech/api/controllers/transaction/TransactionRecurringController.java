@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
@@ -185,11 +187,17 @@ public class TransactionRecurringController {
         return ResponseEntity.ok(savedTransactionDTO);
     }
 
-    @PreAuthorize("#transactionRecurringDTO.user.id == authentication.principal.id")
     @DeleteMapping("/delete/{transactionId}")
-    public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
+    public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId, Authentication authentication) {
         TransactionRecurring transactionRecurring = transactionRecurringService
                 .getTransactionsRecurringById(transactionId);
+
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        if (!transactionRecurring.getUser().getId().equals(userDetails.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to delete this transaction.");
+        }
+
         if (transactionRecurring == null) {
             return ResponseEntity.notFound().build();
         }

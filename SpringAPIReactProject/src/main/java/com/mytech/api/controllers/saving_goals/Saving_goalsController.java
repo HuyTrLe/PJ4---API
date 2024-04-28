@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
 import com.mytech.api.services.saving_goals.SavingGoalsService;
 
@@ -39,10 +41,16 @@ public class Saving_goalsController {
         return new ResponseEntity<>(savingGoals, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{savingGoalId}")
-    public ResponseEntity<String> deleteSavingGoal(@PathVariable Long savingGoalId) {
+    @DeleteMapping("/delete/{savingGoalId}")
+    public ResponseEntity<String> deleteSavingGoal(@PathVariable Long savingGoalId, Authentication authentication) {
         if (savingGoalsService.existsSavingGoalById(savingGoalId)) {
+            SavingGoalDTO savingGoal = savingGoalsService.getSavingGoalById(savingGoalId);
             savingGoalsService.deleteSavingGoalById(savingGoalId);
+            MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+            if (!savingGoal.getUserId().equals(userDetails.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("You are not authorized to delete this transaction.");
+            }
             return ResponseEntity.ok("Saving goal deleted successfully");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Saving goal not found");
