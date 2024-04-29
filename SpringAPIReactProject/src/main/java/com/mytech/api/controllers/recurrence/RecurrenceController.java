@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,10 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mytech.api.auth.repositories.UserRepository;
-import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.recurrence.Recurrence;
-import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.recurrence.RecurrenceDTO;
 import com.mytech.api.services.recurrence.RecurrenceService;
 
@@ -32,21 +30,10 @@ import jakarta.validation.Valid;
 @PreAuthorize("#recurrenceDTO.user.id == principal.id")
 public class RecurrenceController {
 
-    private final RecurrenceService recurrenceService;
-
-    private final UserRepository userRepository;
-
-    private final ModelMapper modelMapper;
-
-    private final RecurrenceConverter recurrenceConverter;
-
-    public RecurrenceController(RecurrenceService recurrenceService, UserRepository userRepository,
-            ModelMapper modelMapper, RecurrenceConverter recurrenceConverter) {
-        this.recurrenceService = recurrenceService;
-        this.userRepository = userRepository;
-        this.modelMapper = modelMapper;
-        this.recurrenceConverter = recurrenceConverter;
-    }
+    @Autowired
+    RecurrenceService recurrenceService;
+    @Autowired
+    ModelMapper modelMapper;
 
     // Schedule a new recurring transaction/bill
     @PostMapping("/create")
@@ -58,12 +45,7 @@ public class RecurrenceController {
                     .collect(Collectors.joining("\n"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
-        Recurrence recurrence = recurrenceConverter.convertToEntity(recurrenceRequestDTO);
-        recurrence.setStartDate(recurrenceRequestDTO.getStartDate());
-
-        Recurrence createdRecurrence = recurrenceService.saveRecurrence(recurrence);
-        RecurrenceDTO newRecurrenceDTO = convertToDTO(createdRecurrence);
-        return new ResponseEntity<>(newRecurrenceDTO, HttpStatus.CREATED);
+        return recurrenceService.createRecurrence(recurrenceRequestDTO);
     }
 
     // Get details of a recurrence
@@ -90,14 +72,7 @@ public class RecurrenceController {
                     .collect(Collectors.joining("\n"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
-        Recurrence existingRecurrence = recurrenceService.findRecurrenceById(recurrenceId);
-        if (existingRecurrence == null) {
-            return new ResponseEntity<>("Recurrence not found", HttpStatus.NOT_FOUND);
-        }
-        Recurrence updatedRecurrence = recurrenceConverter.convertToEntity(recurrenceRequestDTO);
-        updatedRecurrence.setStartDate(recurrenceRequestDTO.getStartDate());
-        Recurrence savedRecurrence = recurrenceService.saveRecurrence(updatedRecurrence);
-        return new ResponseEntity<>(savedRecurrence, HttpStatus.OK);
+        return recurrenceService.updateRecurrence(recurrenceId, recurrenceRequestDTO);
     }
 
     @GetMapping("/userRecurrence/{userId}")
@@ -118,24 +93,7 @@ public class RecurrenceController {
     // Delete a recurrence
     @DeleteMapping("/delete/{recurrenceId}")
     public ResponseEntity<?> deleteRecurrence(@PathVariable int recurrenceId, Authentication authentication) {
-        // Check if recurrence exists
-        Recurrence existingRecurrence = recurrenceService.findRecurrenceById(recurrenceId);
-        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        if (!existingRecurrence.getUser().getId().equals(userDetails.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You are not authorized to delete this transaction.");
-        }
-        if (existingRecurrence == null) {
-            // 404
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            recurrenceService.deleteRecurrenceById(recurrenceId);
-            // Return 204 : successful deletion
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
+        return deleteRecurrence(recurrenceId, authentication);
     }
 
-    private RecurrenceDTO convertToDTO(Recurrence recurrence) {
-        return modelMapper.map(recurrence, RecurrenceDTO.class);
-    }
 }

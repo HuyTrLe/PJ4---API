@@ -3,6 +3,7 @@ package com.mytech.api.models.transaction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
@@ -62,7 +63,12 @@ public class Transaction {
     @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private Expense expense;
 
-    // @ManyToOne
-    // @JoinColumn(name = "transaction_recurring_id")
-    // private TransactionRecurring transactionRecurring;
+    @ManyToOne
+    @JoinColumn(name = "transaction_recurring_id")
+    private TransactionRecurring transactionRecurring;
+
+    @ManyToOne
+    @JoinColumn(name = "bill_id")
+    private Bill bill;
+
 }

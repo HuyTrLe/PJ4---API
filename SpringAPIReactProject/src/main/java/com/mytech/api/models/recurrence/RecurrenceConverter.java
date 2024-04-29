@@ -41,21 +41,37 @@ public class RecurrenceConverter {
 
         // Map endType
         switch (recurrenceRequestDTO.getEndType()) {
-            case "forever":
-                recurrence.setEndType(EndType.FOREVER);
+            case FOREVER:
                 break;
-            case "until":
-                recurrence.setEndType(EndType.UNTIL);
-                recurrence.setEndDate(recurrenceRequestDTO.getEndDate());
+            case UNTIL:
+                LocalDate endDate = recurrenceRequestDTO.getEndDate();
+                LocalDate dueDate = calculateDueDate(recurrenceRequestDTO);
+                switch (recurrenceRequestDTO.getFrequency()) {
+                    case "repeat weekly":
+                        if (endDate.isBefore(dueDate) || endDate.equals(dueDate)) {
+                            throw new IllegalArgumentException("End date must be after a week.");
+                        }
+                        break;
+                    case "repeat monthly":
+                        if (endDate.isBefore(dueDate) || endDate.equals(dueDate)) {
+                            throw new IllegalArgumentException("End date must be after a month.");
+                        }
+                        break;
+                    case "repeat yearly":
+                        if (endDate.isBefore(dueDate) || endDate.equals(dueDate)) {
+                            throw new IllegalArgumentException("End date must be after a year.");
+                        }
+                        break;
+                }
+
                 break;
-            case "times":
+            case TIMES:
                 recurrence.setEndType(EndType.TIMES);
                 recurrence.setTimes(recurrenceRequestDTO.getTimes());
                 break;
         }
         LocalDate dueDate = calculateDueDate(recurrenceRequestDTO);
         recurrence.setDueDate(dueDate);
-
         return recurrence;
     }
 

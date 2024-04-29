@@ -1,5 +1,6 @@
 package com.mytech.api.repositories.bill;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -17,4 +18,6 @@ public interface BillRepository extends JpaRepository<Bill, Integer> {
         Page<Bill> findAllBillByUserId(int userId, Pageable pageable);
 
         List<Bill> findByRecurrence_RecurrenceId(int recurrenceId);
+
+        List<Bill> findByRecurrence_DueDate(LocalDate dueDate);
 }

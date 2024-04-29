@@ -199,7 +199,7 @@ public class TransactionController {
 		existingTransaction.setAmount(transaction.getAmount());
 		existingTransaction.setTransactionDate(transaction.getTransactionDate());
 		if (existingCategory.getType() == CateTypeENum.INCOME) {
-			Income income = new Income();
+			Income income = existingTransaction.getIncome();
 			income.setUser(existingUser.get());
 			income.setWallet(existingWallet);
 			income.setAmount(transaction.getAmount());
@@ -208,7 +208,7 @@ public class TransactionController {
 			income.setTransaction(transaction);
 			transaction.setIncome(income);
 		} else {
-			Expense expense = new Expense();
+			Expense expense = existingTransaction.getExpense();
 			expense.setUser(existingUser.get());
 			expense.setWallet(existingWallet);
 			expense.setAmount(transaction.getAmount());

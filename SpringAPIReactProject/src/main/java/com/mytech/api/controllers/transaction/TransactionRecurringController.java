@@ -1,6 +1,5 @@
 package com.mytech.api.controllers.transaction;
 
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -23,15 +22,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
-import com.mytech.api.auth.services.MyUserDetails;
-import com.mytech.api.models.category.Category;
-import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.transaction.TransactionRecurringDTO;
-import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
-import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 import com.mytech.api.services.transaction.TransactionRecurringService;
@@ -68,43 +61,7 @@ public class TransactionRecurringController {
             System.out.println(errors);
             return ResponseEntity.badRequest().body(errors);
         }
-        TransactionRecurring transactionRecurring = modelMapper.map(transactionRecurringDTO,
-                TransactionRecurring.class);
-
-        UserDTO userDTO = transactionRecurringDTO.getUser();
-        if (userDTO == null || userDTO.getId() == null) {
-            return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
-        }
-
-        Optional<User> existingUser = userRepository.findById(userDTO.getId());
-        if (!existingUser.isPresent()) {
-            return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
-        }
-        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWallet().getWalletId());
-        if (existingWallet == null) {
-            return new ResponseEntity<>(
-                    "Wallet not found with id: " + transactionRecurringDTO.getWallet().getWalletId(),
-                    HttpStatus.NOT_FOUND);
-        }
-
-        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategory().getId());
-        if (existingCategory == null) {
-            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategory().getId(),
-                    HttpStatus.NOT_FOUND);
-        }
-
-        Recurrence newRecurrence = recurrenceConverter.convertToEntity(transactionRecurringDTO.getRecurrence());
-        newRecurrence.setStartDate(transactionRecurringDTO.getRecurrence().getStartDate());
-        newRecurrence.setUser(existingUser.get());
-        Recurrence savedRecurrence = recurrenceService.saveRecurrence(newRecurrence);
-        transactionRecurring.setRecurrence(savedRecurrence);
-        transactionRecurring.setCategory(existingCategory);
-        transactionRecurring.setUser(existingUser.get());
-        transactionRecurring.setWallet(existingWallet);
-        TransactionRecurring savedTransaction = transactionRecurringService
-                .saveTransactionsRecurring(transactionRecurring);
-        TransactionRecurringDTO savedTransactionDTO = modelMapper.map(savedTransaction, TransactionRecurringDTO.class);
-        return ResponseEntity.ok(savedTransactionDTO);
+        return transactionRecurringService.createTransaction(transactionRecurringDTO);
     }
 
     @GetMapping("/{transactionId}")
@@ -144,65 +101,12 @@ public class TransactionRecurringController {
             System.out.println(errors);
             return ResponseEntity.badRequest().body(errors);
         }
-        Optional<TransactionRecurring> existingTransactionRecurring = Optional
-                .ofNullable(transactionRecurringService.getTransactionsRecurringById(transactionId));
-        if (!existingTransactionRecurring.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        UserDTO userDTO = transactionRecurringDTO.getUser();
-        if (userDTO == null || userDTO.getId() == null) {
-            return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
-        }
-
-        Optional<User> existingUser = userRepository.findById(userDTO.getId());
-        if (!existingUser.isPresent()) {
-            return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
-        }
-        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWallet().getWalletId());
-        if (existingWallet == null) {
-            return new ResponseEntity<>(
-                    "Wallet not found with id: " + transactionRecurringDTO.getWallet().getWalletId(),
-                    HttpStatus.NOT_FOUND);
-        }
-
-        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategory().getId());
-        if (existingCategory == null) {
-            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategory().getId(),
-                    HttpStatus.NOT_FOUND);
-        }
-
-        Recurrence updateRecurrence = recurrenceConverter.convertToEntity(transactionRecurringDTO.getRecurrence());
-        updateRecurrence.setStartDate(transactionRecurringDTO.getRecurrence().getStartDate());
-        updateRecurrence.setUser(existingUser.get());
-        Recurrence savedRecurrence = recurrenceService.saveRecurrence(updateRecurrence);
-        TransactionRecurring transactionRecurring = existingTransactionRecurring.get();
-        transactionRecurring.setRecurrence(savedRecurrence);
-        transactionRecurring.setCategory(existingCategory);
-        transactionRecurring.setUser(existingUser.get());
-        transactionRecurring.setWallet(existingWallet);
-        TransactionRecurring savedTransaction = transactionRecurringService
-                .saveTransactionsRecurring(transactionRecurring);
-        TransactionRecurringDTO savedTransactionDTO = modelMapper.map(savedTransaction, TransactionRecurringDTO.class);
-        return ResponseEntity.ok(savedTransactionDTO);
+        return transactionRecurringService.updateTransaction(transactionId, transactionRecurringDTO);
     }
 
     @DeleteMapping("/delete/{transactionId}")
     public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId, Authentication authentication) {
-        TransactionRecurring transactionRecurring = transactionRecurringService
-                .getTransactionsRecurringById(transactionId);
-
-        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        if (!transactionRecurring.getUser().getId().equals(userDetails.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You are not authorized to delete this transaction.");
-        }
-
-        if (transactionRecurring == null) {
-            return ResponseEntity.notFound().build();
-        }
-        transactionRecurringService.deleteTransactionRecurring(transactionId);
-        return ResponseEntity.noContent().build();
+        return transactionRecurringService.deleteTransaction(transactionId, authentication);
     }
 
 }

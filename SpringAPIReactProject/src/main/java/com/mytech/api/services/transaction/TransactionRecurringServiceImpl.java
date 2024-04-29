@@ -1,22 +1,136 @@
 package com.mytech.api.services.transaction;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.category.Category;
+import com.mytech.api.models.recurrence.Recurrence;
+import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.transaction.TransactionRecurring;
+import com.mytech.api.models.transaction.TransactionRecurringDTO;
+import com.mytech.api.models.user.User;
+import com.mytech.api.models.user.UserDTO;
+import com.mytech.api.models.wallet.Wallet;
+import com.mytech.api.repositories.recurrence.RecurrenceRepository;
 import com.mytech.api.repositories.transaction.TransactionRecurringRepository;
+import com.mytech.api.services.category.CategoryService;
+import com.mytech.api.services.wallet.WalletService;
 
 @Service
 public class TransactionRecurringServiceImpl implements TransactionRecurringService {
 
     @Autowired
     TransactionRecurringRepository transactionRecurringRepository;
+    @Autowired
+    CategoryService categoryService;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    WalletService walletService;
+    @Autowired
+    RecurrenceRepository recurrenceRepository;
+    @Autowired
+    ModelMapper modelMapper;
+    @Autowired
+    RecurrenceConverter recurrenceConverter;
 
     @Override
-    public TransactionRecurring saveTransactionsRecurring(TransactionRecurring transactionRecurring) {
-        return transactionRecurringRepository.save(transactionRecurring);
+    public ResponseEntity<?> createTransaction(TransactionRecurringDTO transactionRecurringDTO) {
+        TransactionRecurring transactionRecurring = modelMapper.map(transactionRecurringDTO,
+                TransactionRecurring.class);
+
+        UserDTO userDTO = transactionRecurringDTO.getUser();
+        if (userDTO == null || userDTO.getId() == null) {
+            return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
+        }
+
+        Optional<User> existingUser = userRepository.findById(userDTO.getId());
+        if (!existingUser.isPresent()) {
+            return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+        }
+        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWallet().getWalletId());
+        if (existingWallet == null) {
+            return new ResponseEntity<>(
+                    "Wallet not found with id: " + transactionRecurringDTO.getWallet().getWalletId(),
+                    HttpStatus.NOT_FOUND);
+        }
+
+        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategory().getId());
+        if (existingCategory == null) {
+            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategory().getId(),
+                    HttpStatus.NOT_FOUND);
+        }
+
+        Recurrence newRecurrence = recurrenceConverter.convertToEntity(transactionRecurringDTO.getRecurrence());
+        newRecurrence.setStartDate(transactionRecurringDTO.getRecurrence().getStartDate());
+        newRecurrence.setUser(existingUser.get());
+        Recurrence savedRecurrence = recurrenceRepository.save(newRecurrence);
+        transactionRecurring.setRecurrence(savedRecurrence);
+        transactionRecurring.setCategory(existingCategory);
+        transactionRecurring.setUser(existingUser.get());
+        transactionRecurring.setWallet(existingWallet);
+        TransactionRecurring savedTransaction = transactionRecurringRepository
+                .save(transactionRecurring);
+        TransactionRecurringDTO savedTransactionDTO = modelMapper.map(savedTransaction, TransactionRecurringDTO.class);
+        return ResponseEntity.ok(savedTransactionDTO);
+    }
+
+    @Override
+    public ResponseEntity<?> updateTransaction(Integer transactionId,
+            TransactionRecurringDTO transactionRecurringDTO) {
+        Optional<TransactionRecurring> existingTransactionRecurring = (transactionRecurringRepository
+                .findById(transactionId));
+        if (!existingTransactionRecurring.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        UserDTO userDTO = transactionRecurringDTO.getUser();
+        if (userDTO == null || userDTO.getId() == null) {
+            return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
+        }
+
+        Optional<User> existingUser = userRepository.findById(userDTO.getId());
+        if (!existingUser.isPresent()) {
+            return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+        }
+        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWallet().getWalletId());
+        if (existingWallet == null) {
+            return new ResponseEntity<>(
+                    "Wallet not found with id: " + transactionRecurringDTO.getWallet().getWalletId(),
+                    HttpStatus.NOT_FOUND);
+        }
+
+        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategory().getId());
+        if (existingCategory == null) {
+            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategory().getId(),
+                    HttpStatus.NOT_FOUND);
+        }
+
+        Recurrence updateRecurrence = recurrenceConverter.convertToEntity(transactionRecurringDTO.getRecurrence());
+        updateRecurrence.setStartDate(transactionRecurringDTO.getRecurrence().getStartDate());
+        updateRecurrence.setUser(existingUser.get());
+        Recurrence savedRecurrence = recurrenceRepository.save(updateRecurrence);
+        TransactionRecurring transactionRecurring = existingTransactionRecurring.get();
+        transactionRecurring.setRecurrence(savedRecurrence);
+        transactionRecurring.setCategory(existingCategory);
+        transactionRecurring.setUser(existingUser.get());
+        transactionRecurring.setWallet(existingWallet);
+        TransactionRecurring savedTransaction = transactionRecurringRepository
+                .save(transactionRecurring);
+        TransactionRecurringDTO savedTransactionDTO = modelMapper.map(savedTransaction, TransactionRecurringDTO.class);
+        return ResponseEntity.ok(savedTransactionDTO);
     }
 
     @Override
@@ -30,9 +144,29 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
     }
 
     @Override
-    public void deleteTransactionRecurring(Integer transactionId) {
-        TransactionRecurring transactionRecurring = getTransactionsRecurringById(transactionId);
-        transactionRecurringRepository.delete(transactionRecurring);
+    public ResponseEntity<?> deleteTransaction(Integer transactionId, Authentication authentication) {
+        TransactionRecurring transactionRecurring = transactionRecurringRepository
+                .findById(transactionId).orElse(null);
+        Recurrence recurrence = transactionRecurring.getRecurrence();
+        if (recurrence != null) {
+            recurrenceRepository.deleteById(recurrence.getRecurrenceId());
+        }
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        if (!transactionRecurring.getUser().getId().equals(userDetails.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to delete this transaction.");
+        }
+
+        if (transactionRecurring == null) {
+            return ResponseEntity.notFound().build();
+        }
+        transactionRecurringRepository.deleteById(transactionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public List<TransactionRecurring> findByRecurrence_DueDate(LocalDate dueDate) {
+        return transactionRecurringRepository.findByRecurrence_DueDate(dueDate);
     }
 
 }

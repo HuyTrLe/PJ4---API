@@ -1,11 +1,15 @@
 package com.mytech.api.services.bill;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 import com.mytech.api.models.bill.Bill;
+import com.mytech.api.models.bill.BillDTO;
 
 public interface BillService {
 
@@ -15,9 +19,11 @@ public interface BillService {
 
 	Bill findBillById(int billId);
 
-	Bill addNewBill(Bill bill);
+	ResponseEntity<?> addNewBill(BillDTO billDTO);
 
-	void deleteBill(int billId);
+	ResponseEntity<?> updateBill(int billId, BillDTO billDTO);
 
-	void deleteBillsByRecurrence(int recurrenceId);
+	List<Bill> findByRecurrence_DueDate(LocalDate dueDate);
+
+	ResponseEntity<?> deleteBill(int billId, Authentication authentication);
 }

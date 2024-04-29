@@ -1,16 +1,26 @@
 package com.mytech.api.services.transaction;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 import com.mytech.api.models.transaction.TransactionRecurring;
+import com.mytech.api.models.transaction.TransactionRecurringDTO;
 
 public interface TransactionRecurringService {
-    TransactionRecurring saveTransactionsRecurring(TransactionRecurring transactionRecurring);
-
     TransactionRecurring getTransactionsRecurringById(Integer transactionRecurringId);
 
     Page<TransactionRecurring> getAllTransactionsRecurringByUserId(Integer userId, Pageable pageable);
 
-    void deleteTransactionRecurring(Integer transactionRecurringId);
+    ResponseEntity<?> deleteTransaction(Integer transactionId, Authentication authentication);
+
+    ResponseEntity<?> createTransaction(TransactionRecurringDTO transactionRecurringDTO);
+
+    ResponseEntity<?> updateTransaction(Integer transactionId, TransactionRecurringDTO transactionRecurringDTO);
+
+    List<TransactionRecurring> findByRecurrence_DueDate(LocalDate dueDate);
 }

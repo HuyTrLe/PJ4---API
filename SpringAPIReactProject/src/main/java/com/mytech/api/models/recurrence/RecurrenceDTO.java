@@ -31,13 +31,15 @@ public class RecurrenceDTO {
 	private LocalDate dueDate;
 
 	@NotBlank(message = "You need to choose Forever or Until or Times to repeat")
-	private String endType; // forever, until, times
+	private EndType endType; // forever, until, times
 
 	@Future(message = "End date must be in the future")
 	@Temporal(TemporalType.DATE)
 	private LocalDate endDate; // if choosing until
 
 	private Integer times; // if choosing times
+
+	private Integer timesCompleted;
 
 	@FutureOrPresent(message = "Start date must be in the present or future")
 	@Temporal(TemporalType.DATE)

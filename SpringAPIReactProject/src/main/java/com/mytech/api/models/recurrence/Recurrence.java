@@ -23,6 +23,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -69,6 +70,7 @@ public class Recurrence {
     private EndType endType; // forever, until, times hiển thị số lần lặp lại
 
     @Temporal(TemporalType.DATE)
+    @Future(message = "End date must be in the future")
     private LocalDate endDate; // if choosing until
 
     private int times; // if choosing times

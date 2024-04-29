@@ -72,7 +72,7 @@ public class CategoryController {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining("\n"));
 			System.out.println(errors);
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
 		}
 		CategoryDTO createdCategoryDTO = categoryService.createCategory(categoryRequest);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdCategoryDTO);
