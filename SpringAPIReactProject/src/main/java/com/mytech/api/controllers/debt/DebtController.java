@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.debt.DebtDTO;
 import com.mytech.api.services.debt.DebtService;
 
@@ -52,9 +55,15 @@ public class DebtController {
     }
 
     @DeleteMapping("/delete/{debtId}")
-    public ResponseEntity<String> deleteDebt(@PathVariable Long debtId) {
+    public ResponseEntity<String> deleteDebt(@PathVariable Long debtId, Authentication authentication) {
         if (debtService.existsDebtById(debtId)) {
             debtService.deleteDebtById(debtId);
+            DebtDTO debtDTO = debtService.getDebtById(debtId);
+            MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+            if (!debtDTO.getUserId().equals(userDetails.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("You are not authorized to delete this transaction.");
+            }
             return ResponseEntity.ok("Debt deleted successfully");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Debt not found");
@@ -62,6 +71,7 @@ public class DebtController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#debtRequest.userId == authentication.principal.id")
     public ResponseEntity<?> createDebt(@Valid @RequestBody DebtDTO debtRequest, BindingResult result) {
         if (result.hasErrors()) {
             String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
@@ -74,6 +84,7 @@ public class DebtController {
     }
 
     @PutMapping("/update/{debtId}")
+    @PreAuthorize("#debtRequest.userId == authentication.principal.id")
     public ResponseEntity<DebtDTO> updateDebt(@PathVariable Long debtId, @RequestBody DebtDTO updatedDebtDTO) {
         try {
             DebtDTO updatedDebt = debtService.updateDebt(debtId, updatedDebtDTO);

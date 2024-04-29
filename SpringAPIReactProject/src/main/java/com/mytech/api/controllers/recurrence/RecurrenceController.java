@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,16 +19,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.recurrence.RecurrenceDTO;
-import com.mytech.api.models.user.User;
 import com.mytech.api.services.recurrence.RecurrenceService;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/recurrences")
+@PreAuthorize("#recurrenceDTO.user.id == principal.id")
 public class RecurrenceController {
 
     private final RecurrenceService recurrenceService;
@@ -47,6 +50,7 @@ public class RecurrenceController {
 
     // Schedule a new recurring transaction/bill
     @PostMapping("/create")
+    @PreAuthorize("#recurrenceRequestDTO.userId == authentication.principal.id")
     public ResponseEntity<?> createRecurrence(@RequestBody @Valid RecurrenceDTO recurrenceRequestDTO,
             BindingResult result) {
         if (result.hasErrors()) {
@@ -76,6 +80,7 @@ public class RecurrenceController {
 
     // Update recurrence details
     @PutMapping("/update/{recurrenceId}")
+    @PreAuthorize("#recurrenceRequestDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateRecurrence(@PathVariable int recurrenceId,
             @RequestBody @Valid RecurrenceDTO recurrenceRequestDTO,
             BindingResult result) {
@@ -112,9 +117,14 @@ public class RecurrenceController {
 
     // Delete a recurrence
     @DeleteMapping("/delete/{recurrenceId}")
-    public ResponseEntity<Void> deleteRecurrence(@PathVariable int recurrenceId) {
+    public ResponseEntity<?> deleteRecurrence(@PathVariable int recurrenceId, Authentication authentication) {
         // Check if recurrence exists
         Recurrence existingRecurrence = recurrenceService.findRecurrenceById(recurrenceId);
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        if (!existingRecurrence.getUser().getId().equals(userDetails.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to delete this transaction.");
+        }
         if (existingRecurrence == null) {
             // 404
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

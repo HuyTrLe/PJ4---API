@@ -23,6 +23,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -64,6 +65,7 @@ public class Recurrence {
     private LocalDate dueDate;
 
     @Enumerated(EnumType.STRING)
+    @NotNull(message = "You need to choose Forever or Until or Times to repeat")
     private EndType endType; // forever, until, times hiển thị số lần lặp lại
 
     @Temporal(TemporalType.DATE)

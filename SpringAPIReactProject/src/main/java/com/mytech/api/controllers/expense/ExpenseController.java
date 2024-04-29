@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.expense.ExpenseDTO;
 import com.mytech.api.services.expense.ExpenseService;
@@ -34,6 +38,7 @@ public class ExpenseController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#expenseDTO.user.id == authentication.principal.id")
     public ResponseEntity<?> createExpense(@RequestBody @Valid ExpenseDTO expenseDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -66,6 +71,7 @@ public class ExpenseController {
     }
 
     @PutMapping("/update/{expenseId}")
+    @PreAuthorize("#expenseDTO.user.id == authentication.principal.id")
     public ResponseEntity<?> updateExpense(@PathVariable int expenseId, @RequestBody @Valid ExpenseDTO expenseDTO,
             BindingResult result) {
         if (result.hasErrors()) {
@@ -80,10 +86,12 @@ public class ExpenseController {
     }
 
     @DeleteMapping("/delete/{expenseId}")
-    public ResponseEntity<?> deleteExpense(@PathVariable int expenseId) {
+    public ResponseEntity<?> deleteExpense(@PathVariable int expenseId, Authentication authentication) {
         Expense existingExpense = expenseService.getExpenseById(expenseId);
-        if (existingExpense == null) {
-            return ResponseEntity.notFound().build();
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        if (!existingExpense.getUser().getId().equals(userDetails.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to delete this transaction.");
         }
         expenseService.deleteExpense(expenseId);
         return ResponseEntity.noContent().build(); // 204 No Content

@@ -5,7 +5,9 @@ import java.util.List;
 
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.budget.Budget;
+import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.user.User;
 
 import jakarta.persistence.CascadeType;
@@ -53,6 +55,12 @@ public class Category {
 
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Bill> bill = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Debt> debt = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<TransactionRecurring> transactionRecurrings = new ArrayList<>();
 
 	public Category(String name, CateTypeENum type, Cat_Icon icon, User user) {
 		this.name = name;

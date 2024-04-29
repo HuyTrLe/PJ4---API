@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
@@ -56,6 +59,7 @@ public class TransactionController {
 	@Autowired
 	ModelMapper modelMapper;
 
+	@PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
 	@PostMapping("/create")
 	public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionDTO transactionDTO,
 			BindingResult result) {
@@ -145,6 +149,7 @@ public class TransactionController {
 		return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
 	}
 
+	@PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
 	@PutMapping("/update/{transactionId}")
 	public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
 			@RequestBody @Valid TransactionDTO transactionDTO, BindingResult result) {
@@ -219,10 +224,11 @@ public class TransactionController {
 
 	private BigDecimal calculateNewWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount,
 			BigDecimal newAmount) {
-		BigDecimal transactionChange = newAmount.subtract(oldAmount);
-		BigDecimal newBalance = currentBalance.add(transactionChange);
-
-		return newBalance;
+		if (newAmount.compareTo(oldAmount) > 0) { // newAmount > oldAmount
+			return currentBalance.subtract(newAmount.subtract(oldAmount));
+		} else { // newAmount <= oldAmount
+			return currentBalance.add(oldAmount.subtract(newAmount));
+		}
 	}
 
 	@GetMapping("/allWallets/users/{userId}")
@@ -270,6 +276,7 @@ public class TransactionController {
 	}
 
 	@GetMapping("/income/users/{userId}/wallets/{walletId}")
+	@PreAuthorize("#userId == authentication.principal.id")
 	public ResponseEntity<List<TransactionDTO>> getTotalIncomeByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
 		List<TransactionDTO> totalIncome = transactionService.getTotalIncomeByWalletId(userId, walletId,
@@ -286,6 +293,7 @@ public class TransactionController {
 	}
 
 	@GetMapping("/expense/users/{userId}/wallets/{walletId}")
+	@PreAuthorize("#userId == authentication.principal.id")
 	public ResponseEntity<List<TransactionDTO>> getTotalExpenseByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
 		List<TransactionDTO> totalExpense = transactionService
@@ -303,11 +311,17 @@ public class TransactionController {
 	}
 
 	@DeleteMapping("/delete/{transactionId}")
-	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId) {
+	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId, Authentication authentication) {
 		Transaction transaction = transactionService.getTransactionById(transactionId);
 
 		if (transaction == null) {
 			return ResponseEntity.notFound().build();
+		}
+
+		MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+		if (!transaction.getUser().getId().equals(userDetails.getId())) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body("You are not authorized to delete this transaction.");
 		}
 
 		Wallet wallet = transaction.getWallet();
@@ -333,7 +347,8 @@ public class TransactionController {
 		return currentBalance.subtract(incomeAmount).add(expenseAmount);
 	}
 
-	@GetMapping("/users/{userId}/wallets/{walletId}")
+	@GetMapping("/wallets/{walletId}/users/{userId}")
+	@PreAuthorize("#userId == authentication.principal.id")
 	public ResponseEntity<List<TransactionDTO>> getTransactionsByWalletId(@PathVariable int userId,
 			@PathVariable Integer walletId) {
 		List<Transaction> transactions = transactionService.getTransactionsByWalletId(userId, walletId);

@@ -3,12 +3,11 @@ package com.mytech.api.models.recurrence;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 
-import com.mytech.api.models.user.UserDTO;
-
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,10 +26,11 @@ public class RecurrenceDTO {
 
 	private DayOfWeek dayOfWeek; // Monday, Tuesday, ...
 
-	private String monthOption; // cùng ngày với start date, thứ 5 tuần thứ 4
+	private MonthOption monthOption; // cùng ngày với start date, thứ 5 tuần thứ 4
 
 	private LocalDate dueDate;
 
+	@NotBlank(message = "You need to choose Forever or Until or Times to repeat")
 	private String endType; // forever, until, times
 
 	@Future(message = "End date must be in the future")

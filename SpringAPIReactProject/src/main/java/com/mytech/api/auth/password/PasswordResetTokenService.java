@@ -28,7 +28,7 @@ public class PasswordResetTokenService {
 		return passwordResetTokenRepository.findByUser(user);
 	}
 
-	public long setConfirmedAt(String token) {
+	public int setConfirmedAt(String token) {
 		return passwordResetTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
 	}
 

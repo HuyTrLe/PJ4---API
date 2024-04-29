@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
+import com.mytech.api.models.user.User;
 import com.mytech.api.services.category.CategoryService;
 
 import jakarta.validation.Valid;
@@ -41,16 +45,28 @@ public class CategoryController {
 	}
 
 	@DeleteMapping("/delete/{categoryId}")
-	public ResponseEntity<String> deleteCategory(@PathVariable Long categoryId) {
-		if (categoryService.existsCategoryById(categoryId)) {
-			categoryService.deleteCategoryById(categoryId);
-			return ResponseEntity.ok("Category deleted successfully");
-		} else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found");
+	public ResponseEntity<String> deleteCategory(@PathVariable Long categoryId, Authentication authentication) {
+		Category existingCategory = categoryService.getByCateId(categoryId);
+		if (existingCategory == null) {
+			return ResponseEntity.notFound().build();
 		}
+
+		User categoryUser = existingCategory.getUser();
+		MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+
+		// Check if the category has an associated user and if that user matches the
+		// logged-in user
+		if (categoryUser == null || !categoryUser.getId().equals(userDetails.getId())) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body("You are not authorized to delete this category.");
+		}
+
+		categoryService.deleteCategoryById(categoryId);
+		return ResponseEntity.ok("Category deleted successfully");
 	}
 
 	@PostMapping("/create")
+	@PreAuthorize("#categoryRequest.userId == authentication.principal.id")
 	public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryDTO categoryRequest, BindingResult result) {
 		if (result.hasErrors()) {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
@@ -64,6 +80,7 @@ public class CategoryController {
 	}
 
 	@PutMapping("/update/{categoryId}")
+	@PreAuthorize("#updatedCategoryDTO.userId == authentication.principal.id")
 	public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long categoryId,
 			@RequestBody CategoryDTO updatedCategoryDTO) {
 		try {

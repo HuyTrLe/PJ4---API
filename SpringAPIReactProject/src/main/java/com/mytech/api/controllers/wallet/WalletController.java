@@ -7,6 +7,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.models.wallet.WalletDTO;
 import com.mytech.api.repositories.wallet.WalletRepository;
@@ -39,6 +42,7 @@ public class WalletController {
     UserRepository userRepository;
 
     @PostMapping("/create")
+    @PreAuthorize("#walletDTO.userId == authentication.principal.id")
     public ResponseEntity<?> createWallet(@RequestBody @Valid WalletDTO walletDTO, BindingResult result) {
         if (result.hasErrors()) {
             String errors = result.getFieldErrors().stream()
@@ -79,6 +83,7 @@ public class WalletController {
     }
 
     @PutMapping("/update/{walletId}")
+    @PreAuthorize("#walletDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateWallet(@PathVariable int walletId, @RequestBody @Valid WalletDTO walletDTO,
             BindingResult result) {
         if (result.hasErrors()) {
@@ -100,8 +105,15 @@ public class WalletController {
     }
 
     @DeleteMapping("/delete/{walletId}")
-    public ResponseEntity<String> deleteCategory(@PathVariable int walletId) {
+    public ResponseEntity<String> deleteCategory(@PathVariable int walletId, Authentication authentication) {
+        Wallet wallet = walletService.getWalletById(walletId);
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        if (!wallet.getUser().getId().equals(userDetails.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to delete this transaction.");
+        }
         walletService.deleteWallet(walletId);
+
         return ResponseEntity.ok("Wallets deleted successfully");
     }
 

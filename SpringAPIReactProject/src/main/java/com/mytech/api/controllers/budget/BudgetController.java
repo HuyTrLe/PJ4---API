@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.budget.BudgetDTO;
 import com.mytech.api.services.budget.BudgetService;
@@ -34,6 +38,7 @@ public class BudgetController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("#budgetDTO.userId == authentication.principal.id")
     public ResponseEntity<?> createBudget(@RequestBody @Valid BudgetDTO budgetDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -66,6 +71,7 @@ public class BudgetController {
     }
 
     @PutMapping("/update/{budgetId}")
+    @PreAuthorize("#budgetDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateBudget(@PathVariable int budgetId, @RequestBody @Valid BudgetDTO budgetDTO,
             BindingResult result) {
         if (result.hasErrors()) {
@@ -80,10 +86,15 @@ public class BudgetController {
     }
 
     @DeleteMapping("/delete/{budgetId}")
-    public ResponseEntity<?> deleteBudget(@PathVariable int budgetId) {
+    public ResponseEntity<?> deleteBudget(@PathVariable int budgetId, Authentication authentication) {
         Budget existingBudget = budgetService.getBudgetById(budgetId);
         if (existingBudget == null) {
             return ResponseEntity.notFound().build();
+        }
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        if (!existingBudget.getUser().getId().equals(userDetails.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to delete this transaction.");
         }
         budgetService.deleteBudget(budgetId);
         return ResponseEntity.noContent().build(); // 204 No Content

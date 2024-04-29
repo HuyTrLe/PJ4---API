@@ -184,19 +184,18 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	public Category getByCateId(Long categoryId) {
 		Optional<Category> categoryOptional = categoryRepository.findById(categoryId);
-
-		if (categoryOptional.isPresent()) {
-			Category category = categoryOptional.get();
-
-			Category resultCategoryDTO = new Category();
-			resultCategoryDTO.setId(category.getId());
-			resultCategoryDTO.setName(category.getName());
-
-			return resultCategoryDTO;
-		} else {
+		if (!categoryOptional.isPresent()) {
 			throw new IllegalArgumentException("Category not found with ID: " + categoryId);
-
 		}
+
+		Category category = categoryOptional.get();
+		// Assume we handle the category even if it does not have an associated user
+		Category resultCategory = new Category();
+		resultCategory.setId(category.getId());
+		resultCategory.setName(category.getName());
+		resultCategory.setUser(category.getUser()); // Copy the user as is, could be null
+
+		return resultCategory;
 	}
 
 }
