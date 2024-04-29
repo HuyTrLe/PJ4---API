@@ -10,4 +10,6 @@ import com.mytech.api.models.budget.Budget;
 @Repository
 public interface BudgetRepository extends JpaRepository<Budget, Integer> {
 	List<Budget> findByUserId(int userId);
+	
+    Budget findByUserIdAndCategory_Id(Long userId, Long categoryId);
 }
