@@ -32,6 +32,7 @@ import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
+import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.models.wallet.Wallet;
@@ -129,6 +130,26 @@ public class TransactionController {
 		Transaction transaction = transactionService.getTransactionById(transactionId);
 		if (transaction != null) {
 			TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
+			return ResponseEntity.ok(transactionDTO);
+		}
+		return ResponseEntity.notFound().build();
+	}
+	@PreAuthorize("#userId == authentication.principal.id")
+	@GetMapping("/getTop5NewTransaction/users/{userId}")
+	public ResponseEntity<?> getTop5NewTransaction(@PathVariable Integer userId) {
+		List<TransactionView> transaction = transactionService.getTop5NewTransaction(userId);
+		if (transaction != null) {
+			TransactionView transactionDTO = modelMapper.map(transaction, TransactionView.class);
+			return ResponseEntity.ok(transactionDTO);
+		}
+		return ResponseEntity.notFound().build();
+	}
+	@PreAuthorize("#userId == authentication.principal.id")
+	@GetMapping("/getTop5TransactionHightestMoney/users/{userId}")
+	public ResponseEntity<?> getTop5TransactionHightestMoney(@PathVariable Integer userId) {
+		List<TransactionView> transaction = transactionService.getTop5TransactionHightestMoney(userId);
+		if (transaction != null) {
+			TransactionView transactionDTO = modelMapper.map(transaction, TransactionView.class);
 			return ResponseEntity.ok(transactionDTO);
 		}
 		return ResponseEntity.notFound().build();

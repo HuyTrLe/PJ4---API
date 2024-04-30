@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.transaction.TransactionView;
 
 public interface TransactionService {
     Transaction saveTransaction(Transaction transaction);
@@ -27,4 +28,6 @@ public interface TransactionService {
     List<Transaction> getTotalExpenseByWalletId(int userId, int walletId, Enum type);
 
     List<Transaction> getTransactionsByWalletId(int userId, Integer walletId);
+    List<TransactionView> getTop5NewTransaction(int userId);
+    List<TransactionView> getTop5TransactionHightestMoney(int userId);
 }

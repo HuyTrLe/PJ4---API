@@ -4,11 +4,13 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.repositories.transaction.TransactionRepository;
 import com.mytech.api.services.budget.BudgetService;
 
@@ -104,6 +106,22 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public List<Transaction> getTransactionsByWalletId(int userId, Integer walletId) {
 		return transactionRepository.findByUserIdAndWallet_WalletId(userId, walletId);
+	}
+
+	@Override
+	public List<TransactionView> getTop5NewTransaction(int userId) {
+		PageRequest pageable = PageRequest.of(0, 5);
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransaction(userId, pageable);
+		List<TransactionView> transactions = transactionsPage.getContent();
+		return transactions;		
+	}
+
+	@Override
+	public List<TransactionView> getTop5TransactionHightestMoney(int userId) {
+		PageRequest pageable = PageRequest.of(0, 5);
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(userId, pageable);
+		List<TransactionView> transactions = transactionsPage.getContent(); 
+		return transactions;
 	}
 
 }

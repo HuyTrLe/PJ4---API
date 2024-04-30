@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.transaction.TransactionView;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
@@ -28,5 +29,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 	List<Transaction> getTotalExpenseByUserIdAndWallet_WalletIdAndCategoryType(int userId, int walletId, Enum type);
 
 	List<Transaction> findByUserIdAndWallet_WalletId(int userId, Integer walletId);
+	
+	@Query("SELECT c.name,ci.path,t.amount \n"
+			+ "FROM Transaction t\n"
+			+ "JOIN t.category c\n"
+			+ "JOIN c.icon ci where t.user.id = :userId")
+	Page<TransactionView> getTop5NewTransaction(int userId,Pageable pageable);
+	@Query("SELECT t FROM Transaction t where t.user.id = :userId order by amount  desc ")
+	Page<TransactionView> getTop5TransactionHightestMoney(int userId,Pageable pageable);
 
 }
+
+
