@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.transaction.TransactionView;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
@@ -30,4 +31,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 	List<Transaction> findByUserIdAndWallet_WalletId(int userId, Integer walletId);
 
     List<Transaction> findByCategory_Id(Long categoryId);
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionView(c.name, t.amount, ci.path) " +
+			"FROM Transaction t " +
+			"JOIN t.category c " +
+			"JOIN c.icon ci " +
+			"WHERE t.user.id = :userId")
+	Page<TransactionView> getTop5NewTransaction(int userId, Pageable pageable);
+
+	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(t.category.name, t.amount, c.icon.path) " +
+			"FROM Transaction t " +
+			"JOIN t.category c " +
+			"WHERE t.user.id = :userId " +
+			"ORDER BY t.amount DESC")
+	Page<TransactionView> getTop5TransactionHightestMoney(int userId, Pageable pageable);
+
 }

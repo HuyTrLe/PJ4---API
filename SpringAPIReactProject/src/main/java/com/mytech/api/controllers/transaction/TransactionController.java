@@ -32,6 +32,7 @@ import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
+import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.models.wallet.Wallet;
@@ -130,6 +131,24 @@ public class TransactionController {
 		if (transaction != null) {
 			TransactionDTO transactionDTO = modelMapper.map(transaction, TransactionDTO.class);
 			return ResponseEntity.ok(transactionDTO);
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	@GetMapping("/getTop5NewTransaction/users/{userId}")
+	public ResponseEntity<?> getTop5NewTransaction(@PathVariable Integer userId) {
+		List<TransactionView> transactions = transactionService.getTop5NewTransaction(userId);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	@GetMapping("/getTop5TransactionHightestMoney/users/{userId}")
+	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@PathVariable Integer userId) {
+		List<TransactionView> transactions = transactionService.getTop5TransactionHightestMoney(userId);
+		if (!transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
 		}
 		return ResponseEntity.notFound().build();
 	}
