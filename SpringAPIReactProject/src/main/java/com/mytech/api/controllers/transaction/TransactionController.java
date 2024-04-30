@@ -134,23 +134,21 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
-	@PreAuthorize("#userId == authentication.principal.id")
+
 	@GetMapping("/getTop5NewTransaction/users/{userId}")
 	public ResponseEntity<?> getTop5NewTransaction(@PathVariable Integer userId) {
-		List<TransactionView> transaction = transactionService.getTop5NewTransaction(userId);
-		if (transaction != null) {
-			TransactionView transactionDTO = modelMapper.map(transaction, TransactionView.class);
-			return ResponseEntity.ok(transactionDTO);
+		List<TransactionView> transactions = transactionService.getTop5NewTransaction(userId);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
 		}
 		return ResponseEntity.notFound().build();
 	}
-	@PreAuthorize("#userId == authentication.principal.id")
+
 	@GetMapping("/getTop5TransactionHightestMoney/users/{userId}")
-	public ResponseEntity<?> getTop5TransactionHightestMoney(@PathVariable Integer userId) {
-		List<TransactionView> transaction = transactionService.getTop5TransactionHightestMoney(userId);
-		if (transaction != null) {
-			TransactionView transactionDTO = modelMapper.map(transaction, TransactionView.class);
-			return ResponseEntity.ok(transactionDTO);
+	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@PathVariable Integer userId) {
+		List<TransactionView> transactions = transactionService.getTop5TransactionHightestMoney(userId);
+		if (!transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
 		}
 		return ResponseEntity.notFound().build();
 	}

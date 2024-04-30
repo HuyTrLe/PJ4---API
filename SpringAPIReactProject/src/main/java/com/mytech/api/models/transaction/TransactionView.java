@@ -1,6 +1,5 @@
 package com.mytech.api.models.transaction;
 
-
 import java.math.BigDecimal;
 
 import lombok.AllArgsConstructor;
@@ -13,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransactionView {
-	private int CategoryName;
-	private BigDecimal Amount;
-	private String Cate_Icon;
+	private String categoryName;
+	private BigDecimal amount;
+	private String cateIcon;
 }

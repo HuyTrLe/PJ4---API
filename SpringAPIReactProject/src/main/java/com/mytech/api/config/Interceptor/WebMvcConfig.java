@@ -37,6 +37,5 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/transactions/getTop5TransactionHightestMoney/users/**")
                 .addPathPatterns("/api/transactions/users/**");
 
-
     }
 }

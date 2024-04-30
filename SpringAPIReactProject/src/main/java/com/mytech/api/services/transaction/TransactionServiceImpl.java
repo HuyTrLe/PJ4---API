@@ -113,14 +113,15 @@ public class TransactionServiceImpl implements TransactionService {
 		PageRequest pageable = PageRequest.of(0, 5);
 		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransaction(userId, pageable);
 		List<TransactionView> transactions = transactionsPage.getContent();
-		return transactions;		
+		return transactions;
 	}
 
 	@Override
 	public List<TransactionView> getTop5TransactionHightestMoney(int userId) {
-		PageRequest pageable = PageRequest.of(0, 5);
-		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(userId, pageable);
-		List<TransactionView> transactions = transactionsPage.getContent(); 
+		Pageable pageable = PageRequest.of(0, 5);
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(userId,
+				pageable);
+		List<TransactionView> transactions = transactionsPage.getContent();
 		return transactions;
 	}
 
