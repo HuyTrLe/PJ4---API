@@ -11,10 +11,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class TransactionDTO {
     private Integer transactionId;
     private UserDTO user;
@@ -40,4 +42,6 @@ public class TransactionDTO {
         this.category = category;
         this.notes = notes;
     }
+    
+    
 }

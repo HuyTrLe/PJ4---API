@@ -29,4 +29,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
 	List<Transaction> findByUserIdAndWallet_WalletId(int userId, Integer walletId);
 
+    List<Transaction> findByCategory_Id(Long categoryId);
 }

@@ -149,87 +149,23 @@ public class TransactionController {
 		return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
 	}
 
-	@PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
 	@PutMapping("/update/{transactionId}")
-	public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
-			@RequestBody @Valid TransactionDTO transactionDTO, BindingResult result) {
-		if (result.hasErrors()) {
-			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
-					.collect(Collectors.joining(", "));
-			return ResponseEntity.badRequest().body(errors);
-		}
-		Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
-		Transaction existingTransaction = transactionService.getTransactionById(transactionId);
-		if (existingTransaction == null) {
-			return ResponseEntity.notFound().build();
-		}
+    @PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
+    public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
+                                               @RequestBody @Valid TransactionDTO transactionDTO,
+                                               BindingResult result) {
+	    System.out.println("Received DTO for update: " + transactionDTO);
 
-		UserDTO userDTO = transactionDTO.getUser();
-		if (userDTO == null || userDTO.getId() == null) {
-			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
-		}
-		Optional<User> existingUser = userRepository.findById(userDTO.getId());
-		if (!existingUser.isPresent()) {
-			return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
-		}
+        if (result.hasErrors()) {
+            String errors = result.getFieldErrors().stream()
+                                  .map(error -> error.getDefaultMessage())
+                                  .collect(Collectors.joining(", "));
+            return ResponseEntity.badRequest().body(errors);
+        }
 
-		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWallet().getWalletId());
-		if (existingWallet == null) {
-			return new ResponseEntity<>("Wallet not found with id: " + transactionDTO.getWallet().getWalletId(),
-					HttpStatus.NOT_FOUND);
-		}
-		Wallet wallet = existingTransaction.getWallet();
-		BigDecimal newBalance = calculateNewWalletBalance(wallet.getBalance(), existingTransaction.getAmount(),
-				transaction.getAmount());
-		if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-			return ResponseEntity.badRequest().body("Insufficient funds in the wallet");
-		}
-		wallet.setBalance(newBalance);
-		walletService.saveWallet(wallet);
-
-		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategory().getId());
-		if (existingCategory == null) {
-			return new ResponseEntity<>("Category not found with id: " + transactionDTO.getCategory().getId(),
-					HttpStatus.NOT_FOUND);
-		}
-
-		existingTransaction.setCategory(existingCategory);
-		existingTransaction.setUser(existingUser.get());
-		existingTransaction.setWallet(existingWallet);
-		existingTransaction.setAmount(transaction.getAmount());
-		existingTransaction.setTransactionDate(transaction.getTransactionDate());
-		if (existingCategory.getType() == CateTypeENum.INCOME) {
-			Income income = existingTransaction.getIncome();
-			income.setUser(existingUser.get());
-			income.setWallet(existingWallet);
-			income.setAmount(transaction.getAmount());
-			income.setIncomeDate(transaction.getTransactionDate());
-			income.setCategory(existingCategory);
-			income.setTransaction(transaction);
-			transaction.setIncome(income);
-		} else {
-			Expense expense = existingTransaction.getExpense();
-			expense.setUser(existingUser.get());
-			expense.setWallet(existingWallet);
-			expense.setAmount(transaction.getAmount());
-			expense.setExpenseDate(transaction.getTransactionDate());
-			expense.setCategory(existingCategory);
-			expense.setTransaction(transaction);
-			transaction.setExpense(expense);
-		}
-		Transaction updatedTransaction = transactionService.saveTransaction(existingTransaction);
-		TransactionDTO updatedTransactionDTO = modelMapper.map(updatedTransaction, TransactionDTO.class);
-		return ResponseEntity.ok(updatedTransactionDTO);
-	}
-
-	private BigDecimal calculateNewWalletBalance(BigDecimal currentBalance, BigDecimal oldAmount,
-			BigDecimal newAmount) {
-		if (newAmount.compareTo(oldAmount) > 0) { // newAmount > oldAmount
-			return currentBalance.subtract(newAmount.subtract(oldAmount));
-		} else { // newAmount <= oldAmount
-			return currentBalance.add(oldAmount.subtract(newAmount));
-		}
-	}
+        TransactionDTO updatedTransactionDTO = transactionService.updateTransaction(transactionId, transactionDTO);
+        return ResponseEntity.ok(updatedTransactionDTO);
+    }
 
 	@GetMapping("/allWallets/users/{userId}")
 	public ResponseEntity<List<TransactionDTO>> getAllTransactionsForAllWallet(@PathVariable int userId) {

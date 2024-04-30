@@ -6,11 +6,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.transaction.TransactionDTO;
 
 public interface TransactionService {
     Transaction saveTransaction(Transaction transaction);
 
     Transaction getTransactionById(Integer transactionId);
+    
+    TransactionDTO updateTransaction(Integer transactionId, TransactionDTO transactionDTO);
 
     List<Transaction> getAllTransactionsByAllWallet(int userId);
 
