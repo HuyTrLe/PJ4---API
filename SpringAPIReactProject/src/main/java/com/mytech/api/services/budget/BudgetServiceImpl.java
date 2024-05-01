@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.budget.Budget;
+import com.mytech.api.models.budget.BudgetResponse;
+import com.mytech.api.models.budget.ParamPudget;
 import com.mytech.api.models.notifications.NotificationDTO;
 import com.mytech.api.models.notifications.NotificationType;
 import com.mytech.api.models.transaction.Transaction;
@@ -192,5 +194,10 @@ public class BudgetServiceImpl implements BudgetService {
 
 		// Save the new budget
 		budgetRepository.save(newBudget);
+	}
+
+	@Override
+	public List<BudgetResponse> getBudgetWithTime(ParamPudget param) {
+		return budgetRepository.getBudgetWithTime(param.getUserId(), param.getFromDate(), param.getToDate());
 	}
 }

@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.budget.BudgetDTO;
+import com.mytech.api.models.budget.BudgetResponse;
+import com.mytech.api.models.budget.ParamPudget;
 import com.mytech.api.services.budget.BudgetService;
 
 import jakarta.validation.Valid;
@@ -68,6 +70,13 @@ public class BudgetController {
                 .map(budget -> modelMapper.map(budget, BudgetDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(budgetDTOs);
+    }
+    
+    @PostMapping("/getBudgetWithTime")
+ 
+    public ResponseEntity<List<BudgetResponse>> getBudgetWithTime(@RequestBody @Valid ParamPudget paramPudget, BindingResult result) {
+        List<BudgetResponse> budgets = budgetService.getBudgetWithTime(paramPudget);
+        return ResponseEntity.ok(budgets);
     }
 
     @PutMapping("/update/{budgetId}")
