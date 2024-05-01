@@ -21,7 +21,6 @@ import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.transaction.TransactionRecurringDTO;
 import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.recurrence.RecurrenceRepository;
 import com.mytech.api.repositories.transaction.TransactionRecurringRepository;
@@ -51,19 +50,19 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
         TransactionRecurring transactionRecurring = modelMapper.map(transactionRecurringDTO,
                 TransactionRecurring.class);
 
-        UserDTO userDTO = transactionRecurringDTO.getUser();
-        if (userDTO == null || userDTO.getId() == null) {
+        if (transactionRecurringDTO.getUserId() == 0) {
             return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
         }
 
-        Optional<User> existingUser = userRepository.findById(userDTO.getId());
+        Optional<User> existingUser = userRepository.findById(transactionRecurringDTO.getUserId());
         if (!existingUser.isPresent()) {
-            return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("User not found with id: " + transactionRecurringDTO.getUserId(),
+                    HttpStatus.NOT_FOUND);
         }
-        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWallet().getWalletId());
+        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWalletId());
         if (existingWallet == null) {
             return new ResponseEntity<>(
-                    "Wallet not found with id: " + transactionRecurringDTO.getWallet().getWalletId(),
+                    "Wallet not found with id: " + transactionRecurringDTO.getWalletId(),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -96,19 +95,19 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        UserDTO userDTO = transactionRecurringDTO.getUser();
-        if (userDTO == null || userDTO.getId() == null) {
+        if (transactionRecurringDTO.getUserId() == 0) {
             return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
         }
 
-        Optional<User> existingUser = userRepository.findById(userDTO.getId());
+        Optional<User> existingUser = userRepository.findById(transactionRecurringDTO.getUserId());
         if (!existingUser.isPresent()) {
-            return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("User not found with id: " + transactionRecurringDTO.getUserId(),
+                    HttpStatus.NOT_FOUND);
         }
-        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWallet().getWalletId());
+        Wallet existingWallet = walletService.getWalletById(transactionRecurringDTO.getWalletId());
         if (existingWallet == null) {
             return new ResponseEntity<>(
-                    "Wallet not found with id: " + transactionRecurringDTO.getWallet().getWalletId(),
+                    "Wallet not found with id: " + transactionRecurringDTO.getWalletId(),
                     HttpStatus.NOT_FOUND);
         }
 

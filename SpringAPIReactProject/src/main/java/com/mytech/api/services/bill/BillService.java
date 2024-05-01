@@ -21,7 +21,7 @@ public interface BillService {
 
 	ResponseEntity<?> addNewBill(BillDTO billDTO);
 
-	ResponseEntity<?> updateBill(int billId, BillDTO billDTO);
+	BillDTO updateBill(int billId, BillDTO billDTO);
 
 	List<Bill> findByRecurrence_DueDate(LocalDate dueDate);
 

@@ -34,9 +34,7 @@ import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.models.wallet.Wallet;
-import com.mytech.api.models.wallet.WalletDTO;
 import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 import com.mytech.api.services.transaction.TransactionService;
@@ -60,7 +58,7 @@ public class TransactionController {
 	@Autowired
 	ModelMapper modelMapper;
 
-	@PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
+	@PreAuthorize("#transactionDTO.userId == authentication.principal.id")
 	@PostMapping("/create")
 	public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionDTO transactionDTO,
 			BindingResult result) {
@@ -71,29 +69,21 @@ public class TransactionController {
 			return ResponseEntity.badRequest().body(errors);
 		}
 		Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
-		UserDTO userDTO = transactionDTO.getUser();
-		if (userDTO == null || userDTO.getId() == null) {
+		if (transactionDTO.getUserId() == 0) {
 			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
 		}
-		Optional<User> existingUser = userRepository.findById(userDTO.getId());
+		Optional<User> existingUser = userRepository.findById(transactionDTO.getUserId());
 		if (!existingUser.isPresent()) {
-			return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>("User not found with id: " + transactionDTO.getUserId(), HttpStatus.NOT_FOUND);
 		}
-		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWallet().getWalletId());
+		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWalletId());
 		if (existingWallet == null) {
-			return new ResponseEntity<>("Wallet not found with id: " + transactionDTO.getWallet().getWalletId(),
+			return new ResponseEntity<>("Wallet not found with id: " + transactionDTO.getWalletId(),
 					HttpStatus.NOT_FOUND);
 		}
-		WalletDTO existingWalletDTO = modelMapper.map(existingWallet, WalletDTO.class);
-		try {
-			existingWalletDTO.addTransactionBalance(transactionDTO);
-			walletService.saveWallet(modelMapper.map(existingWalletDTO, Wallet.class));
-		} catch (RuntimeException e) {
-			return new ResponseEntity<>("Balance is not enough to complete this transaction", HttpStatus.BAD_REQUEST);
-		}
-		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategory().getId());
+		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategoryId());
 		if (existingCategory == null) {
-			return new ResponseEntity<>("Category not found with id: " + transactionDTO.getCategory().getId(),
+			return new ResponseEntity<>("Category not found with id: " + transactionDTO.getCategoryId(),
 					HttpStatus.NOT_FOUND);
 		}
 		transaction.setCategory(existingCategory);
@@ -169,22 +159,22 @@ public class TransactionController {
 	}
 
 	@PutMapping("/update/{transactionId}")
-    @PreAuthorize("#transactionDTO.user.id == authentication.principal.id")
-    public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
-                                               @RequestBody @Valid TransactionDTO transactionDTO,
-                                               BindingResult result) {
-	    System.out.println("Received DTO for update: " + transactionDTO);
+	@PreAuthorize("#transactionDTO.userId == authentication.principal.id")
+	public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
+			@RequestBody @Valid TransactionDTO transactionDTO,
+			BindingResult result) {
+		System.out.println("Received DTO for update: " + transactionDTO);
 
-        if (result.hasErrors()) {
-            String errors = result.getFieldErrors().stream()
-                                  .map(error -> error.getDefaultMessage())
-                                  .collect(Collectors.joining(", "));
-            return ResponseEntity.badRequest().body(errors);
-        }
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream()
+					.map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining(", "));
+			return ResponseEntity.badRequest().body(errors);
+		}
 
-        TransactionDTO updatedTransactionDTO = transactionService.updateTransaction(transactionId, transactionDTO);
-        return ResponseEntity.ok(updatedTransactionDTO);
-    }
+		TransactionDTO updatedTransactionDTO = transactionService.updateTransaction(transactionId, transactionDTO);
+		return ResponseEntity.ok(updatedTransactionDTO);
+	}
 
 	@GetMapping("/allWallets/users/{userId}")
 	public ResponseEntity<List<TransactionDTO>> getAllTransactionsForAllWallet(@PathVariable int userId) {

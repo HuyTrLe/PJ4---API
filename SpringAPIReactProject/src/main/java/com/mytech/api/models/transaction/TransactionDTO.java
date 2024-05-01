@@ -3,10 +3,6 @@ package com.mytech.api.models.transaction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import com.mytech.api.models.category.CategoryDTO;
-import com.mytech.api.models.user.UserDTO;
-import com.mytech.api.models.wallet.WalletDTO;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,8 +15,8 @@ import lombok.ToString;
 @ToString
 public class TransactionDTO {
     private Integer transactionId;
-    private UserDTO user;
-    private WalletDTO wallet;
+    private Long userId;
+    private int walletId;
 
     @NotNull(message = "Amount cannot be null")
     private BigDecimal amount;
@@ -28,20 +24,19 @@ public class TransactionDTO {
     @NotNull(message = "Date cannot be null")
     private LocalDate transactionDate;
 
-    private CategoryDTO category;
+    private Long categoryId;
 
     private String notes;
 
-    public TransactionDTO(Integer transactionId, UserDTO user, WalletDTO wallet, BigDecimal amount,
-            LocalDate transactionDate, CategoryDTO category, String notes) {
+    public TransactionDTO(Integer transactionId, Long userId, int walletId, BigDecimal amount,
+            LocalDate transactionDate, long categoryId, String notes) {
         this.transactionId = transactionId;
-        this.user = user;
-        this.wallet = wallet;
+        this.userId = userId;
+        this.walletId = walletId;
         this.amount = amount;
         this.transactionDate = transactionDate;
-        this.category = category;
+        this.categoryId = categoryId;
         this.notes = notes;
     }
-    
-    
+
 }

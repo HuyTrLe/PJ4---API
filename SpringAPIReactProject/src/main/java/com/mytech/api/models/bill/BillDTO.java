@@ -2,10 +2,7 @@ package com.mytech.api.models.bill;
 
 import java.math.BigDecimal;
 
-import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.recurrence.RecurrenceDTO;
-import com.mytech.api.models.user.UserDTO;
-import com.mytech.api.models.wallet.WalletDTO;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +17,7 @@ public class BillDTO {
 
 	private int billId;
 
-	private UserDTO user;
+	private Long userId;
 
 	@DecimalMin(value = "0.01", message = "Amount must be greater than 0")
 	@NotNull(message = "Amount must not be null")
@@ -28,17 +25,17 @@ public class BillDTO {
 
 	private RecurrenceDTO recurrence;
 
-	private CategoryDTO category;
+	private Long categoryId;
 
-	private WalletDTO wallet;
+	private int walletId;
 
-	public BillDTO(int billId, UserDTO user, BigDecimal amount,
-			RecurrenceDTO recurrence, CategoryDTO category, WalletDTO wallet) {
+	public BillDTO(int billId, Long userId, BigDecimal amount,
+			RecurrenceDTO recurrence, Long categoryId, int walletId) {
 		this.billId = billId;
-		this.user = user;
+		this.userId = userId;
 		this.amount = amount;
 		this.recurrence = recurrence;
-		this.category = category;
-		this.wallet = wallet;
+		this.categoryId = categoryId;
+		this.walletId = walletId;
 	}
 }

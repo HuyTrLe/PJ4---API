@@ -58,4 +58,6 @@ public class Debt {
 
     @Column(name = "notes")
     private String notes;
+
+    private boolean isDelete = false;
 }

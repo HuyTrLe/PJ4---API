@@ -54,7 +54,7 @@ public class BillController {
 	@Autowired
 	ExpenseService expenseService;
 
-	@PreAuthorize("#billDTO.user.id == authentication.principal.id")
+	@PreAuthorize("#billDTO.userId == authentication.principal.id")
 	@PostMapping("/create")
 	public ResponseEntity<?> addNewBill(@RequestBody @Valid BillDTO billDTO, BindingResult result) {
 		if (result.hasErrors()) {
@@ -87,7 +87,7 @@ public class BillController {
 		return new ResponseEntity<>(billPages, HttpStatus.OK);
 	}
 
-	@PreAuthorize("#billDTO.user.id == authentication.principal.id")
+	@PreAuthorize("#billDTO.userId == authentication.principal.id")
 	@PutMapping("/update/{billId}")
 	public ResponseEntity<?> updateBill(@PathVariable int billId, @RequestBody @Valid BillDTO billDTO,
 			BindingResult result) {
@@ -96,7 +96,8 @@ public class BillController {
 					.collect(Collectors.joining(", "));
 			return ResponseEntity.badRequest().body(errors);
 		}
-		return billService.updateBill(billId, billDTO);
+		BillDTO updateBillDTO = billService.updateBill(billId, billDTO);
+		return ResponseEntity.ok(updateBillDTO);
 	}
 
 	@DeleteMapping("/delete/{billId}")

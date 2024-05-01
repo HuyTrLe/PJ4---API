@@ -21,7 +21,6 @@ import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.user.User;
-import com.mytech.api.models.user.UserDTO;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.bill.BillRepository;
 import com.mytech.api.repositories.recurrence.RecurrenceRepository;
@@ -70,24 +69,23 @@ public class BillServiceImpl implements BillService {
 	public ResponseEntity<?> addNewBill(BillDTO billDTO) {
 		Bill bill = modelMapper.map(billDTO, Bill.class);
 
-		UserDTO userDTO = billDTO.getUser();
-		if (userDTO == null || userDTO.getId() == null) {
+		if (billDTO.getUserId() == 0) {
 			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
 		}
-		Optional<User> existingUser = userRepository.findById(userDTO.getId());
+		Optional<User> existingUser = userRepository.findById(billDTO.getUserId());
 		if (!existingUser.isPresent()) {
-			return new ResponseEntity<>("User not found with id: " + userDTO.getId(), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>("User not found with id: " + billDTO.getUserId(), HttpStatus.NOT_FOUND);
 		}
 
-		Category existingCategory = categoryService.getByCateId(billDTO.getCategory().getId());
+		Category existingCategory = categoryService.getByCateId(billDTO.getCategoryId());
 		if (existingCategory == null) {
-			return new ResponseEntity<>("Category not found with id: " + billDTO.getCategory().getId(),
+			return new ResponseEntity<>("Category not found with id: " + billDTO.getCategoryId(),
 					HttpStatus.NOT_FOUND);
 		}
 
-		Wallet existingWallet = walletService.getWalletById(billDTO.getWallet().getWalletId());
+		Wallet existingWallet = walletService.getWalletById(billDTO.getWalletId());
 		if (existingWallet == null) {
-			return new ResponseEntity<>("Wallet not found with id: " + billDTO.getWallet().getWalletId(),
+			return new ResponseEntity<>("Wallet not found with id: " + billDTO.getWalletId(),
 					HttpStatus.NOT_FOUND);
 		}
 		Recurrence newRecurrence = recurrenceConverter.convertToEntity(billDTO.getRecurrence());
@@ -105,38 +103,16 @@ public class BillServiceImpl implements BillService {
 	}
 
 	@Override
-	public ResponseEntity<?> updateBill(int billId, BillDTO billDTO) {
-		Optional<User> userOptional = userRepository.findById(billDTO.getUser().getId());
-		if (!userOptional.isPresent()) {
-			return new ResponseEntity<>("User not found with id: " +
-					billDTO.getUser().getId(), HttpStatus.NOT_FOUND);
-		}
-		Optional<Bill> existingBillOptional = billRepository.findById(billId);
-		if (!existingBillOptional.isPresent()) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-
-		Category categoryOptional = categoryService.getByCateId(billDTO.getCategory().getId());
-		if (categoryOptional == null) {
-			return new ResponseEntity<>("Category not found with id: " +
-					billDTO.getCategory().getId(), HttpStatus.NOT_FOUND);
-		}
-		Wallet walletOptional = walletService.getWalletById(billDTO.getWallet().getWalletId());
-		if (walletOptional == null) {
-			return new ResponseEntity<>("Wallet not found with id: " +
-					billDTO.getWallet().getWalletId(), HttpStatus.NOT_FOUND);
-		}
-		Recurrence recurrenceOptional = recurrenceRepository.findById(billDTO.getRecurrence().getRecurrenceId())
-				.orElse(null);
-		if (recurrenceOptional == null) {
-			return new ResponseEntity<>("Recurrence not found with id: " +
-					billDTO.getRecurrence().getRecurrenceId(), HttpStatus.NOT_FOUND);
-		}
+	public BillDTO updateBill(int billId, BillDTO billDTO) {
+		Optional<User> userOptional = userRepository.findById(billDTO.getUserId());
+		Bill existingBill = billRepository.findById(billId)
+				.orElseThrow(() -> new RuntimeException("Bill not found with id: " + billId));
+		Category categoryOptional = categoryService.getByCateId(billDTO.getCategoryId());
+		Wallet walletOptional = walletService.getWalletById(billDTO.getWalletId());
 		Recurrence updateRecurrence = recurrenceConverter.convertToEntity(billDTO.getRecurrence());
 		updateRecurrence.setStartDate(billDTO.getRecurrence().getStartDate());
 		updateRecurrence.setUser(userOptional.get());
 		recurrenceRepository.save(updateRecurrence);
-		Bill existingBill = existingBillOptional.get();
 		existingBill.setAmount(billDTO.getAmount());
 		existingBill.setRecurrence(updateRecurrence);
 		existingBill.setCategory(categoryOptional);
@@ -145,8 +121,7 @@ public class BillServiceImpl implements BillService {
 
 		Bill updatedBill = modelMapper.map(billDTO, Bill.class);
 		updatedBill = billRepository.save(updatedBill);
-		BillDTO updatedBillDTO = modelMapper.map(updatedBill, BillDTO.class);
-		return ResponseEntity.ok(updatedBillDTO);
+		return modelMapper.map(updatedBill, BillDTO.class);
 	}
 
 	@Override
