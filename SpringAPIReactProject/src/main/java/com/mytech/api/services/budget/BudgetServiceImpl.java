@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +55,7 @@ public class BudgetServiceImpl implements BudgetService {
 			notificationService.sendNotification(notificationDTO);
 		}
 
-		long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), savedBudget.getPeriod_end());
+		long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), savedBudget.getPeriodEnd());
 		if (daysUntilDue <= 3) {
 			NotificationDTO notificationDTO = new NotificationDTO();
 			notificationDTO.setUserId(savedBudget.getUser().getId());
@@ -82,7 +83,7 @@ public class BudgetServiceImpl implements BudgetService {
 			}
 
 			// Check if the budget is about to be due
-			long daysUntilDue = ChronoUnit.DAYS.between(today, budget.getPeriod_end());
+			long daysUntilDue = ChronoUnit.DAYS.between(today, budget.getPeriodEnd());
 			if (daysUntilDue <= 3) {
 				sendDueNotification(budget);
 			}
@@ -192,5 +193,18 @@ public class BudgetServiceImpl implements BudgetService {
 
 		// Save the new budget
 		budgetRepository.save(newBudget);
+	}
+
+	@Override
+	public List<Budget> getValidBudget(int userId) {
+		LocalDate today = LocalDate.now();
+	    LocalDate lastDayOfMonth = today.with(TemporalAdjusters.lastDayOfMonth());
+	    return budgetRepository.findByUserIdAndPeriodEndBetween(userId, today, lastDayOfMonth);
+	}
+
+	@Override
+	public List<Budget> getNotValidBudget(int userId) {
+		LocalDate today = LocalDate.now();
+	    return budgetRepository.findByUserIdAndPeriodEndLessThan(userId, today);
 	}
 }

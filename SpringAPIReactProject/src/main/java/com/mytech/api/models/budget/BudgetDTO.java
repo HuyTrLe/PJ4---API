@@ -17,7 +17,7 @@ public class BudgetDTO {
 	private Integer categoryId;
 	private BigDecimal amount;
 	private BigDecimal threshold_amount;
-	private LocalDate period_start;
-	private LocalDate period_end;
+	private LocalDate periodStart;
+	private LocalDate periodEnd;
 
 }

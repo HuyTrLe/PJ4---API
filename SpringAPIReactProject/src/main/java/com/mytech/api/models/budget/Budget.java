@@ -46,11 +46,9 @@ public class Budget {
 	@Column(nullable = true, precision = 10, scale = 2)
 	private BigDecimal threshold_amount;
 
-	@Column(nullable = false)
-	@Temporal(TemporalType.DATE)
-	private LocalDate period_start;
+	@Column(name = "period_start", nullable = false)
+	private LocalDate periodStart;
 
-	@Column(nullable = false)
-	@Temporal(TemporalType.DATE)
-	private LocalDate period_end;
+	@Column(name = "period_end", nullable = false)
+	private LocalDate periodEnd;
 }
