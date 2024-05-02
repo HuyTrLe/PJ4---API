@@ -5,8 +5,10 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
+import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionView;
 
 public interface TransactionService {
@@ -35,4 +37,6 @@ public interface TransactionService {
     List<TransactionView> getTop5NewTransaction(int userId);
 
     List<TransactionView> getTop5TransactionHightestMoney(int userId);
+   
+    List<TransactionData> getTransactionWithTime(ParamBudget param);
 }

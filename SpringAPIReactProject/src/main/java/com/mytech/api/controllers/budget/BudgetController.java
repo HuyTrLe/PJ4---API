@@ -23,7 +23,7 @@ import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.budget.BudgetDTO;
 import com.mytech.api.models.budget.BudgetResponse;
-import com.mytech.api.models.budget.ParamPudget;
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.services.budget.BudgetService;
 
 import jakarta.validation.Valid;
@@ -75,7 +75,7 @@ public class BudgetController {
     
     @PostMapping("/getBudgetWithTime")
  
-    public ResponseEntity<List<BudgetResponse>> getBudgetWithTime(@RequestBody @Valid ParamPudget paramPudget, BindingResult result) {
+    public ResponseEntity<List<BudgetResponse>> getBudgetWithTime(@RequestBody @Valid ParamBudget paramPudget, BindingResult result) {
         List<BudgetResponse> budgets = budgetService.getBudgetWithTime(paramPudget);
         return ResponseEntity.ok(budgets);
     }

@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ParamPudget {
+public class ParamBudget {
 	private int userId;
 	private LocalDate fromDate;
 	private LocalDate toDate;

@@ -11,10 +11,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.budget.Budget;
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
+import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CategoryRepository;
@@ -84,7 +86,8 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@Override
 	public Transaction saveTransaction(Transaction transaction) {
-		boolean isUpdate = transaction.getTransactionId() != null;
+		
+		boolean isUpdate = transaction.getTransactionId() != null && transaction.getTransactionId() != 0;
 		BigDecimal oldAmount = null;
 
 		if (isUpdate) {
@@ -247,6 +250,12 @@ public class TransactionServiceImpl implements TransactionService {
 				pageable);
 		List<TransactionView> transactions = transactionsPage.getContent();
 		return transactions;
+	}
+
+	@Override
+	public List<TransactionData> getTransactionWithTime(ParamBudget param) {
+		// TODO Auto-generated method stub
+		return transactionRepository.getTransactionWithTime(param.getUserId(),param.getFromDate(), param.getToDate());
 	}
 
 }

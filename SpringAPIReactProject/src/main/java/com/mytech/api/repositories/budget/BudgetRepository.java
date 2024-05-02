@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.budget.BudgetResponse;
-import com.mytech.api.models.budget.ParamPudget;
+import com.mytech.api.models.budget.ParamBudget;
 
 @Repository
 public interface BudgetRepository extends JpaRepository<Budget, Integer> {

@@ -1,5 +1,6 @@
 package com.mytech.api.repositories.transaction;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -8,8 +9,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionView;
+
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
@@ -35,7 +39,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			"FROM Transaction t " +
 			"JOIN t.category c " +
 			"JOIN c.icon ci " +
-			"WHERE t.user.id = :userId")
+			"WHERE t.user.id = :userId order by t.id desc")
 	Page<TransactionView> getTop5NewTransaction(int userId, Pageable pageable);
 
 	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(t.category.name, t.amount, c.icon.path) " +
@@ -44,5 +48,29 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			"WHERE t.user.id = :userId " +
 			"ORDER BY t.amount DESC")
 	Page<TransactionView> getTop5TransactionHightestMoney(int userId, Pageable pageable);
+	
+//	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" +
+//            "c.name, ci.path, t.amount, c.type, " +
+//            "(SELECT SUM(tx.amount) FROM Transaction tx " +
+//            "JOIN tx.category tc " +
+//            "WHERE tc.type = c.type AND tx.user.id = :userId " +
+//            "GROUP BY tc.type)) as totalAmount " +
+//            "FROM Transaction t " +
+//            "JOIN t.category c " +
+//            "JOIN c.icon ci " +
+//            "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate " + 
+//            "ORDER BY t.id DESC")
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" +
+            "c.name, ci.path, t.amount, c.type, " +
+            "(SELECT SUM(tx.amount) FROM Transaction tx " +
+            "JOIN tx.category tc " +
+            "WHERE tc.type = c.type AND tx.user.id = :userId " +
+            "GROUP BY tc.type) ) " +
+            "FROM Transaction t " +
+            "JOIN t.category c " +
+            "JOIN c.icon ci " +
+            "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate " + 
+            "ORDER BY t.id DESC")
+	List<TransactionData> getTransactionWithTime(int userId, LocalDate fromDate, LocalDate toDate);
 
 }

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.budget.BudgetResponse;
-import com.mytech.api.models.budget.ParamPudget;
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.notifications.NotificationDTO;
 import com.mytech.api.models.notifications.NotificationType;
 import com.mytech.api.models.transaction.Transaction;
@@ -198,7 +198,7 @@ public class BudgetServiceImpl implements BudgetService {
 	}
 
 	@Override
-	public List<BudgetResponse> getBudgetWithTime(ParamPudget param) {
+	public List<BudgetResponse> getBudgetWithTime(ParamBudget param) {
 		return budgetRepository.getBudgetWithTime(param.getUserId(), param.getFromDate(), param.getToDate());
 	}
 	
