@@ -1,6 +1,7 @@
 package com.mytech.api.models.budget;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
@@ -10,9 +11,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BudgetResponse extends Budget{
+public class BudgetResponse{
 
-	private int CategoryName;
-	private int CategoryIcon;
-
+	  private BigDecimal amount;
+	  private BigDecimal thresholdAmount;
+	  private String categoryName;       
+	  private String categoryIcon; 
 }

@@ -20,11 +20,13 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
     
     Optional<Budget> findByCategoryId(Long categoryId);
     
+
     List<Budget> findByUserIdAndPeriodEndBetween(int userId, LocalDate startDate, LocalDate endDate);
     
     List<Budget> findByUserIdAndPeriodEndLessThan(int userId, LocalDate date);
     
-    @Query("SELECT t FROM Budget t WHERE t.user.id = :userId and t.periodStart <= :toDate and t.periodEnd >= :fromDate")
+
+    @Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.amount, t.threshold_amount, c.name, ci.path) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.period_start <= :toDate and t.period_end >= :fromDate")
     List<BudgetResponse> getBudgetWithTime(int userId, LocalDate fromDate, LocalDate toDate);
 }
 
