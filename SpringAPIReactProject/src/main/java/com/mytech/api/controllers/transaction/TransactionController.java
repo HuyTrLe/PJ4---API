@@ -62,6 +62,7 @@ public class TransactionController {
 	@PostMapping("/create")
 	public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionDTO transactionDTO,
 			BindingResult result) {
+		System.out.println("Tu ne");
 		if (result.hasErrors()) {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining(", "));
