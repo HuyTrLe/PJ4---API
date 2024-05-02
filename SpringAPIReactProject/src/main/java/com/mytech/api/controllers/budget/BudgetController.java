@@ -1,5 +1,6 @@
 package com.mytech.api.controllers.budget;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -107,5 +108,23 @@ public class BudgetController {
         }
         budgetService.deleteBudget(budgetId);
         return ResponseEntity.noContent().build(); // 204 No Content
+    }
+    
+    @GetMapping("valid/user/{userId}")
+    public ResponseEntity<List<BudgetDTO>> getValidBudgetsByUserId(@PathVariable int userId) {
+        List<Budget> validBudgets = budgetService.getValidBudget(userId);
+        List<BudgetDTO> validBudgetDTOs = validBudgets.stream()
+                .map(budget -> modelMapper.map(budget, BudgetDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(validBudgetDTOs);
+    }
+    
+    @GetMapping("not_valid/user/{userId}")
+    public ResponseEntity<List<BudgetDTO>> getNotValidBudgetsByUserId(@PathVariable int userId) {
+        List<Budget> validBudgets = budgetService.getNotValidBudget(userId);
+        List<BudgetDTO> validBudgetDTOs = validBudgets.stream()
+                .map(budget -> modelMapper.map(budget, BudgetDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(validBudgetDTOs);
     }
 }
