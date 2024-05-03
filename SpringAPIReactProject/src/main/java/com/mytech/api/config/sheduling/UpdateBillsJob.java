@@ -14,7 +14,6 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
 
 import com.mytech.api.models.bill.Bill;
-import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.recurrence.MonthOption;
@@ -88,24 +87,29 @@ public class UpdateBillsJob extends QuartzJobBean {
                     transaction.setWallet(bill.getWallet());
                     transaction.setTransactionDate(currentDate);
                     transaction.setNotes("Pay Bills");
-                    if (bill.getCategory().getType().INCOME != null) {
-                        Income income = new Income();
-                        income.setUser(bill.getUser());
-                        income.setWallet(bill.getWallet());
-                        income.setAmount(bill.getAmount());
-                        income.setIncomeDate(currentDate);
-                        income.setCategory(bill.getCategory());
-                        income.setTransaction(transaction);
-                        transaction.setIncome(income);
-                    } else {
-                        Expense expense = new Expense();
-                        expense.setUser(bill.getUser());
-                        expense.setWallet(bill.getWallet());
-                        expense.setAmount(bill.getAmount());
-                        expense.setExpenseDate(currentDate);
-                        expense.setCategory(bill.getCategory());
-                        expense.setTransaction(transaction);
-                        transaction.setExpense(expense);
+
+                    switch (bill.getCategory().getType()) {
+                        case INCOME:
+                            Income income = new Income();
+                            income.setUser(bill.getUser());
+                            income.setWallet(bill.getWallet());
+                            income.setAmount(bill.getAmount());
+                            income.setIncomeDate(currentDate);
+                            income.setCategory(bill.getCategory());
+                            income.setTransaction(transaction);
+                            transaction.setIncome(income);
+                            break;
+                        case EXPENSE:
+                            Expense expense = new Expense();
+                            expense.setUser(bill.getUser());
+                            expense.setWallet(bill.getWallet());
+                            expense.setAmount(bill.getAmount());
+                            expense.setExpenseDate(currentDate);
+                            expense.setCategory(bill.getCategory());
+                            expense.setTransaction(transaction);
+                            transaction.setExpense(expense);
+                        default:
+                            break;
                     }
                     transactionRepository.save(transaction);
                     logger.info("Updated bill ID: {} with new due date: {}", bill.getBillId(), nextDueDate);
@@ -144,24 +148,29 @@ public class UpdateBillsJob extends QuartzJobBean {
                     transaction.setWallet(transactionRecurring.getWallet());
                     transaction.setTransactionDate(currentDate);
                     transaction.setNotes("Pay Transaction Recurring");
-                    if (transactionRecurring.getCategory().getType() == CateTypeENum.INCOME) {
-                        Income income = new Income();
-                        income.setUser(transactionRecurring.getUser());
-                        income.setWallet(transactionRecurring.getWallet());
-                        income.setAmount(transactionRecurring.getAmount());
-                        income.setIncomeDate(currentDate);
-                        income.setCategory(transactionRecurring.getCategory());
-                        income.setTransaction(transaction);
-                        transaction.setIncome(income);
-                    } else {
-                        Expense expense = new Expense();
-                        expense.setUser(transactionRecurring.getUser());
-                        expense.setWallet(transactionRecurring.getWallet());
-                        expense.setAmount(transactionRecurring.getAmount());
-                        expense.setExpenseDate(currentDate);
-                        expense.setCategory(transactionRecurring.getCategory());
-                        expense.setTransaction(transaction);
-                        transaction.setExpense(expense);
+                    switch (transactionRecurring.getCategory().getType()) {
+                        case INCOME:
+                            Income income = new Income();
+                            income.setUser(transactionRecurring.getUser());
+                            income.setWallet(transactionRecurring.getWallet());
+                            income.setAmount(transactionRecurring.getAmount());
+                            income.setIncomeDate(currentDate);
+                            income.setCategory(transactionRecurring.getCategory());
+                            income.setTransaction(transaction);
+                            transaction.setIncome(income);
+                            break;
+                        case EXPENSE:
+                            Expense expense = new Expense();
+                            expense.setUser(transactionRecurring.getUser());
+                            expense.setWallet(transactionRecurring.getWallet());
+                            expense.setAmount(transactionRecurring.getAmount());
+                            expense.setExpenseDate(currentDate);
+                            expense.setCategory(transactionRecurring.getCategory());
+                            expense.setTransaction(transaction);
+                            transaction.setExpense(expense);
+                            break;
+                        default:
+                            break;
                     }
                     transactionRepository.save(transaction);
                     logger.info("Updated bill ID: {} with new due date: {}",

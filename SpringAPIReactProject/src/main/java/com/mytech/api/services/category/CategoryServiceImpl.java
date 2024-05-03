@@ -193,7 +193,8 @@ public class CategoryServiceImpl implements CategoryService {
 		Category resultCategory = new Category();
 		resultCategory.setId(category.getId());
 		resultCategory.setName(category.getName());
-		resultCategory.setUser(category.getUser()); // Copy the user as is, could be null
+		resultCategory.setUser(category.getUser());
+		resultCategory.setType(category.getType());
 
 		return resultCategory;
 	}

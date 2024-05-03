@@ -6,6 +6,8 @@ import java.util.List;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.debt.Debt;
+import com.mytech.api.models.expense.Expense;
+import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.user.User;
@@ -13,6 +15,8 @@ import com.mytech.api.models.user.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -36,7 +40,7 @@ public class Category {
 	@Column(nullable = false)
 	private String name;
 
-	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
 	private CateTypeENum type;
 
 	@ManyToOne
@@ -61,6 +65,12 @@ public class Category {
 
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<TransactionRecurring> transactionRecurrings = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Expense> expenses = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Income> incomes = new ArrayList<>();
 
 	public Category(String name, CateTypeENum type, Cat_Icon icon, User user) {
 		this.name = name;

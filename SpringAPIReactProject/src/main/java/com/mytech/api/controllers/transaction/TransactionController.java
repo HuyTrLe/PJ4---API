@@ -99,27 +99,34 @@ public class TransactionController {
 		transaction.setWallet(existingWallet);
 		transaction.setAmount(transaction.getAmount());
 		transaction.setTransactionDate(transaction.getTransactionDate());
+		System.out.println("Existing Category: " + existingCategory);
 		System.out.println("Category Type: " + existingCategory.getType());
 
-		if ((existingCategory.getType().INCOME) != null) {
-			Income income = new Income();
-			income.setUser(existingUser.get());
-			income.setWallet(existingWallet);
-			income.setAmount(transaction.getAmount());
-			income.setIncomeDate(transaction.getTransactionDate());
-			income.setCategory(existingCategory);
-			income.setTransaction(transaction);
-			transaction.setIncome(income);
-		} else {
-			Expense expense = new Expense();
-			expense.setUser(existingUser.get());
-			expense.setWallet(existingWallet);
-			expense.setAmount(transaction.getAmount());
-			expense.setExpenseDate(transaction.getTransactionDate());
-			expense.setCategory(existingCategory);
-			expense.setTransaction(transaction);
-			transaction.setExpense(expense);
+		switch (existingCategory.getType()) {
+			case INCOME:
+				Income income = new Income();
+				income.setUser(existingUser.get());
+				income.setWallet(existingWallet);
+				income.setAmount(transaction.getAmount());
+				income.setIncomeDate(transaction.getTransactionDate());
+				income.setCategory(existingCategory);
+				income.setTransaction(transaction);
+				transaction.setIncome(income);
+				break;
+			case EXPENSE:
+				Expense expense = new Expense();
+				expense.setUser(existingUser.get());
+				expense.setWallet(existingWallet);
+				expense.setAmount(transaction.getAmount());
+				expense.setExpenseDate(transaction.getTransactionDate());
+				expense.setCategory(existingCategory);
+				expense.setTransaction(transaction);
+				transaction.setExpense(expense);
+				break;
+			default:
+				break;
 		}
+
 		Transaction savedTransaction = transactionService.saveTransaction(transaction);
 		TransactionDTO savedTransactionDTO = modelMapper.map(savedTransaction, TransactionDTO.class);
 		return ResponseEntity.ok(savedTransactionDTO);
