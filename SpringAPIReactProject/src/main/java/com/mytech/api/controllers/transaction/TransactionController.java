@@ -34,6 +34,7 @@ import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
+import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
@@ -147,8 +148,15 @@ public class TransactionController {
 	
 	@PostMapping("/GetTransactionWithTime")
 	public ResponseEntity<?> GetTransactionWithTime(@RequestBody @Valid ParamBudget paramBudget) {
-		System.out.println("Tu ne");
 		List<TransactionData> transactions = transactionService.getTransactionWithTime(paramBudget);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
+	@PostMapping("/GetTransactionReport")
+	public ResponseEntity<?> GetTransactionReport(@RequestBody @Valid ParamBudget paramBudget) {
+		List<TransactionReport> transactions = transactionService.getTransactionReport(paramBudget);
 		if (transactions != null && !transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
 		}

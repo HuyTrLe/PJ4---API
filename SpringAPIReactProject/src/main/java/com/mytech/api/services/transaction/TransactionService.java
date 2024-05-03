@@ -9,6 +9,7 @@ import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
+import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionView;
 
 public interface TransactionService {
@@ -39,4 +40,6 @@ public interface TransactionService {
     List<TransactionView> getTop5TransactionHightestMoney(int userId);
    
     List<TransactionData> getTransactionWithTime(ParamBudget param);
+    
+    List<TransactionReport> getTransactionReport(ParamBudget param);
 }
