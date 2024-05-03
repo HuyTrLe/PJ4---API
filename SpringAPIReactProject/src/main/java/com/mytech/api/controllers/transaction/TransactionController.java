@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +40,7 @@ import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 import com.mytech.api.services.transaction.TransactionService;
 import com.mytech.api.services.wallet.WalletService;
+import com.mytech.api.models.InsufficientFundsException;
 
 import jakarta.validation.Valid;
 
@@ -57,6 +59,12 @@ public class TransactionController {
 	RecurrenceService recurrenceService;
 	@Autowired
 	ModelMapper modelMapper;
+	
+	 @ExceptionHandler(InsufficientFundsException.class)
+	    public ResponseEntity<String> handleInsufficientFunds(InsufficientFundsException ex) {
+	        // Log the error message if needed
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	 }
 
 	@PreAuthorize("#transactionDTO.userId == authentication.principal.id")
 	@PostMapping("/create")
