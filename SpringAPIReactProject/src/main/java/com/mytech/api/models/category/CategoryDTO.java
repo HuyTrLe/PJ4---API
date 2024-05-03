@@ -13,11 +13,11 @@ public class CategoryDTO {
 
 	@NotBlank(message = "Category name cannot be blank")
 	private String name;
-	private CateTypeENum type;
+	private String type;
 	private Cat_IconDTO icon;
 	private Long userId;
 
-	public CategoryDTO(Long id, String name, CateTypeENum type, Cat_IconDTO icon, Long userId) {
+	public CategoryDTO(Long id, String name, String type, Cat_IconDTO icon, Long userId) {
 		this.id = id;
 		this.name = name;
 		this.type = type;
