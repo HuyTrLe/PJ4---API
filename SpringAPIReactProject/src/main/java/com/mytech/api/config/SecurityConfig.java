@@ -17,6 +17,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.mytech.api.auth.jwt.AuthEntryPointJwt;
 import com.mytech.api.auth.jwt.AuthTokenFilter;
+import com.mytech.api.auth.oauth2.CustomOAuth2UserService;
+import com.mytech.api.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.mytech.api.auth.oauth2.OAuth2AuthenticationFailureHandler;
+import com.mytech.api.auth.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.mytech.api.auth.services.UserDetailServiceImpl;
 
 @Configuration
@@ -29,9 +33,26 @@ public class SecurityConfig {
 	@Autowired
 	AuthEntryPointJwt authEntryPointJwt;
 
+	@Autowired
+	CustomOAuth2UserService customOAuth2UserService;
+
+	@Autowired
+	OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+	@Autowired
+	OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+
+	@Autowired
+	HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+
 	@Bean
 	AuthTokenFilter authenticationJwtTokenFilter() {
 		return new AuthTokenFilter();
+	}
+
+	@Bean
+	public HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository() {
+		return new HttpCookieOAuth2AuthorizationRequestRepository();
 	}
 
 	@Bean
@@ -56,7 +77,8 @@ public class SecurityConfig {
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
 						.requestMatchers("/api/recurrences/**").permitAll()
 						.requestMatchers("/api/categories/**").permitAll()
 						.requestMatchers("/api/bills/**").permitAll()
@@ -72,12 +94,24 @@ public class SecurityConfig {
 						.requestMatchers("/ws/**").permitAll()
 						.requestMatchers("/api/transactionsRecurring/**").permitAll()
 						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-						.anyRequest().authenticated()
-
-				).exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPointJwt));
+						.requestMatchers("/", "/error", "/favicon.ico", "/**/*.png", "/**/*.gif", "/**/*.svg",
+								"/**/*.jpg",
+								"/**/*.html", "/**/*.css", "/**/*.js")
+						.permitAll()
+						.anyRequest().authenticated())
+				.oauth2Login(oauth2 -> oauth2
+						.authorizationEndpoint(authorization -> authorization
+								.baseUri("/oauth2/authorize")
+								.authorizationRequestRepository(cookieAuthorizationRequestRepository()))
+						.redirectionEndpoint(redirection -> redirection
+								.baseUri("/oauth2/callback/*"))
+						.userInfoEndpoint(userInfo -> userInfo
+								.userService(customOAuth2UserService))
+						.successHandler(oAuth2AuthenticationSuccessHandler)
+						.failureHandler(oAuth2AuthenticationFailureHandler))
+				.exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPointJwt));
 		http.authenticationProvider(authenticationProvider());
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
-
 }
