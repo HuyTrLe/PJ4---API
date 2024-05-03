@@ -88,7 +88,7 @@ public class UpdateBillsJob extends QuartzJobBean {
                     transaction.setWallet(bill.getWallet());
                     transaction.setTransactionDate(currentDate);
                     transaction.setNotes("Pay Bills");
-                    if (bill.getCategory().getType() == CateTypeENum.INCOME) {
+                    if (bill.getCategory().getType().INCOME != null) {
                         Income income = new Income();
                         income.setUser(bill.getUser());
                         income.setWallet(bill.getWallet());

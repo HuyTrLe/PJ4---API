@@ -3,14 +3,17 @@ package com.mytech.api.models.user;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mytech.api.auth.password.PasswordResetToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationToken;
+import com.mytech.api.auth.payload.request.token.emailupdate.EmailUpdateConfirmationToken;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.notifications.Notification;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.transaction.Transaction;
@@ -19,12 +22,15 @@ import com.mytech.api.models.wallet.Wallet;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,11 +54,16 @@ public class User {
 	@Size(max = 50)
 	private String email;
 
-	@NotBlank
-	@Size(max = 120)
+	@JsonIgnore
 	private String password;
 
 	private boolean isEnabled = false;
+
+	@NotNull
+	@Enumerated(EnumType.STRING)
+	private AuthProvider provider;
+
+	private String providerId;
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Category> categories = new ArrayList<>();
@@ -90,11 +101,18 @@ public class User {
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private PasswordResetToken passwordResetToken;
 
-	public User(String username, String email, String password, boolean isEnabled) {
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Notification> notifications = new ArrayList<>();
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<EmailUpdateConfirmationToken> emailUpdateConfirmationTokens = new ArrayList<>();
+
+	public User(String username, String email, String password, boolean isEnabled, AuthProvider provider) {
 		this.username = username;
 		this.email = email;
 		this.password = password;
 		this.isEnabled = isEnabled;
+		this.provider = provider;
 	}
 
 }

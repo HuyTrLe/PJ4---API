@@ -138,4 +138,5 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	public void enabledUser(String email) {
 		userRepository.enabledUser(email);
 	}
+
 }

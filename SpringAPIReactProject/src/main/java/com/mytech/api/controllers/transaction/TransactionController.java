@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.InsufficientFundsException;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
@@ -40,7 +41,6 @@ import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 import com.mytech.api.services.transaction.TransactionService;
 import com.mytech.api.services.wallet.WalletService;
-import com.mytech.api.models.InsufficientFundsException;
 
 import jakarta.validation.Valid;
 
@@ -59,12 +59,12 @@ public class TransactionController {
 	RecurrenceService recurrenceService;
 	@Autowired
 	ModelMapper modelMapper;
-	
-	 @ExceptionHandler(InsufficientFundsException.class)
-	    public ResponseEntity<String> handleInsufficientFunds(InsufficientFundsException ex) {
-	        // Log the error message if needed
-	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-	 }
+
+	@ExceptionHandler(InsufficientFundsException.class)
+	public ResponseEntity<String> handleInsufficientFunds(InsufficientFundsException ex) {
+		// Log the error message if needed
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
 
 	@PreAuthorize("#transactionDTO.userId == authentication.principal.id")
 	@PostMapping("/create")
@@ -99,7 +99,9 @@ public class TransactionController {
 		transaction.setWallet(existingWallet);
 		transaction.setAmount(transaction.getAmount());
 		transaction.setTransactionDate(transaction.getTransactionDate());
-		if (existingCategory.getType() == CateTypeENum.INCOME) {
+		System.out.println("Category Type: " + existingCategory.getType());
+
+		if ((existingCategory.getType().INCOME) != null) {
 			Income income = new Income();
 			income.setUser(existingUser.get());
 			income.setWallet(existingWallet);

@@ -15,6 +15,7 @@ import com.mytech.api.auth.payload.request.SignupRequest;
 import com.mytech.api.auth.payload.request.token.ConfirmationToken;
 import com.mytech.api.auth.payload.request.token.ConfirmationTokenService;
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.models.user.AuthProvider;
 import com.mytech.api.models.user.User;
 
 import jakarta.transaction.Transactional;
@@ -58,7 +59,8 @@ public class SignupService {
 																						// Request
 		}
 		String token = userDetailServiceImpl
-				.signUpUser(new User(request.getUsername(), request.getEmail(), request.getPassword(), false));
+				.signUpUser(new User(request.getUsername(), request.getEmail(), request.getPassword(), false,
+						AuthProvider.local));
 		String link = "http://localhost:8080/api/auth/signup/confirm?token=" + token;
 		emailSender.send(request.getEmail(), buildEmail(request.getUsername(), link));
 		return ResponseEntity.ok("Please check your email to verify your account.");
