@@ -38,7 +38,7 @@ public class ExpenseController {
     }
 
     @PostMapping("/create")
-    @PreAuthorize("#expenseDTO.user.id == authentication.principal.id")
+    @PreAuthorize("#expenseDTO.userId == authentication.principal.id")
     public ResponseEntity<?> createExpense(@RequestBody @Valid ExpenseDTO expenseDTO, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldErrors().stream()
@@ -71,7 +71,7 @@ public class ExpenseController {
     }
 
     @PutMapping("/update/{expenseId}")
-    @PreAuthorize("#expenseDTO.user.id == authentication.principal.id")
+    @PreAuthorize("#expenseDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateExpense(@PathVariable int expenseId, @RequestBody @Valid ExpenseDTO expenseDTO,
             BindingResult result) {
         if (result.hasErrors()) {
