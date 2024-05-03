@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.mytech.api.models.budget.Budget;
+import com.mytech.api.models.budget.BudgetResponse;
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.transaction.Transaction;
 
 
@@ -16,6 +18,8 @@ public interface BudgetService {
 	Budget getBudgetById(int budgetId);
 
 	List<Budget> getBudgetsByUserId(int userId);
+	
+	List<BudgetResponse> getBudgetWithTime(ParamBudget param);
 
 	void deleteBudget(int budgetId);
 	

@@ -27,13 +27,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
+
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.InsufficientFundsException;
+
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
+import com.mytech.api.models.transaction.TransactionData;
+import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
@@ -155,6 +160,23 @@ public class TransactionController {
 	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@PathVariable Integer userId) {
 		List<TransactionView> transactions = transactionService.getTop5TransactionHightestMoney(userId);
 		if (!transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
+	
+	@PostMapping("/GetTransactionWithTime")
+	public ResponseEntity<?> GetTransactionWithTime(@RequestBody @Valid ParamBudget paramBudget) {
+		List<TransactionData> transactions = transactionService.getTransactionWithTime(paramBudget);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
+	@PostMapping("/GetTransactionReport")
+	public ResponseEntity<?> GetTransactionReport(@RequestBody @Valid ParamBudget paramBudget) {
+		List<TransactionReport> transactions = transactionService.getTransactionReport(paramBudget);
+		if (transactions != null && !transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
 		}
 		return ResponseEntity.notFound().build();
