@@ -220,8 +220,8 @@ public class TransactionController {
 		return ResponseEntity.ok(expenseTransactions);
 	}
 
-	@GetMapping("/income/users/{userId}/wallets/{walletId}")
 	@PreAuthorize("#userId == authentication.principal.id")
+	@GetMapping("/income/users/{userId}/wallets/{walletId}")
 	public ResponseEntity<List<TransactionDTO>> getTotalIncomeByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
 		List<TransactionDTO> totalIncome = transactionService.getTotalIncomeByWalletId(userId, walletId,
@@ -237,8 +237,8 @@ public class TransactionController {
 		return ResponseEntity.ok(totalIncome);
 	}
 
-	@GetMapping("/expense/users/{userId}/wallets/{walletId}")
 	@PreAuthorize("#userId == authentication.principal.id")
+	@GetMapping("/expense/users/{userId}/wallets/{walletId}")
 	public ResponseEntity<List<TransactionDTO>> getTotalExpenseByWalletId(@PathVariable Integer userId,
 			@PathVariable Integer walletId) {
 		List<TransactionDTO> totalExpense = transactionService

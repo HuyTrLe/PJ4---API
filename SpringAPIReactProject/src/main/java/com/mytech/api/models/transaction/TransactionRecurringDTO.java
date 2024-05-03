@@ -2,7 +2,6 @@ package com.mytech.api.models.transaction;
 
 import java.math.BigDecimal;
 
-import com.mytech.api.models.category.CategoryDTO;
 import com.mytech.api.models.recurrence.RecurrenceDTO;
 
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +21,7 @@ public class TransactionRecurringDTO {
     @NotNull(message = "Amount cannot be null")
     private BigDecimal amount;
 
-    private CategoryDTO category;
+    private Long categoryId;
     private String notes;
     private RecurrenceDTO recurrence;
 }

@@ -66,9 +66,9 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
                     HttpStatus.NOT_FOUND);
         }
 
-        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategory().getId());
+        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategoryId());
         if (existingCategory == null) {
-            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategory().getId(),
+            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategoryId(),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -111,9 +111,9 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
                     HttpStatus.NOT_FOUND);
         }
 
-        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategory().getId());
+        Category existingCategory = categoryService.getByCateId(transactionRecurringDTO.getCategoryId());
         if (existingCategory == null) {
-            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategory().getId(),
+            return new ResponseEntity<>("Category not found with id: " + transactionRecurringDTO.getCategoryId(),
                     HttpStatus.NOT_FOUND);
         }
 

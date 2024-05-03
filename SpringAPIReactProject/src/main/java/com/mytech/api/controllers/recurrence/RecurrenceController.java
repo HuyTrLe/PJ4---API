@@ -27,7 +27,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/recurrences")
-@PreAuthorize("#recurrenceDTO.user.id == principal.id")
 public class RecurrenceController {
 
     @Autowired
