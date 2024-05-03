@@ -237,17 +237,20 @@ public class TransactionServiceImpl implements TransactionService {
 			// Adjust the budget for the old category by subtracting the old amount
 			Optional<Budget> oldCategoryBudget = budgetService.findBudgetByCategoryId(oldCategory.getId());
 			if (categoryChanged && oldCategoryBudget.isPresent()) {
-				budgetService.adjustBudgetForCategory(oldCategory.getId(), oldAmount.negate());
+			    budgetService.adjustBudgetForCategory(oldCategory.getId(), oldAmount.negate());
 			}
 
 			// Adjust the budget for the new category by adding the new amount
 			if (categoryChanged) {
-				budgetService.adjustBudgetForCategory(newCategory.getId(), transactionDTO.getAmount());
+			    Optional<Budget> newCategoryBudget = budgetService.findBudgetByCategoryId(newCategory.getId());
+			    if (newCategoryBudget.isPresent()) {
+			        budgetService.adjustBudgetForCategory(newCategory.getId(), transactionDTO.getAmount());
+			    }
+			    // If there's no budget for the new category, skip the adjustment
 			} else if (!oldAmount.equals(transactionDTO.getAmount())) {
-				// If the category hasn't changed, but the transaction amount has, adjust the
-				// budget accordingly
-				budgetService.adjustBudgetForCategory(oldCategory.getId(),
-						transactionDTO.getAmount().subtract(oldAmount));
+			    // If the category hasn't changed, but the transaction amount has, adjust the
+			    // budget accordingly
+			    budgetService.adjustBudgetForCategory(oldCategory.getId(), transactionDTO.getAmount().subtract(oldAmount));
 			}
 
 			// Return the updated transaction as DTO
