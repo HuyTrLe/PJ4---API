@@ -51,7 +51,7 @@ public class TransactionRecurringController {
     @Autowired
     RecurrenceConverter recurrenceConverter;
 
-    @PreAuthorize("#transactionRecurringDTO.user.id == authentication.principal.id")
+    @PreAuthorize("#transactionRecurringDTO.userId == authentication.principal.id")
     @PostMapping("/create")
     public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionRecurringDTO transactionRecurringDTO,
             BindingResult result) {
@@ -91,7 +91,7 @@ public class TransactionRecurringController {
         return new ResponseEntity<>(transactionsPage, HttpStatus.OK);
     }
 
-    @PreAuthorize("#transactionRecurringDTO.user.id == authentication.principal.id")
+    @PreAuthorize("#transactionRecurringDTO.userId == authentication.principal.id")
     @PutMapping("/update/{transactionId}")
     public ResponseEntity<?> updateTransaction(@PathVariable Integer transactionId,
             @RequestBody @Valid TransactionRecurringDTO transactionRecurringDTO, BindingResult result) {

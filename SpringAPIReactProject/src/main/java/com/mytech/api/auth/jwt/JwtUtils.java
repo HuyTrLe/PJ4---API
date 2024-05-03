@@ -5,11 +5,11 @@ import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.config.OAuth2.AppProperties;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -23,23 +23,32 @@ import io.jsonwebtoken.security.Keys;
 public class JwtUtils {
   private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-  @Value("${com.mytech.api.jwtSecret}")
-  private String jwtSecret;
+  private AppProperties appProperties;
 
-  @Value("${com.mytech.api.jwtExpirationMs}")
-  private int jwtExpirationMs;
+  public JwtUtils(AppProperties appProperties) {
+    this.appProperties = appProperties;
+  }
+
+  // @Value("${com.mytech.api.jwtSecret}")
+  // private String jwtSecret;
+
+  // @Value("${com.mytech.api.jwtExpirationMs}")
+  // private int jwtExpirationMs;
 
   public String generateJwtToken(Authentication authentication) {
     MyUserDetails userPrincipal = (MyUserDetails) authentication.getPrincipal();
+    Date now = new Date();
+    Date expiryDate = new Date(now.getTime() + appProperties.getAuth().getTokenExpirationMsec());
     return Jwts.builder()
-        .setSubject(userPrincipal.getEmail()) // Thay đổi từ getUsername() sang getEmail()
-        .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+        .setSubject(userPrincipal.getEmail())
+        .setIssuedAt(new Date())
+        .setExpiration(expiryDate)
         .signWith(key(), SignatureAlgorithm.HS256)
         .compact();
   }
 
   private Key key() {
-    return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+    return Keys.hmacShaKeyFor(Decoders.BASE64.decode(appProperties.getAuth().getTokenSecret()));
   }
 
   public String getEmailFromJwtToken(String token) {

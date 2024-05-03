@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 
 import com.mytech.api.auth.UpdateUser.EmailandUsername.DTO.UserProfileDTO;
 import com.mytech.api.auth.UpdateUser.EmailandUsername.UpdateEmailService;
