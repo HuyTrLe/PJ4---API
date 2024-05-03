@@ -43,6 +43,44 @@ public class TransactionServiceImpl implements TransactionService {
 		this.categoryRepository = categoryRepository;
 		this.walletRepository = walletRepository;
 	}
+	
+	private void adjustWalletBalance(Transaction transaction) {
+        Wallet wallet = transaction.getWallet();
+        BigDecimal newBalance = wallet.getBalance();
+        if (transaction.getIncome() != null) {
+            newBalance = newBalance.add(transaction.getAmount());
+        } else if (transaction.getExpense() != null) {
+            newBalance = newBalance.subtract(transaction.getAmount());
+        }
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+        	System.out.println("Insufficient funds in wallet after transaction.");
+            return;
+        }
+        wallet.setBalance(newBalance);
+        walletRepository.save(wallet);
+    }
+	
+	private void revertWalletBalanceIfNeeded(Transaction oldTransaction) {
+	    Wallet wallet = oldTransaction.getWallet();
+	    BigDecimal balanceAdjustment = oldTransaction.getAmount();
+
+	    // Determine if the transaction was an income or expense to adjust the balance correctly
+	    if (oldTransaction.getCategory().getType() == CateTypeENum.INCOME) {
+	        // If it was income, subtract it from the wallet balance to revert its effect
+	        wallet.setBalance(wallet.getBalance().subtract(balanceAdjustment));
+	    } else if (oldTransaction.getCategory().getType() == CateTypeENum.EXPENSE) {
+	        // If it was an expense, add it back to the wallet balance to revert its effect
+	        wallet.setBalance(wallet.getBalance().add(balanceAdjustment));
+	    }
+
+	    // Check if the balance adjustment results in a negative balance, which should not happen
+	    if (wallet.getBalance().compareTo(BigDecimal.ZERO) < 0) {
+	        throw new RuntimeException("Reverting the transaction results in a negative wallet balance.");
+	    }
+
+	    // Save the updated wallet balance
+	    walletRepository.save(wallet);
+	}
 
 	@Override
 	public Transaction saveTransaction(Transaction transaction) {
@@ -54,11 +92,12 @@ public class TransactionServiceImpl implements TransactionService {
 			Transaction oldTransaction = transactionRepository.findById(transaction.getTransactionId()).orElseThrow(
 					() -> new RuntimeException("Transaction not found with id: " + transaction.getTransactionId()));
 			oldAmount = oldTransaction.getAmount();
+			revertWalletBalanceIfNeeded(oldTransaction);
 		}
 
 		// Save the transaction
 		Transaction savedTransaction = transactionRepository.save(transaction);
-
+        adjustWalletBalance(savedTransaction);
 		// Adjust the budget
 		if (isUpdate) {
 			// If updating, pass the old amount to adjustBudgetForTransaction
@@ -90,13 +129,7 @@ public class TransactionServiceImpl implements TransactionService {
 	public void deleteTransaction(Integer transactionId) {
 		Transaction transaction = getTransactionById(transactionId);
 		if (transaction != null) {
-			// Before deleting the transaction, adjust the budget to account for its
-			// removal.
-			// Since the transaction is being deleted, the old amount is the transaction's
-			// amount.
 			budgetService.adjustBudgetForTransaction(transaction, true, transaction.getAmount());
-
-			// Now, delete the transaction from the repository.
 			transactionRepository.delete(transaction);
 		}
 	}
@@ -140,72 +173,63 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@Override
 	public TransactionDTO updateTransaction(Integer transactionId, TransactionDTO transactionDTO) {
-		Transaction existingTransaction = transactionRepository.findById(transactionId)
-				.orElseThrow(() -> new RuntimeException("Transaction not found with id: " + transactionId));
+	    Transaction existingTransaction = transactionRepository.findById(transactionId)
+	            .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + transactionId));
 
-		BigDecimal oldAmount = existingTransaction.getAmount();
-		Category oldCategory = existingTransaction.getCategory();
+	    BigDecimal oldAmount = existingTransaction.getAmount();
+	    Category oldCategory = existingTransaction.getCategory();
+	    Integer currentWalletId = existingTransaction.getWallet().getWalletId();
+	    Integer newWalletId = transactionDTO.getWalletId();
 
-		// Check if the category has changed
-		boolean categoryChanged = transactionDTO.getCategoryId() != null &&
-				!transactionDTO.getCategoryId().equals(oldCategory.getId());
+	    // Revert the old transaction's effect on the wallet balance before updating
+	    revertWalletBalanceIfNeeded(existingTransaction);
 
-		// Update the transaction fields
-		existingTransaction.setAmount(transactionDTO.getAmount());
-		existingTransaction.setTransactionDate(transactionDTO.getTransactionDate());
-		existingTransaction.setNotes(transactionDTO.getNotes());
+	    // Check if the category has changed
+	    boolean categoryChanged = transactionDTO.getCategoryId() != null &&
+	            !transactionDTO.getCategoryId().equals(oldCategory.getId());
 
-		// Update the category if changed
-		if (categoryChanged) {
-			Category newCategory = categoryRepository.findById(transactionDTO.getCategoryId())
-					.orElseThrow(() -> new RuntimeException(
-							"Category not found with id: " + transactionDTO.getCategoryId()));
-			existingTransaction.setCategory(newCategory);
+	    // Update the transaction fields
+	    existingTransaction.setAmount(transactionDTO.getAmount());
+	    existingTransaction.setTransactionDate(transactionDTO.getTransactionDate());
+	    existingTransaction.setNotes(transactionDTO.getNotes());
 
-			Optional<Budget> oldCategoryBudget = budgetService.findBudgetByCategoryId(oldCategory.getId());
-			if (oldCategoryBudget.isPresent()) {
-				// Adjust the budget for the old category
-				budgetService.adjustBudgetForCategory(oldCategory.getId(), oldAmount.negate());
-			}
+	    // Update the category if changed
+	    Category newCategory = null;
+	    if (categoryChanged) {
+	        newCategory = categoryRepository.findById(transactionDTO.getCategoryId())
+	                .orElseThrow(() -> new RuntimeException(
+	                        "Category not found with id: " + transactionDTO.getCategoryId()));
+	        existingTransaction.setCategory(newCategory);
+	    }
 
-			// Adjust the budget for the new category
-			// Check if a budget exists for the new category
-			Optional<Budget> newCategoryBudget = budgetService.findBudgetByCategoryId(newCategory.getId());
-			if (newCategoryBudget.isPresent()) {
-				budgetService.adjustBudgetForCategory(newCategory.getId(), transactionDTO.getAmount());
-			}
-		}
+	    // Update the wallet if changed
+	    if (newWalletId != null && !newWalletId.equals(currentWalletId)) {
+	        Wallet newWallet = walletRepository.findById(transactionDTO.getWalletId())
+	                .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + transactionDTO.getWalletId()));
+	        existingTransaction.setWallet(newWallet);
+	    }
 
-		// Update the wallet if changed
-		if (transactionDTO.getWalletId() != 0) {
-			Wallet newWallet = walletRepository.findById(transactionDTO.getWalletId())
-					.orElseThrow(
-							() -> new RuntimeException("Wallet not found with id: " + transactionDTO.getWalletId()));
-			existingTransaction.setWallet(newWallet);
-		}
+	    // Save the updated transaction
+	    Transaction updatedTransaction = transactionRepository.save(existingTransaction);
 
-		// Calculate the amount change for the wallet balance
-		BigDecimal amountChange = transactionDTO.getAmount().subtract(oldAmount);
-		adjustWalletBalance(existingTransaction, amountChange);
+	    // Adjust the wallet balance with the new transaction amount
+	    adjustWalletBalance(updatedTransaction);
 
-		// Save the updated transaction
-		Transaction updatedTransaction = transactionRepository.save(existingTransaction);
-		if (!categoryChanged) {
-			budgetService.adjustBudgetForTransaction(updatedTransaction, false, oldAmount);
-		}
+	    // Adjust the budget for the old category by subtracting the old amount
+	    if (categoryChanged) {
+	        budgetService.adjustBudgetForCategory(oldCategory.getId(), oldAmount.negate());
+	    }
 
-		// Return the updated transaction as DTO
-		return modelMapper.map(updatedTransaction, TransactionDTO.class);
-	}
+	    // Adjust the budget for the new category by adding the new amount
+	    if (categoryChanged) {
+	        budgetService.adjustBudgetForCategory(newCategory.getId(), transactionDTO.getAmount());
+	    } else if (!oldAmount.equals(transactionDTO.getAmount())) {
+	        // If the category hasn't changed, but the transaction amount has, adjust the budget accordingly
+	        budgetService.adjustBudgetForCategory(oldCategory.getId(), transactionDTO.getAmount().subtract(oldAmount));
+	    }
 
-	private void adjustWalletBalance(Transaction transaction, BigDecimal amountChange) {
-		Wallet wallet = transaction.getWallet();
-		BigDecimal newBalance = wallet.getBalance().add(amountChange);
-		if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-			throw new RuntimeException("Insufficient funds in the wallet for transaction update.");
-		}
-		wallet.setBalance(newBalance);
-		walletService.saveWallet(wallet);
+	    // Return the updated transaction as DTO
+	    return modelMapper.map(updatedTransaction, TransactionDTO.class);
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package com.mytech.api.services.budget;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +24,8 @@ public interface BudgetService {
 	Optional<Budget> findBudgetByCategoryId(Long categoryId);
 	
 	void adjustBudgetForCategory(Long categoryId, BigDecimal amount);
+	
+	List<Budget> getValidBudget(int userId);
+	
+	List<Budget> getNotValidBudget(int userId);
 }

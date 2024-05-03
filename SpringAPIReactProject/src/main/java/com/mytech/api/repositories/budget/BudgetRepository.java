@@ -1,5 +1,6 @@
 package com.mytech.api.repositories.budget;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +16,8 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
     Budget findByUserIdAndCategory_Id(Long userId, Long categoryId);
     
     Optional<Budget> findByCategoryId(Long categoryId);
+    
+    List<Budget> findByUserIdAndPeriodEndBetween(int userId, LocalDate startDate, LocalDate endDate);
+    
+    List<Budget> findByUserIdAndPeriodEndLessThan(int userId, LocalDate date);
 }
