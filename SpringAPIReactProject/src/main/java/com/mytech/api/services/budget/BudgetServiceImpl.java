@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.models.budget.Budget;
+import com.mytech.api.models.budget.BudgetResponse;
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.notifications.NotificationDTO;
 import com.mytech.api.models.notifications.NotificationType;
 import com.mytech.api.models.transaction.Transaction;
@@ -162,11 +164,16 @@ public class BudgetServiceImpl implements BudgetService {
 		}
 	}
 
+	@Override
 	public void adjustBudgetForCategory(Long categoryId, BigDecimal amount) {
-		Budget budget = budgetRepository.findByCategoryId(categoryId)
-				.orElseThrow(() -> new RuntimeException("Budget not found for category id: " + categoryId));
-		budget.setAmount(budget.getAmount().add(amount));
-		budgetRepository.save(budget);
+	    Optional<Budget> budgetOpt = budgetRepository.findByCategoryId(categoryId);
+	    if (budgetOpt.isPresent()) {
+	        Budget budget = budgetOpt.get();
+	        budget.setAmount(budget.getAmount().add(amount));
+	        budgetRepository.save(budget);
+	    } else {
+	        System.out.println("No budget found for category id: " + categoryId + ", skipping budget adjustment.");
+	    }
 	}
 
 	@Override
@@ -195,6 +202,11 @@ public class BudgetServiceImpl implements BudgetService {
 		budgetRepository.save(newBudget);
 	}
 
+	@Override
+	public List<BudgetResponse> getBudgetWithTime(ParamBudget param) {
+		return budgetRepository.getBudgetWithTime(param.getUserId(), param.getFromDate(), param.getToDate());
+	}
+	
 	@Override
 	public List<Budget> getValidBudget(int userId) {
 		LocalDate today = LocalDate.now();

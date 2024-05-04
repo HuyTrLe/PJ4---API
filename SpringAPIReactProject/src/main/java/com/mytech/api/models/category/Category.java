@@ -40,7 +40,7 @@ public class Category {
 	@Column(nullable = false)
 	private String name;
 
-	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
 	private CateTypeENum type;
 
 	@ManyToOne
