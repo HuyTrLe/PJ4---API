@@ -119,7 +119,7 @@ public class AuthController {
 
 			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
 			SecurityContextHolder.getContext().setAuthentication(authentication);
-			String jwt = jwtUtils.generateJwtToken(authentication);
+			String jwt = jwtUtils.createToken(authentication);
 			System.out.println("Token: " + jwt);
 			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(),
 					userDetails.getEmail(), userDetails.isEnabled()));

@@ -45,7 +45,7 @@ public class MyUserDetails implements OAuth2User, UserDetails {
 		this.authorities = authorities;
 	}
 
-	public static MyUserDetails build(User user) {
+	public static MyUserDetails create(User user) {
 		List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 		return new MyUserDetails(
 				user.getId(),
