@@ -164,11 +164,16 @@ public class BudgetServiceImpl implements BudgetService {
 		}
 	}
 
+	@Override
 	public void adjustBudgetForCategory(Long categoryId, BigDecimal amount) {
-		Budget budget = budgetRepository.findByCategoryId(categoryId)
-				.orElseThrow(() -> new RuntimeException("Budget not found for category id: " + categoryId));
-		budget.setAmount(budget.getAmount().add(amount));
-		budgetRepository.save(budget);
+	    Optional<Budget> budgetOpt = budgetRepository.findByCategoryId(categoryId);
+	    if (budgetOpt.isPresent()) {
+	        Budget budget = budgetOpt.get();
+	        budget.setAmount(budget.getAmount().add(amount));
+	        budgetRepository.save(budget);
+	    } else {
+	        System.out.println("No budget found for category id: " + categoryId + ", skipping budget adjustment.");
+	    }
 	}
 
 	@Override
