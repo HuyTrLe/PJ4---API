@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BudgetResponse{
-
+	  private int budgetId;
 	  private BigDecimal amount;
 	  private BigDecimal thresholdAmount;
 	  private String categoryName;       

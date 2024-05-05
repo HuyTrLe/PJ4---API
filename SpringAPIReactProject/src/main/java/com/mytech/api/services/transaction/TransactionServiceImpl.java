@@ -1,6 +1,8 @@
 package com.mytech.api.services.transaction;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 
@@ -316,9 +318,9 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	@Override
-	public List<TransactionView> getTop5TransactionHightestMoney(int userId) {
+	public List<TransactionView> getTop5TransactionHightestMoney(ParamBudget param) {
 		Pageable pageable = PageRequest.of(0, 5);
-		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(userId,
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(param.getUserId(),param.getFromDate(),param.getToDate(),
 				pageable);
 		List<TransactionView> transactions = transactionsPage.getContent();
 		return transactions;
@@ -334,6 +336,13 @@ public class TransactionServiceImpl implements TransactionService {
 	public List<TransactionReport> getTransactionReport(ParamBudget param) {
 		// TODO Auto-generated method stub
 		return transactionRepository.getTransactionReport(param.getUserId(), param.getFromDate(), param.getToDate());
+	}
+
+	@Override
+	public List<TransactionReport> getTransactionReportMonth(ParamBudget param) {
+		LocalDate previousMonthStart = param.getFromDate().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()); // April 1, 2024
+		LocalDate previousMonthEnd = param.getFromDate().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()); // April 30, 2024
+		return transactionRepository.getTransactionReportMonth(param.getUserId(), param.getFromDate(), param.getToDate(),previousMonthStart,previousMonthEnd);
 	}
 
 }

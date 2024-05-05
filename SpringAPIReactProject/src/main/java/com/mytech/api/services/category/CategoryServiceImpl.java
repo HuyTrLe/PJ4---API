@@ -16,6 +16,7 @@ import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
+import com.mytech.api.models.category.CategoryResponse;
 import com.mytech.api.models.user.User;
 import com.mytech.api.repositories.categories.CateIconRepository;
 import com.mytech.api.repositories.categories.CategoryRepository;
@@ -197,6 +198,11 @@ public class CategoryServiceImpl implements CategoryService {
 		resultCategory.setType(category.getType());
 
 		return resultCategory;
+	}
+
+	@Override
+	public CategoryResponse getCategoryByCategoryId(Long categoryId) {
+		return categoryRepository.getCategoryByCategoryId(categoryId);
 	}
 
 }

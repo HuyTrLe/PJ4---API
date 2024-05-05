@@ -14,9 +14,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransactionData{
+	private int transactionID;
 	private String categoryName;
 	private String cateIcon;
 	private BigDecimal amount;
 	private CateTypeENum Type;
 	private BigDecimal totalAmount;
+	private Long categoryId;
 }

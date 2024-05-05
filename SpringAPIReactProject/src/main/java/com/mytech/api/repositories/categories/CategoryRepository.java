@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.mytech.api.models.category.Cat_Icon;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.category.CategoryResponse;
 import com.mytech.api.models.user.User;
 
 @Repository
@@ -25,5 +26,11 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 	boolean existsByUserAndIconIn(User user, List<Cat_Icon> icons);
 
 	void deleteCategoryById(Long categoryId);
+	
+	@Query("SELECT new com.mytech.api.models.category.CategoryResponse(c.id, c.name, c.type, ci.path, us.id) FROM Category c "
+			+ "JOIN c.icon ci "
+			+ "JOIN c.user us "
+			+ "WHERE c.id = :id")
+	CategoryResponse getCategoryByCategoryId(Long id);
 
 }

@@ -46,16 +46,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(t.category.name, t.amount, c.icon.path) " +
 			"FROM Transaction t " +
 			"JOIN t.category c " +
-			"WHERE t.user.id = :userId and c.type = com.mytech.api.models.category.CateTypeENum.EXPENSE " +
+			"WHERE t.user.id = :userId  and c.type = com.mytech.api.models.category.CateTypeENum.EXPENSE and t.transactionDate between :fromDate and :toDate " +
 			"ORDER BY t.amount DESC")
-	Page<TransactionView> getTop5TransactionHightestMoney(int userId, Pageable pageable);
+	Page<TransactionView> getTop5TransactionHightestMoney(int userId,LocalDate fromDate, LocalDate toDate, Pageable pageable);
 	
 	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" +
-            "c.name, ci.path, t.amount, c.type, " +
+            "t.transactionId,c.name, ci.path, t.amount, c.type, " +
             "(SELECT SUM(tx.amount) FROM Transaction tx " +
             "JOIN tx.category tc " +
             "WHERE tc.type = c.type AND tx.user.id = :userId " +
-            "GROUP BY tc.type) ) " +
+            "GROUP BY tc.type),c.id ) " +
             "FROM Transaction t " +
             "JOIN t.category c " +
             "JOIN c.icon ci " +
@@ -63,18 +63,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             "ORDER BY t.id DESC")
 	List<TransactionData> getTransactionWithTime(int userId, LocalDate fromDate, LocalDate toDate);
 	
-//	@Query("SELECT new com.mytech.api.models.transaction.TransactionReport(" +
-//            "t.transactionDate, " +
-//            "(SELECT SUM(tx.amount) FROM Transaction tx " +
-//            "JOIN tx.category tc " +
-//            "WHERE tc.type = c.type AND tx.user.id = :userId and tc.type = com.mytech.api.models.category.CateTypeENum.EXPENSE " +
-//            "GROUP BY tx.transactionDate) ) " +
-//            "FROM Transaction t " +
-//            "JOIN t.category c " +
-//            "JOIN c.icon ci " +
-//            "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = com.mytech.api.models.category.CateTypeENum.EXPENSE " +
-//            "GROUP BY t.transactionDate " +
-//            "ORDER BY t.transactionDate ASC")
+
 	@Query("SELECT new com.mytech.api.models.transaction.TransactionReport(" +
             "t.transactionDate, " +
             "SUM(t.amount)) " +
@@ -85,5 +74,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             "GROUP BY t.transactionDate " +
             "ORDER BY t.transactionDate ASC")
 	List<TransactionReport> getTransactionReport(int userId,LocalDate fromDate, LocalDate toDate);
+	
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionReport(" +
+//		       "FUNCTION('DATE_FORMAT', t.transactionDate, '%Y-%m'), " +
+				"t.transactionDate, " +
+		       "SUM(t.amount)) " +
+		       "FROM Transaction t " +
+		       "WHERE t.user.id = :userId AND " +
+		       "(t.transactionDate BETWEEN :fromDate AND :toDate OR " +
+		       "t.transactionDate BETWEEN :prevMonthStart AND :prevMonthEnd) " +
+//		       "GROUP BY FUNCTION('DATE_FORMAT', t.transactionDate, '%Y-%m') " +
+"GROUP BY t.transactionDate " +
+		       "ORDER BY transactionDate ASC")
+	List<TransactionReport> getTransactionReportMonth(int userId,LocalDate fromDate, LocalDate toDate,LocalDate prevMonthStart,LocalDate prevMonthEnd);
 
 }
