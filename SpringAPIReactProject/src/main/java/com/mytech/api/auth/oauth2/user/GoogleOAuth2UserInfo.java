@@ -20,7 +20,12 @@ public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
 
     @Override
     public String getEmail() {
-        return (String) attributes.get("email");
+        Object emailObject = attributes.get("email");
+        if (emailObject != null) {
+            return emailObject.toString();
+        } else {
+            return "";
+        }
     }
 
 }

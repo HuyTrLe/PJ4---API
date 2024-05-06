@@ -18,12 +18,16 @@ import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.user.AuthProvider;
 import com.mytech.api.models.user.User;
+import com.mytech.api.services.category.CategoryService;
 
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    CategoryService categoryService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest oAuth2UserRequest) throws OAuth2AuthenticationException {
@@ -73,7 +77,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setUsername(oAuth2UserInfo.getUsername());
         user.setEmail(oAuth2UserInfo.getEmail());
         user.setEnabled(true);
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        categoryService.seedCategoriesForNewUsers(savedUser);
+        return savedUser;
     }
 
     private User updateExistingUser(User existingUser, OAuth2UserInfo oAuth2UserInfo) {

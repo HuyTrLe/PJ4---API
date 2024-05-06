@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.mytech.api.auth.oauth2.exception.ResourceNotFoundException;
 import com.mytech.api.auth.password.PasswordResetToken;
 import com.mytech.api.auth.password.PasswordResetTokenService;
 import com.mytech.api.auth.payload.request.token.ConfirmationToken;
@@ -20,6 +21,7 @@ import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.user.User;
 import com.mytech.api.services.category.CategoryService;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -51,11 +53,23 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
-		return MyUserDetails.build(user);
+		return MyUserDetails.create(user);
+	}
+
+	@Transactional
+	public UserDetails loadUserById(Long id) {
+		User user = userRepository.findById(id).orElseThrow(
+				() -> new ResourceNotFoundException("User", "id", id));
+
+		return MyUserDetails.create(user);
 	}
 
 	public User findByEmail(String email) {
 		return userRepository.findByEmail(email).orElse(null);
+	}
+
+	public User findById(Long id) {
+		return userRepository.findById(id).orElse(null);
 	}
 
 	public User findByUsername(String username) {
