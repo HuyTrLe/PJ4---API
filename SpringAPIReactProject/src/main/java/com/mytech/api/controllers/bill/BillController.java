@@ -1,5 +1,6 @@
 package com.mytech.api.controllers.bill;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.bill.BillDTO;
+import com.mytech.api.models.bill.BillResponse;
+import com.mytech.api.models.budget.BudgetDTO;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.services.bill.BillService;
 import com.mytech.api.services.category.CategoryService;
@@ -72,6 +75,30 @@ public class BillController {
 			BillDTO billDTO = modelMapper.map(bill, BillDTO.class);
 			return new ResponseEntity<>(billDTO, HttpStatus.OK);
 		}
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
+	
+	@GetMapping("findBillActive/users/{userId}")
+	public ResponseEntity<?> findBillActive(@PathVariable int userId) {
+		List<Bill> bill = billService.findBillActive(userId);
+		if (bill != null) {
+			List<BillResponse> billDTOs = bill.stream()
+	                .map(bills -> modelMapper.map(bills, BillResponse.class))
+	                .collect(Collectors.toList());
+			 return ResponseEntity.ok(billDTOs);
+		}	
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
+	
+	@GetMapping("findBillExpired/users/{userId}")
+	public ResponseEntity<?> findBillExpired(@PathVariable int userId) {
+		List<Bill> bill = billService.findBillExpired(userId);
+		if (bill != null) {
+			List<BillResponse> billDTOs = bill.stream()
+	                .map(bills -> modelMapper.map(bills, BillResponse.class))
+	                .collect(Collectors.toList());
+			 return ResponseEntity.ok(billDTOs);
+		}	
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 

@@ -26,4 +26,9 @@ public interface BillService {
 	List<Bill> findByRecurrence_DueDate(LocalDate dueDate);
 
 	ResponseEntity<?> deleteBill(int billId, Authentication authentication);
+	
+	List<Bill> findBillActive(int userId);
+
+	List<Bill> findBillExpired(int userId);
+
 }

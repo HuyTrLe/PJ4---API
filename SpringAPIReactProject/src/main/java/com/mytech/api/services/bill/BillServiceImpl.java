@@ -1,6 +1,7 @@
 package com.mytech.api.services.bill;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -141,6 +142,18 @@ public class BillServiceImpl implements BillService {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.notFound().build();
+	}
+
+	@Override
+	public List<Bill> findBillActive(int userId) {
+		LocalDate currentDate = LocalDate.now();
+		return billRepository.findBillActive(userId,currentDate);
+	}
+
+	@Override
+	public List<Bill> findBillExpired(int userId) {
+		LocalDate currentDate = LocalDate.now();
+		return billRepository.findBillExpired(userId,currentDate);
 	}
 
 }
