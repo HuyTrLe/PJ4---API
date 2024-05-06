@@ -203,6 +203,7 @@ public class TransactionServiceImpl implements TransactionService {
 		LocalDate oldTransactionDate = existingTransaction.getTransactionDate();
 		boolean categoryChanged = transactionDTO.getCategoryId() != null
 				&& !transactionDTO.getCategoryId().equals(oldCategory.getId());
+		boolean dateChanged = !oldTransactionDate.equals(transactionDTO.getTransactionDate());
 
 		// Fetch wallet and get current balance
 		Wallet wallet = existingTransaction.getWallet();
@@ -253,6 +254,10 @@ public class TransactionServiceImpl implements TransactionService {
 				budgetService.adjustBudgetForCategory(oldCategory.getId(), transactionDTO.getAmount());
 			}
 		}
+		
+		if (dateChanged) {
+	        budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
+	    }
 
 		// Handle Income/Expense Record Update
 		if (oldCategory.getType() == CateTypeENum.EXPENSE) {
@@ -301,7 +306,7 @@ public class TransactionServiceImpl implements TransactionService {
 
 		transactionRepository.save(existingTransaction);
 		
-		budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
+		//budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
 		System.out.println("transactiondto amount: " + transactionDTO.getAmount());
 
 		return modelMapper.map(existingTransaction, TransactionDTO.class);
