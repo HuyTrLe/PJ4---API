@@ -1,11 +1,13 @@
 package com.mytech.api.services.transaction;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.mytech.api.models.budget.ParamBudget;
+import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
@@ -43,4 +45,6 @@ public interface TransactionService {
     
     List<TransactionReport> getTransactionReport(ParamBudget param);
     List<TransactionReport> getTransactionReportMonth(ParamBudget param);
+    
+    List<TransactionData> FindTransaction(FindTransactionParam param);
 }

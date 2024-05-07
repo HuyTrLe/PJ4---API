@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.mytech.api.models.budget.ParamBudget;
+import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
@@ -55,7 +56,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             "(SELECT SUM(tx.amount) FROM Transaction tx " +
             "JOIN tx.category tc " +
             "WHERE tc.type = c.type AND tx.user.id = :userId " +
-            "GROUP BY tc.type),c.id ) " +
+            "GROUP BY tc.type),c.id,t.transactionDate ) " +
             "FROM Transaction t " +
             "JOIN t.category c " +
             "JOIN c.icon ci " +
@@ -89,4 +90,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 	List<TransactionReport> getTransactionReportMonth(int userId,LocalDate fromDate, LocalDate toDate,LocalDate prevMonthStart,LocalDate prevMonthEnd);
 
 	List<Transaction> findByCategory_IdAndTransactionDateBetween(Long categoryId, LocalDate start, LocalDate end);
+	
+	
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" +
+            "t.transactionId,c.name, ci.path, t.amount, c.type, " +
+            "(SELECT SUM(tx.amount) FROM Transaction tx " +
+            "JOIN tx.category tc " +
+            "WHERE tc.type = c.type AND tx.user.id = :userId " +
+            "GROUP BY tc.type),c.id,t.transactionDate ) " +
+            "FROM Transaction t " +
+            "JOIN t.category c " +
+            "JOIN c.icon ci " +
+            "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = :type " + 
+            "ORDER BY t.id DESC")
+	List<TransactionData> FindTransaction(int userId, LocalDate fromDate, LocalDate toDate,CateTypeENum  type);
 }

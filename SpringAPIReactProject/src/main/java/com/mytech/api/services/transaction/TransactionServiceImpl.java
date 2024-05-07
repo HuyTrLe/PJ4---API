@@ -20,6 +20,7 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
@@ -347,6 +348,12 @@ public class TransactionServiceImpl implements TransactionService {
 		LocalDate previousMonthStart = param.getFromDate().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()); // April 1, 2024
 		LocalDate previousMonthEnd = param.getFromDate().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()); // April 30, 2024
 		return transactionRepository.getTransactionReportMonth(param.getUserId(), param.getFromDate(), param.getToDate(),previousMonthStart,previousMonthEnd);
+	}
+
+	@Override
+	public List<TransactionData> FindTransaction(FindTransactionParam param) {
+		var result = CateTypeENum.valueOf(param.getType().toUpperCase());
+		return transactionRepository.FindTransaction(param.getUserId(), param.getFromDate(), param.getToDate(), result);
 	}
 
 }

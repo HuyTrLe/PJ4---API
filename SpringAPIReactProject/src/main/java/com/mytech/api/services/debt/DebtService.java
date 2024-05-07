@@ -1,8 +1,11 @@
 package com.mytech.api.services.debt;
 
+import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
 
 import java.util.List;
+
+import org.springframework.data.jpa.repository.Query;
 
 public interface DebtService {
 
@@ -19,4 +22,10 @@ public interface DebtService {
     void deleteDebtById(Long debtId);
 
     boolean existsDebtById(Long debtId);
+    
+
+    List<Debt> findDebtActive(Long userId);
+
+    List<Debt> findDebtPaid(Long userId);
+    
 }

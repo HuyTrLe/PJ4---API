@@ -2,7 +2,8 @@ package com.mytech.api.controllers.debt;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.bill.Bill;
+import com.mytech.api.models.bill.BillDTO;
+import com.mytech.api.models.bill.BillResponse;
+import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
 import com.mytech.api.services.debt.DebtService;
 
@@ -26,6 +31,9 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/debts")
 public class DebtController {
+	@Autowired
+	ModelMapper modelMapper;
+	
     private final DebtService debtService;
 
     public DebtController(DebtService debtService) {
@@ -84,7 +92,7 @@ public class DebtController {
     }
 
     @PutMapping("/update/{debtId}")
-    @PreAuthorize("#debtRequest.userId == authentication.principal.id")
+    @PreAuthorize("#updatedDebtDTO.userId == authentication.principal.id")
     public ResponseEntity<DebtDTO> updateDebt(@PathVariable Long debtId, @RequestBody DebtDTO updatedDebtDTO) {
         try {
             DebtDTO updatedDebt = debtService.updateDebt(debtId, updatedDebtDTO);
@@ -95,5 +103,30 @@ public class DebtController {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+    }
+    
+    @GetMapping("/findDebtActive/user/{userId}")
+    public ResponseEntity<?> findDebtActive(@PathVariable Long userId) {  	
+        List<Debt> debts = debtService.findDebtActive(userId);
+        if (debts.isEmpty()) {
+            return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
+        }
+        List<DebtDTO> debtDTOs = debts.stream()
+                .map(debt -> modelMapper.map(debt, DebtDTO.class))
+                .collect(Collectors.toList());
+		return ResponseEntity.ok(debtDTOs);
+    }
+    
+    
+    @GetMapping("/findDebtPaid/user/{userId}")
+    public ResponseEntity<?> findDebtPaid(@PathVariable Long userId) {
+    	 List<Debt> debts = debtService.findDebtPaid(userId);
+         if (debts.isEmpty()) {
+             return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
+         }
+         List<DebtDTO> debtDTOs = debts.stream()
+                 .map(debt -> modelMapper.map(debt, DebtDTO.class))
+                 .collect(Collectors.toList());
+ 		return ResponseEntity.ok(debtDTOs);
     }
 }

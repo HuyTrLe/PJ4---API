@@ -35,6 +35,7 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
@@ -348,6 +349,15 @@ public class TransactionController {
 				.map(transaction -> modelMapper.map(transaction, TransactionDTO.class))
 				.collect(Collectors.toList());
 		return ResponseEntity.ok(transactionDTOs);
+	}
+	
+	@PostMapping("/FindTransaction")
+	public ResponseEntity<?> FindTransaction(@RequestBody @Valid FindTransactionParam param) {
+		List<TransactionData> transactions = transactionService.FindTransaction(param);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
 	}
 
 }

@@ -22,6 +22,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/wallets/users/**")
                 .addPathPatterns("/api/expenses/users/**")
                 .addPathPatterns("/api/debts/user/**")
+                .addPathPatterns("/api/debts/findDebtPaid/user/**")
+                .addPathPatterns("/api/debts/findDebtActive/user/**")
                 .addPathPatterns("/api/savinggoals/user/**")
                 .addPathPatterns("/api/incomes/users/**")
                 .addPathPatterns("/api/budgets/users/**")
