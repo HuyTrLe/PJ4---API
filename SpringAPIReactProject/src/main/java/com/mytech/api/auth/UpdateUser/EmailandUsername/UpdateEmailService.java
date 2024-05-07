@@ -37,12 +37,12 @@ public class UpdateEmailService {
     @Autowired
     PasswordEncoder encoder;
 
-    public ResponseEntity<?> updateUser(UserProfileDTO userDTO) {
-        User existingUser = userRepository.findById(userDTO.getUserId())
+    public ResponseEntity<?> updateUser(UserProfileDTO userProfileDTO) {
+        User existingUser = userRepository.findById(userProfileDTO.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        String newUsername = userDTO.getUsername();
-        String newEmail = userDTO.getEmail();
+        String newUsername = userProfileDTO.getUsername();
+        String newEmail = userProfileDTO.getEmail();
 
         // Check if new email is different and already exists
         Optional<User> existingUserWithEmail = userRepository.findByEmail(newEmail);
@@ -52,7 +52,7 @@ public class UpdateEmailService {
 
         // Check if new email is different
         if (!newEmail.equals(existingUser.getEmail())) {
-            userDTO.setConfirmNewEmail(true);
+            userProfileDTO.setConfirmNewEmail(true);
         }
 
         // Check if only username is updated
@@ -63,7 +63,7 @@ public class UpdateEmailService {
         }
 
         // Check if email is updated
-        if (userDTO.isConfirmNewEmail()) {
+        if (userProfileDTO.isConfirmNewEmail()) {
             try {
                 String token = UUID.randomUUID().toString();
                 EmailUpdateConfirmationToken newToken = new EmailUpdateConfirmationToken(token, LocalDateTime.now(),

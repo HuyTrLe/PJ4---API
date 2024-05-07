@@ -257,17 +257,17 @@ public class AuthController {
 		}
 	}
 
-	@PutMapping("/updateEmailUsernameProfile")
-	@PreAuthorize("#userDTO.userDTO.userId == authentication.principal.id")
-	public ResponseEntity<?> updateUser(@Valid @RequestBody UserProfileDTO userDTO,
+	@PostMapping("/updateEmailUsernameProfile")
+	@PreAuthorize("#userProfileDTO.userId == authentication.principal.id")
+	public ResponseEntity<?> updateUser(@Valid @RequestBody UserProfileDTO userProfileDTO,
 			BindingResult result) {
 		if (result.hasErrors()) {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining("\n"));
 			System.out.println(errors);
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
 		}
-		return updateEmailService.updateUser(userDTO);
+		return updateEmailService.updateUser(userProfileDTO);
 	}
 
 	@GetMapping("/updateEmailUsernameProfile/confirmToken")
