@@ -23,7 +23,7 @@ public interface BudgetService {
 
 	void deleteBudget(int budgetId);
 	
-	void adjustBudgetForTransaction(Transaction transaction, boolean isDeletion, BigDecimal oldAmount);
+	void adjustBudgetForTransaction(Transaction transaction, boolean isDeletion, BigDecimal oldAmount, LocalDate oldTransactionDate);
 	
 	Optional<Budget> findBudgetByCategoryId(Long categoryId);
 	
@@ -32,4 +32,6 @@ public interface BudgetService {
 	List<Budget> getValidBudget(int userId);
 	
 	List<Budget> getNotValidBudget(int userId);
+	
+	Budget createAndInitializeBudget(Long categoryId, BigDecimal initialAmount);
 }

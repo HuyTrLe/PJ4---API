@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.mytech.api.models.budget.Budget;
@@ -28,5 +29,10 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
 
     @Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId ,t.amount, t.threshold_amount, c.name, ci.path) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart <= :toDate and t.periodEnd >= :fromDate")
     List<BudgetResponse> getBudgetWithTime(int userId, LocalDate fromDate, LocalDate toDate);
+    
+    Optional<Budget> findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(
+    	    Long userId, Long categoryId, LocalDate startDate, LocalDate endDate);
+ 
+    List<Budget> findByUserIdAndCategory_Id(int userId, Long categoryId);
 }
 
