@@ -86,4 +86,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             "ORDER BY t.transactionDate ASC")
 	List<TransactionReport> getTransactionReport(int userId,LocalDate fromDate, LocalDate toDate);
 
+	List<Transaction> findByCategory_IdAndTransactionDateBetween(Long categoryId, LocalDate start, LocalDate end);
 }

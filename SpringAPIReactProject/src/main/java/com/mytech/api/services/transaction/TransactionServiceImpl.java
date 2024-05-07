@@ -1,6 +1,7 @@
 package com.mytech.api.services.transaction;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,6 +86,7 @@ public class TransactionServiceImpl implements TransactionService {
 	public Transaction saveTransaction(Transaction transaction) {
 		boolean isUpdate = transaction.getTransactionId() != null && transaction.getTransactionId() != 0;
 		BigDecimal oldAmount = null;
+		LocalDate oldTransactionDate = null;
 		Wallet wallet = transaction.getWallet();
 
 		if (isUpdate) {
@@ -92,6 +94,7 @@ public class TransactionServiceImpl implements TransactionService {
 			Transaction oldTransaction = transactionRepository.findById(transaction.getTransactionId()).orElseThrow(
 					() -> new RuntimeException("Transaction not found with id: " + transaction.getTransactionId()));
 			oldAmount = oldTransaction.getAmount();
+			oldTransactionDate = oldTransaction.getTransactionDate();
 			// Revert the old transaction's effect on the wallet balance
 			revertWalletBalanceIfNeeded(oldTransaction);
 		}
@@ -103,9 +106,9 @@ public class TransactionServiceImpl implements TransactionService {
 		} else if (transaction.getExpense() != null) {
 			potentialNewBalance = potentialNewBalance.subtract(transaction.getAmount());
 		}
-		if (potentialNewBalance.compareTo(BigDecimal.ZERO) < 0) {
-			throw new InsufficientFundsException("Insufficient funds in wallet after transaction.");
-		}
+//		if (potentialNewBalance.compareTo(BigDecimal.ZERO) < 0) {
+//			throw new InsufficientFundsException("Insufficient funds in wallet after transaction.");
+//		}
 
 		// Since there are sufficient funds, update the wallet balance
 		wallet.setBalance(potentialNewBalance);
@@ -116,9 +119,10 @@ public class TransactionServiceImpl implements TransactionService {
 
 		// Adjust the budget if necessary
 		if (isUpdate) {
-			budgetService.adjustBudgetForTransaction(savedTransaction, true, oldAmount);
+			budgetService.adjustBudgetForTransaction(savedTransaction, true, oldAmount, oldTransactionDate);
 		} else {
-			budgetService.adjustBudgetForTransaction(savedTransaction, false, BigDecimal.ZERO);
+			budgetService.adjustBudgetForTransaction(savedTransaction, false, BigDecimal.ZERO,
+					transaction.getTransactionDate());
 		}
 
 		return savedTransaction;
@@ -142,10 +146,13 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public void deleteTransaction(Integer transactionId) {
 		Transaction transaction = getTransactionById(transactionId);
-		if (transaction != null) {
-			budgetService.adjustBudgetForTransaction(transaction, true, transaction.getAmount());
-			transactionRepository.delete(transaction);
-		}
+		BigDecimal transactionAmount = transaction.getAmount();
+		LocalDate transactionDate = transaction.getTransactionDate();
+		boolean isDeletion = true;
+
+		budgetService.adjustBudgetForTransaction(transaction, isDeletion, transactionAmount, transactionDate);
+
+		transactionRepository.delete(transaction);
 	}
 
 	@Override
@@ -189,110 +196,120 @@ public class TransactionServiceImpl implements TransactionService {
 	@Transactional(rollbackFor = InsufficientFundsException.class)
 	public TransactionDTO updateTransaction(Integer transactionId, TransactionDTO transactionDTO) {
 		Transaction existingTransaction = transactionRepository.findById(transactionId)
-	            .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + transactionId));
+				.orElseThrow(() -> new RuntimeException("Transaction not found with id: " + transactionId));
 
-	    BigDecimal oldAmount = existingTransaction.getAmount();
-	    Category oldCategory = existingTransaction.getCategory();
-	    boolean categoryChanged = transactionDTO.getCategoryId() != null
-	            && !transactionDTO.getCategoryId().equals(oldCategory.getId());
+		BigDecimal oldAmount = existingTransaction.getAmount();
+		Category oldCategory = existingTransaction.getCategory();
+		LocalDate oldTransactionDate = existingTransaction.getTransactionDate();
+		boolean categoryChanged = transactionDTO.getCategoryId() != null
+				&& !transactionDTO.getCategoryId().equals(oldCategory.getId());
+		boolean dateChanged = !oldTransactionDate.equals(transactionDTO.getTransactionDate());
 
-	    // Fetch wallet and get current balance
-	    Wallet wallet = existingTransaction.getWallet();
-	    BigDecimal walletBalance = wallet.getBalance();
+		// Fetch wallet and get current balance
+		Wallet wallet = existingTransaction.getWallet();
+		BigDecimal walletBalance = wallet.getBalance();
 
-	    // Revert the original transaction from the balance
-	    BigDecimal correctedBalance = walletBalance;
-	    if (oldCategory.getType() == CateTypeENum.INCOME) {
-	        correctedBalance = correctedBalance.subtract(oldAmount);
-	    } else if (oldCategory.getType() == CateTypeENum.EXPENSE) {
-	        correctedBalance = correctedBalance.add(oldAmount);
+		// Revert the original transaction from the balance
+		BigDecimal correctedBalance = walletBalance;
+		if (oldCategory.getType() == CateTypeENum.INCOME) {
+			correctedBalance = correctedBalance.subtract(oldAmount);
+		} else if (oldCategory.getType() == CateTypeENum.EXPENSE) {
+			correctedBalance = correctedBalance.add(oldAmount);
+		}
+
+		// Update the category if changed
+		Category newCategory = oldCategory;
+		if (categoryChanged) {
+			newCategory = categoryRepository.findById(transactionDTO.getCategoryId()).orElseThrow(
+					() -> new RuntimeException("Category not found with id: " + transactionDTO.getCategoryId()));
+		}
+
+		// Adjust the balance with the updated transaction
+		if (newCategory.getType() == CateTypeENum.INCOME) {
+			walletBalance = correctedBalance.add(transactionDTO.getAmount());
+		} else if (newCategory.getType() == CateTypeENum.EXPENSE) {
+			walletBalance = correctedBalance.subtract(transactionDTO.getAmount());
+		}
+
+		// Check for insufficient funds
+//	    if (walletBalance.compareTo(BigDecimal.ZERO) < 0) {
+//	        throw new InsufficientFundsException("Not enough balance in the wallet for the updated transaction.");
+//	    }
+
+		wallet.setBalance(walletBalance); // Update wallet with new calculated balance
+		walletRepository.save(wallet);
+
+		existingTransaction.setCategory(newCategory);
+		existingTransaction.setTransactionDate(transactionDTO.getTransactionDate());
+		existingTransaction.setNotes(transactionDTO.getNotes());
+		existingTransaction.setAmount(transactionDTO.getAmount());
+
+		// Adjust budget only if category or amount has changed
+		if (categoryChanged || !oldAmount.equals(transactionDTO.getAmount())) {
+			budgetService.adjustBudgetForCategory(oldCategory.getId(), oldAmount.negate());
+			if (categoryChanged) {
+				budgetService.adjustBudgetForCategory(transactionDTO.getCategoryId(), transactionDTO.getAmount());
+				System.out.println("transactiondto amount: " + transactionDTO.getAmount());
+			} else {
+				budgetService.adjustBudgetForCategory(oldCategory.getId(), transactionDTO.getAmount());
+			}
+		}
+		
+		if (dateChanged) {
+	        budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
 	    }
 
-	    // Update the category if changed
-	    Category newCategory = oldCategory;
-	    if (categoryChanged) {
-	        newCategory = categoryRepository.findById(transactionDTO.getCategoryId())
-	                .orElseThrow(() -> new RuntimeException("Category not found with id: " + transactionDTO.getCategoryId()));
-	    }
+		// Handle Income/Expense Record Update
+		if (oldCategory.getType() == CateTypeENum.EXPENSE) {
+			Expense expense = expenseRepository.findByTransaction(existingTransaction);
+			if (expense != null) {
+				if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.INCOME) {
+					existingTransaction.setExpense(null);
 
-	    // Adjust the balance with the updated transaction
-	    if (newCategory.getType() == CateTypeENum.INCOME) {
-	        walletBalance = correctedBalance.add(transactionDTO.getAmount());
-	    } else if (newCategory.getType() == CateTypeENum.EXPENSE) {
-	        walletBalance = correctedBalance.subtract(transactionDTO.getAmount());
-	    }
+					// Create a new Income record since the new category is INCOME
+					Income newIncome = new Income();
+					newIncome.setTransaction(existingTransaction); // Link the transaction
+					newIncome.setAmount(transactionDTO.getAmount()); // Use updated amount
+					newIncome.setIncomeDate(transactionDTO.getTransactionDate()); // Use updated transaction date
+					newIncome.setCategory(existingTransaction.getCategory()); // Use the new (updated) category
+					newIncome.setWallet(existingTransaction.getWallet()); // Use associated wallet
+					newIncome.setUser(existingTransaction.getUser()); // Use associated user
+					incomeRepository.save(newIncome); // Persist the new Income entity
+				} else {
+					// Update the existing Expense record if there's no category change
+					expense.setAmount(transactionDTO.getAmount()); // Update the amount
+					expenseRepository.save(expense); // Persist the updates
+				}
+			}
+		} else if (oldCategory.getType() == CateTypeENum.INCOME) {
+			Income income = incomeRepository.findByTransaction(existingTransaction);
+			if (income != null) {
+				if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.EXPENSE) {
+					existingTransaction.setIncome(null);
 
-	    // Check for insufficient funds
-	    if (walletBalance.compareTo(BigDecimal.ZERO) < 0) {
-	        throw new InsufficientFundsException("Not enough balance in the wallet for the updated transaction.");
-	    }
+					// Create a new Expense record since the new category is EXPENSE
+					Expense newExpense = new Expense();
+					newExpense.setTransaction(existingTransaction); // Link the transaction
+					newExpense.setAmount(transactionDTO.getAmount()); // Use updated amount
+					newExpense.setExpenseDate(transactionDTO.getTransactionDate()); // Use updated transaction date
+					newExpense.setCategory(existingTransaction.getCategory()); // Use the new (updated) category
+					newExpense.setWallet(existingTransaction.getWallet()); // Use associated wallet
+					newExpense.setUser(existingTransaction.getUser()); // Use associated user
+					expenseRepository.save(newExpense); // Persist the new Expense entity
+				} else {
+					// Update the existing Income record if there's no category change
+					income.setAmount(transactionDTO.getAmount()); // Update the amount
+					incomeRepository.save(income); // Persist the updates
+				}
+			}
+		}
 
-	    wallet.setBalance(walletBalance); // Update wallet with new calculated balance
-	    walletRepository.save(wallet);
-	    
-	    existingTransaction.setCategory(newCategory);
-	    existingTransaction.setTransactionDate(transactionDTO.getTransactionDate());
-	    existingTransaction.setNotes(transactionDTO.getNotes());
-	    existingTransaction.setAmount(transactionDTO.getAmount());
+		transactionRepository.save(existingTransaction);
+		
+		//budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
+		System.out.println("transactiondto amount: " + transactionDTO.getAmount());
 
-	    // Adjust budget only if category or amount has changed
-	    if (categoryChanged || !oldAmount.equals(transactionDTO.getAmount())) {
-	        budgetService.adjustBudgetForCategory(oldCategory.getId(), oldAmount.negate());
-	        if (categoryChanged) {
-	            budgetService.adjustBudgetForCategory(transactionDTO.getCategoryId(), transactionDTO.getAmount());
-	        } else {
-	            budgetService.adjustBudgetForCategory(oldCategory.getId(), transactionDTO.getAmount());
-	        }
-	    }
-
-	    // Handle Income/Expense Record Update
-	    if (oldCategory.getType() == CateTypeENum.EXPENSE) {
-	        Expense expense = expenseRepository.findByTransaction(existingTransaction);
-	        if (expense != null) {
-	            if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.INCOME) {
-	                existingTransaction.setExpense(null);
-
-	                // Create a new Income record since the new category is INCOME
-	                Income newIncome = new Income();
-	                newIncome.setTransaction(existingTransaction); // Link the transaction
-	                newIncome.setAmount(transactionDTO.getAmount()); // Use updated amount
-	                newIncome.setIncomeDate(transactionDTO.getTransactionDate()); // Use updated transaction date
-	                newIncome.setCategory(existingTransaction.getCategory()); // Use the new (updated) category
-	                newIncome.setWallet(existingTransaction.getWallet()); // Use associated wallet
-	                newIncome.setUser(existingTransaction.getUser()); // Use associated user
-	                incomeRepository.save(newIncome); // Persist the new Income entity
-	            } else {
-	                // Update the existing Expense record if there's no category change
-	                expense.setAmount(transactionDTO.getAmount()); // Update the amount
-	                expenseRepository.save(expense); // Persist the updates
-	            }
-	        }
-	    } else if (oldCategory.getType() == CateTypeENum.INCOME) {
-	        Income income = incomeRepository.findByTransaction(existingTransaction);
-	        if (income != null) {
-	            if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.EXPENSE) {
-	                existingTransaction.setIncome(null);
-
-	                // Create a new Expense record since the new category is EXPENSE
-	                Expense newExpense = new Expense();
-	                newExpense.setTransaction(existingTransaction); // Link the transaction
-	                newExpense.setAmount(transactionDTO.getAmount()); // Use updated amount
-	                newExpense.setExpenseDate(transactionDTO.getTransactionDate()); // Use updated transaction date
-	                newExpense.setCategory(existingTransaction.getCategory()); // Use the new (updated) category
-	                newExpense.setWallet(existingTransaction.getWallet()); // Use associated wallet
-	                newExpense.setUser(existingTransaction.getUser()); // Use associated user
-	                expenseRepository.save(newExpense); // Persist the new Expense entity
-	            } else {
-	                // Update the existing Income record if there's no category change
-	                income.setAmount(transactionDTO.getAmount()); // Update the amount
-	                incomeRepository.save(income); // Persist the updates
-	            }
-	        }
-	    }
-
-	    transactionRepository.save(existingTransaction);
-
-	    return modelMapper.map(existingTransaction, TransactionDTO.class);
+		return modelMapper.map(existingTransaction, TransactionDTO.class);
 	}
 
 	@Override
