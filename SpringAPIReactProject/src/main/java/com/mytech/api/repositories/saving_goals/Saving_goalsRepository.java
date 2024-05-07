@@ -17,4 +17,6 @@ public interface Saving_goalsRepository extends JpaRepository<SavingGoal, Long> 
 
 	void deleteSavingGoalById(Long savingGoalId);
 
+	SavingGoal findByUserIdAndCategory_Id(Long userId, Long categoryId);
+
 }

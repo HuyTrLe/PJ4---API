@@ -8,6 +8,7 @@ import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.user.User;
@@ -41,6 +42,7 @@ public class Category {
 	private String name;
 
 	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
 	private CateTypeENum type;
 
 	@ManyToOne
@@ -71,6 +73,9 @@ public class Category {
 
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Income> incomes = new ArrayList<>();
+
+	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<SavingGoal> savingGoals = new ArrayList<>();
 
 	public Category(String name, CateTypeENum type, Cat_Icon icon, User user) {
 		this.name = name;

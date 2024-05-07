@@ -7,7 +7,6 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,7 +29,6 @@ public class RecurrenceDTO {
 
 	private LocalDate dueDate;
 
-	@NotBlank(message = "You need to choose Forever or Until or Times to repeat")
 	private EndType endType; // forever, until, times
 
 	@Future(message = "End date must be in the future")

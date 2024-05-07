@@ -37,8 +37,8 @@ public class UpdateEmailService {
     @Autowired
     PasswordEncoder encoder;
 
-    public ResponseEntity<?> updateUser(long userId, UserProfileDTO userDTO) {
-        User existingUser = userRepository.findById(userId)
+    public ResponseEntity<?> updateUser(UserProfileDTO userDTO) {
+        User existingUser = userRepository.findById(userDTO.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         String newUsername = userDTO.getUsername();

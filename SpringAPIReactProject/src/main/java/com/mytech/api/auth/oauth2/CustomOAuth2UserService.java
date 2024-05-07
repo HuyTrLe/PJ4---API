@@ -38,8 +38,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } catch (AuthenticationException ex) {
             throw ex;
         } catch (Exception ex) {
-            // Throwing an instance of AuthenticationException will trigger the
-            // OAuth2AuthenticationFailureHandler
             throw new InternalAuthenticationServiceException(ex.getMessage(), ex.getCause());
         }
     }
@@ -83,8 +81,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User updateExistingUser(User existingUser, OAuth2UserInfo oAuth2UserInfo) {
-        existingUser.setUsername(oAuth2UserInfo.getUsername());
-        return userRepository.save(existingUser);
+        if (!existingUser.getUsername().equals(oAuth2UserInfo.getUsername())) {
+            existingUser.setUsername(oAuth2UserInfo.getUsername());
+            return userRepository.save(existingUser);
+        }
+        return existingUser;
     }
 
 }

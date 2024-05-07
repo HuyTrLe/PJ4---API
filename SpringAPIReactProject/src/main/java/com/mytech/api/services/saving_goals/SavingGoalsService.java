@@ -1,8 +1,10 @@
 package com.mytech.api.services.saving_goals;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
+import com.mytech.api.models.transaction.Transaction;
 
 public interface SavingGoalsService {
 
@@ -19,4 +21,6 @@ public interface SavingGoalsService {
     void deleteSavingGoalById(Long savingGoalId);
 
     boolean existsSavingGoalById(Long savingGoalId);
+
+    void adjustSavingGoalForTransaction(Transaction transaction, boolean isDeletion, BigDecimal oldAmount);
 }

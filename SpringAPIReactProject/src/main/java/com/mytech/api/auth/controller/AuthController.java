@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.view.RedirectView;
 
 import com.mytech.api.auth.UpdateUser.EmailandUsername.DTO.UserProfileDTO;
 import com.mytech.api.auth.UpdateUser.EmailandUsername.UpdateEmailService;
@@ -258,8 +257,9 @@ public class AuthController {
 		}
 	}
 
-	@PutMapping("/updateEmailUsernameProfile/{userId}")
-	public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UserProfileDTO userDTO,
+	@PutMapping("/updateEmailUsernameProfile")
+	@PreAuthorize("#userDTO.userDTO.userId == authentication.principal.id")
+	public ResponseEntity<?> updateUser(@Valid @RequestBody UserProfileDTO userDTO,
 			BindingResult result) {
 		if (result.hasErrors()) {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
@@ -267,7 +267,7 @@ public class AuthController {
 			System.out.println(errors);
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
 		}
-		return updateEmailService.updateUser(userId, userDTO);
+		return updateEmailService.updateUser(userDTO);
 	}
 
 	@GetMapping("/updateEmailUsernameProfile/confirmToken")
