@@ -41,6 +41,14 @@ public class BudgetServiceImpl implements BudgetService {
 
 	@Override
 	public Budget saveBudget(Budget budget) {
+		List<Budget> overlappingBudgets = budgetRepository.findOverlappingBudgets(budget.getCategory(),
+				budget.getPeriodStart(), budget.getPeriodEnd());
+
+		if (!overlappingBudgets.isEmpty() && (budget.getBudgetId() == 0
+				|| overlappingBudgets.stream().noneMatch(b -> b.getBudgetId() == budget.getBudgetId()))) {
+			throw new IllegalStateException("A budget for this category and period overlaps with an existing one.");
+		}
+
 		boolean isNewBudget = budget.getBudgetId() == 0;
 
 		// Save budget to the repository (new or updated)
@@ -159,42 +167,44 @@ public class BudgetServiceImpl implements BudgetService {
 
 	@Override
 	public void adjustBudgetForTransaction(Transaction transaction, boolean isDeletion, BigDecimal oldAmount,
-	        LocalDate oldTransactionDate) {
-	    Long categoryId = transaction.getCategory().getId();
-	    Long userId = transaction.getUser().getId();
-	    LocalDate newTransactionDate = transaction.getTransactionDate();
+			LocalDate oldTransactionDate) {
+		Long categoryId = transaction.getCategory().getId();
+		Long userId = transaction.getUser().getId();
+		LocalDate newTransactionDate = transaction.getTransactionDate();
 
-	    // Case 1: This is an update, and the transaction date has changed, or it's a new transaction.
-	    if (!isDeletion) {
-	        if (!oldTransactionDate.equals(newTransactionDate)) {
-	            // Subtract the old amount from the budget associated with the old transaction date
-	            adjustBudget(userId, categoryId, oldTransactionDate, oldAmount.negate());
+		// Case 1: This is an update, and the transaction date has changed, or it's a
+		// new transaction.
+		if (!isDeletion) {
+			if (!oldTransactionDate.equals(newTransactionDate)) {
+				// Subtract the old amount from the budget associated with the old transaction
+				// date
+				adjustBudget(userId, categoryId, oldTransactionDate, oldAmount.negate());
 
-	            // Add the transaction amount to the new budget date
-	            adjustBudget(userId, categoryId, newTransactionDate, transaction.getAmount());
-	        } else {
-	            // Case 2: This is an update without change in transaction date, just adjust with the new amount.
-	            BigDecimal amountDifference = transaction.getAmount().subtract(oldAmount);
-	            System.out.println("amountDifference: " + amountDifference);
-	            adjustBudget(userId, categoryId, newTransactionDate, amountDifference);
-	        }
-	    } 
+				// Add the transaction amount to the new budget date
+				adjustBudget(userId, categoryId, newTransactionDate, transaction.getAmount());
+			} else {
+				// Case 2: This is an update without change in transaction date, just adjust
+				// with the new amount.
+				BigDecimal amountDifference = transaction.getAmount().subtract(oldAmount);
+				System.out.println("amountDifference: " + amountDifference);
+				adjustBudget(userId, categoryId, newTransactionDate, amountDifference);
+			}
+		}
 
-	    // Case 3: If the transaction has been deleted, subtract its amount from the budget.
-	    if (isDeletion) {
-	        adjustBudget(userId, categoryId, oldTransactionDate, oldAmount.negate());
-	    }
+		// Case 3: If the transaction has been deleted, subtract its amount from the
+		// budget.
+		if (isDeletion) {
+			adjustBudget(userId, categoryId, oldTransactionDate, oldAmount.negate());
+		}
 	}
 
 	private void adjustBudget(Long userId, Long categoryId, LocalDate transactionDate, BigDecimal amountAdjustment) {
-	    budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(
-	    userId, categoryId, transactionDate, transactionDate
-	    ).ifPresent(budget -> {
-	        budget.setAmount(budget.getAmount().add(amountAdjustment));
-	        budgetRepository.save(budget);
-	    });
+		budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId,
+				categoryId, transactionDate, transactionDate).ifPresent(budget -> {
+					budget.setAmount(budget.getAmount().add(amountAdjustment));
+					budgetRepository.save(budget);
+				});
 	}
-
 
 	@Override
 	public void adjustBudgetForCategory(Long categoryId, BigDecimal amount) {

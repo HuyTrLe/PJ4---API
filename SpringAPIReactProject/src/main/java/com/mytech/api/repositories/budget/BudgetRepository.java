@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.budget.BudgetResponse;
 import com.mytech.api.models.budget.ParamBudget;
+import com.mytech.api.models.category.Category;
 
 @Repository
 public interface BudgetRepository extends JpaRepository<Budget, Integer> {
@@ -34,5 +35,10 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
     	    Long userId, Long categoryId, LocalDate startDate, LocalDate endDate);
  
     List<Budget> findByUserIdAndCategory_Id(int userId, Long categoryId);
+
+    @Query("SELECT b FROM Budget b WHERE b.category = :category AND NOT (b.periodEnd < :newStart OR b.periodStart > :newEnd)")
+    List<Budget> findOverlappingBudgets(@Param("category") Category category, 
+                                        @Param("newStart") LocalDate newStart, 
+                                        @Param("newEnd") LocalDate newEnd);
 }
 
