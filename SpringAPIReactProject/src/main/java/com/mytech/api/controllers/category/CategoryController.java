@@ -54,8 +54,6 @@ public class CategoryController {
 		User categoryUser = existingCategory.getUser();
 		MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
 
-		// Check if the category has an associated user and if that user matches the
-		// logged-in user
 		if (categoryUser == null || !categoryUser.getId().equals(userDetails.getId())) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN)
 					.body("You are not authorized to delete this category.");
