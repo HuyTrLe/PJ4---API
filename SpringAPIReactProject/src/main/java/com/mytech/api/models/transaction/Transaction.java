@@ -7,6 +7,7 @@ import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 
@@ -66,6 +67,10 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "transaction_recurring_id")
     private TransactionRecurring transactionRecurring;
+
+    @ManyToOne
+    @JoinColumn(name = "saving_goal_id")
+    private SavingGoal savingGoal;
 
     @ManyToOne
     @JoinColumn(name = "bill_id")

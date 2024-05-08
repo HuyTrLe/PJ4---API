@@ -228,6 +228,24 @@ public class AuthController {
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
+	@PostMapping("/updateProfile/setPassword")
+	@PreAuthorize("#passwordDTO.userId == authentication.principal.id")
+	public ResponseEntity<?> setUserPassword(@Valid @RequestBody PasswordDTO passwordDTO,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
+		try {
+			ResponseEntity<?> response = updatePasswordService.setUserPassword(passwordDTO);
+			return response;
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body("Internal Server Error");
+		}
+	}
+
 	@PostMapping("/updateProfile/updatePassword")
 	@PreAuthorize("#passwordDTO.userId == authentication.principal.id")
 	public ResponseEntity<?> updateUserPassword(@Valid @RequestBody PasswordDTO passwordDTO,

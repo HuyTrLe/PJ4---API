@@ -3,7 +3,6 @@ package com.mytech.api.services.transaction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -13,12 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.models.InsufficientFundsException;
-import com.mytech.api.models.budget.Budget;
 import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
@@ -28,9 +27,11 @@ import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CategoryRepository;
 import com.mytech.api.repositories.expense.ExpenseRepository;
 import com.mytech.api.repositories.income.IncomeRepository;
+import com.mytech.api.repositories.saving_goals.Saving_goalsRepository;
 import com.mytech.api.repositories.transaction.TransactionRepository;
 import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.budget.BudgetService;
+import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.wallet.WalletService;
 
 @Service
@@ -44,10 +45,13 @@ public class TransactionServiceImpl implements TransactionService {
 	private final WalletRepository walletRepository;
 	private final IncomeRepository incomeRepository;
 	private final ExpenseRepository expenseRepository;
+	private final Saving_goalsRepository saving_goalsRepository;
+	private final CategoryService categoryService;
 
 	public TransactionServiceImpl(TransactionRepository transactionRepository, BudgetService budgetService,
 			WalletService walletService, ModelMapper modelMapper, CategoryRepository categoryRepository,
-			WalletRepository walletRepository, IncomeRepository incomeRepository, ExpenseRepository expenseRepository) {
+			WalletRepository walletRepository, IncomeRepository incomeRepository, ExpenseRepository expenseRepository,
+			Saving_goalsRepository saving_goalsRepository, CategoryService categoryService) {
 		this.transactionRepository = transactionRepository;
 		this.budgetService = budgetService;
 		this.walletService = walletService;
@@ -56,6 +60,8 @@ public class TransactionServiceImpl implements TransactionService {
 		this.walletRepository = walletRepository;
 		this.incomeRepository = incomeRepository;
 		this.expenseRepository = expenseRepository;
+		this.saving_goalsRepository = saving_goalsRepository;
+		this.categoryService = categoryService;
 	}
 
 	private void revertWalletBalanceIfNeeded(Transaction oldTransaction) {
@@ -106,9 +112,14 @@ public class TransactionServiceImpl implements TransactionService {
 		} else if (transaction.getExpense() != null) {
 			potentialNewBalance = potentialNewBalance.subtract(transaction.getAmount());
 		}
-//		if (potentialNewBalance.compareTo(BigDecimal.ZERO) < 0) {
-//			throw new InsufficientFundsException("Insufficient funds in wallet after transaction.");
-//		}
+		// if (potentialNewBalance.compareTo(BigDecimal.ZERO) < 0) {
+		// throw new InsufficientFundsException("Insufficient funds in wallet after
+		// transaction.");
+		// }
+
+		if (wallet.getWalletType() == 3) {
+			adjustGoalsAndTransaction(transaction);
+		}
 
 		// Since there are sufficient funds, update the wallet balance
 		wallet.setBalance(potentialNewBalance);
@@ -232,9 +243,10 @@ public class TransactionServiceImpl implements TransactionService {
 		}
 
 		// Check for insufficient funds
-//	    if (walletBalance.compareTo(BigDecimal.ZERO) < 0) {
-//	        throw new InsufficientFundsException("Not enough balance in the wallet for the updated transaction.");
-//	    }
+		// if (walletBalance.compareTo(BigDecimal.ZERO) < 0) {
+		// throw new InsufficientFundsException("Not enough balance in the wallet for
+		// the updated transaction.");
+		// }
 
 		wallet.setBalance(walletBalance); // Update wallet with new calculated balance
 		walletRepository.save(wallet);
@@ -254,10 +266,10 @@ public class TransactionServiceImpl implements TransactionService {
 				budgetService.adjustBudgetForCategory(oldCategory.getId(), transactionDTO.getAmount());
 			}
 		}
-		
+
 		if (dateChanged) {
-	        budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
-	    }
+			budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
+		}
 
 		// Handle Income/Expense Record Update
 		if (oldCategory.getType() == CateTypeENum.EXPENSE) {
@@ -305,8 +317,9 @@ public class TransactionServiceImpl implements TransactionService {
 		}
 
 		transactionRepository.save(existingTransaction);
-		
-		//budgetService.adjustBudgetForTransaction(existingTransaction, false, oldAmount, oldTransactionDate);
+
+		// budgetService.adjustBudgetForTransaction(existingTransaction, false,
+		// oldAmount, oldTransactionDate);
 		System.out.println("transactiondto amount: " + transactionDTO.getAmount());
 
 		return modelMapper.map(existingTransaction, TransactionDTO.class);
@@ -339,6 +352,34 @@ public class TransactionServiceImpl implements TransactionService {
 	public List<TransactionReport> getTransactionReport(ParamBudget param) {
 		// TODO Auto-generated method stub
 		return transactionRepository.getTransactionReport(param.getUserId(), param.getFromDate(), param.getToDate());
+	}
+
+	private void adjustGoalsAndTransaction(Transaction transaction) {
+
+		Wallet existingWallet = walletService.getWalletById(transaction.getWallet().getWalletId());
+		Category existingCategory = categoryService.getByCateId(transaction.getCategory().getId());
+		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
+				.orElseThrow(() -> new RuntimeException(
+						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
+
+		BigDecimal walletBalance = existingWallet.getBalance();
+		BigDecimal transactionAmount = transaction.getAmount(); // Extracting transaction amount
+
+		if (existingCategory.getType() == CateTypeENum.INCOME) {
+			walletBalance = existingWallet.getBalance().add(transactionAmount);
+			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
+		} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
+			walletBalance = existingWallet.getBalance().subtract(transactionAmount);
+			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
+		}
+
+		if (walletBalance.compareTo(BigDecimal.ZERO) < 0) {
+			throw new InsufficientFundsException("Not enough balance in the wallet for the updated transaction.");
+		}
+
+		// Lưu lại mục tiêu tiết kiệm đã được cập nhật
+		saving_goalsRepository.save(selectedSavingGoal);
+
 	}
 
 }

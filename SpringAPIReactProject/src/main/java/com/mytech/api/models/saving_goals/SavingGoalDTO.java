@@ -26,21 +26,20 @@ public class SavingGoalDTO {
 	private LocalDate endDate;
 	private EndDateType endDateType;
 	private Long userId;
-	private Long walletId;
-	private Long categoryId;
+	private Integer walletId;
 
-	public SavingGoalDTO(Long id, String name, BigDecimal targetAmount, BigDecimal currentAmount, LocalDate startDate,
-			LocalDate endDate, EndDateType endDateType, Long userId, Long walletId, Long categoryId) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.targetAmount = targetAmount;
-		this.currentAmount = currentAmount;
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.endDateType = endDateType;
-		this.userId = userId;
-		this.walletId = walletId;
-		this.categoryId = categoryId;
-	}
+	// public SavingGoalDTO(Long id, String name, BigDecimal targetAmount,
+	// BigDecimal currentAmount, LocalDate startDate,
+	// LocalDate endDate, EndDateType endDateType, Long userId, Long walletId) {
+	// super();
+	// this.id = id;
+	// this.name = name;
+	// this.targetAmount = targetAmount;
+	// this.currentAmount = currentAmount;
+	// this.startDate = startDate;
+	// this.endDate = endDate;
+	// this.endDateType = endDateType;
+	// this.userId = userId;
+	// this.walletId = walletId;
+	// }
 }

@@ -79,17 +79,20 @@ public class CategoryController {
 
 	@PutMapping("/update/{categoryId}")
 	@PreAuthorize("#updatedCategoryDTO.userId == authentication.principal.id")
-	public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long categoryId,
-			@RequestBody CategoryDTO updatedCategoryDTO) {
+	public ResponseEntity<?> updateCategory(@PathVariable Long categoryId,
+			@Valid @RequestBody CategoryDTO updatedCategoryDTO, BindingResult result) {
 		try {
+			if (result.hasErrors()) {
+				String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+						.collect(Collectors.joining("\n"));
+				System.out.println(errors);
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+			}
 			CategoryDTO updatedCategory = categoryService.updateCategory(categoryId, updatedCategoryDTO);
 			return ResponseEntity.ok(updatedCategory);
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
-
 	}
 
 	@GetMapping("/icons")

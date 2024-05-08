@@ -14,7 +14,6 @@ public class PasswordDTO {
 
     private String email;
 
-    @NotBlank(message = "Old password cannot be blank")
     private String oldPassword;
 
     @NotBlank(message = "New password cannot be blank")

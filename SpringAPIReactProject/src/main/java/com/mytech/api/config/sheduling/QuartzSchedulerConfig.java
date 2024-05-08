@@ -23,7 +23,7 @@ public class QuartzSchedulerConfig {
                 .forJob(updateBillsJobDetail())
                 .withIdentity("updateBillsJobTrigger")
                 .withDescription("Trigger for update bills job")
-                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(20, 51))
+                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(2, 36))
                 .build();
     }
 }

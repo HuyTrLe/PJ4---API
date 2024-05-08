@@ -27,10 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
-
-import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.InsufficientFundsException;
-
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
@@ -164,7 +162,7 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@PostMapping("/GetTransactionWithTime")
 	public ResponseEntity<?> GetTransactionWithTime(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionData> transactions = transactionService.getTransactionWithTime(paramBudget);
@@ -173,6 +171,7 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
+
 	@PostMapping("/GetTransactionReport")
 	public ResponseEntity<?> GetTransactionReport(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionReport> transactions = transactionService.getTransactionReport(paramBudget);

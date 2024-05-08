@@ -72,7 +72,7 @@ public class Saving_goalsController {
     }
 
     @PutMapping("/update/{savingGoalId}")
-    @PreAuthorize("#savingGoalRequest.userId == authentication.principal.id")
+    @PreAuthorize("#updatedSavingGoalDTO.userId == authentication.principal.id")
     public ResponseEntity<SavingGoalDTO> updateSavingGoal(@PathVariable Long savingGoalId,
             @RequestBody SavingGoalDTO updatedSavingGoalDTO) {
         try {

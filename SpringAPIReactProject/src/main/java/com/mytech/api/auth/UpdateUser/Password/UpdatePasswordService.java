@@ -50,12 +50,33 @@ public class UpdatePasswordService {
         }
     }
 
+    public ResponseEntity<?> setUserPassword(PasswordDTO passwordDTO) {
+        User user = userRepository.findById(passwordDTO.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getPassword() == null) {
+            if (!validateNewPassword(passwordDTO.getNewPassword(), passwordDTO.getConfirmNewPassword())) {
+                return ResponseEntity.badRequest().body("Confirm password is not match");
+            }
+            String newEncodedPassword = encoder.encode(passwordDTO.getNewPassword());
+            user.setPassword(newEncodedPassword);
+            userRepository.save(user);
+            return ResponseEntity.ok("Password set successfully");
+        } else {
+            return updateUserPassword(passwordDTO);
+        }
+    }
+
     public ResponseEntity<?> updateUserPassword(PasswordDTO passwordDTO) {
         User user = userRepository.findById(passwordDTO.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        if (passwordDTO.getOldPassword().isEmpty()) {
+            return ResponseEntity.badRequest().body("Old password cannot be blank");
+        }
+
         if (!validateNewPassword(passwordDTO.getNewPassword(), passwordDTO.getConfirmNewPassword())) {
-            return ResponseEntity.badRequest().body("New passwords do not match");
+            return ResponseEntity.badRequest().body("Confirm password is not match");
         }
 
         if (!checkOldPassword(user, passwordDTO.getOldPassword())) {

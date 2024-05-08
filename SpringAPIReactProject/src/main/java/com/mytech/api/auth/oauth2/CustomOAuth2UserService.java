@@ -53,13 +53,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user;
         if (userOptional.isPresent()) {
             user = userOptional.get();
-            if (!user.getProvider()
-                    .equals(AuthProvider.valueOf(oAuth2UserRequest.getClientRegistration().getRegistrationId()))) {
-                throw new OAuth2AuthenticationProcessingException("Looks like you're signed up with " +
-                        user.getProvider() + " account. Please use your " + user.getProvider() +
-                        " account to login.");
+            if (oAuth2UserRequest != null) {
+                user.setProvider(AuthProvider.valueOf(oAuth2UserRequest.getClientRegistration().getRegistrationId()));
             }
-            user = updateExistingUser(user, oAuth2UserInfo);
+            user.setProviderId(oAuth2UserInfo.getId());
+            user.setUsername(oAuth2UserInfo.getUsername());
+            user = updateExistingUser(oAuth2UserRequest, user, oAuth2UserInfo);
         } else {
             user = registerNewUser(oAuth2UserRequest, oAuth2UserInfo);
         }
@@ -80,12 +79,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return savedUser;
     }
 
-    private User updateExistingUser(User existingUser, OAuth2UserInfo oAuth2UserInfo) {
-        if (!existingUser.getUsername().equals(oAuth2UserInfo.getUsername())) {
-            existingUser.setUsername(oAuth2UserInfo.getUsername());
-            return userRepository.save(existingUser);
+    private User updateExistingUser(OAuth2UserRequest oAuth2UserRequest, User existingUser,
+            OAuth2UserInfo oAuth2UserInfo) {
+        if (oAuth2UserRequest != null) {
+            existingUser
+                    .setProvider(AuthProvider.valueOf(oAuth2UserRequest.getClientRegistration().getRegistrationId()));
         }
-        return existingUser;
+        existingUser.setProviderId(oAuth2UserInfo.getId());
+        existingUser.setUsername(oAuth2UserInfo.getUsername());
+        return userRepository.save(existingUser);
     }
 
 }
