@@ -41,67 +41,48 @@ public class BudgetServiceImpl implements BudgetService {
 
 	@Override
 	public Budget saveBudget(Budget budget) {
-		List<Budget> overlappingBudgets = budgetRepository.findOverlappingBudgets(budget.getCategory(),
-				budget.getPeriodStart(), budget.getPeriodEnd());
+	    Integer budgetId = budget.getBudgetId() > 0 ? budget.getBudgetId() : null;
+	    List<Budget> overlappingBudgets = budgetRepository.findByCategoryAndPeriodOverlaps(budget.getCategory().getId(), budget.getPeriodStart(), budget.getPeriodEnd(), budgetId);
 
-		if (!overlappingBudgets.isEmpty() && (budget.getBudgetId() == 0
-				|| overlappingBudgets.stream().noneMatch(b -> b.getBudgetId() == budget.getBudgetId()))) {
-			throw new IllegalStateException("A budget for this category and period overlaps with an existing one.");
-		}
+	    if (!overlappingBudgets.isEmpty()) {
+	        throw new IllegalStateException("A budget for this category and period overlaps with an existing one.");
+	    }
+	    
+	    Budget savedBudget = budgetRepository.save(budget);
+	    
+	    // Whether this is a new budget or updating, recalculate amounts if the period has changed or if it's new   
+	    List<Transaction> transactionsWithinPeriod = transactionRepository.findByCategory_IdAndTransactionDateBetween(savedBudget.getCategory().getId(), savedBudget.getPeriodStart(), savedBudget.getPeriodEnd());
+	    BigDecimal transactionsSum = transactionsWithinPeriod.stream().map(Transaction::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+	    savedBudget.setAmount(transactionsSum);
+	    
+	    savedBudget = budgetRepository.save(savedBudget);
+	    
+	    checkAndSendNotifications(savedBudget);
+	    
+	    return savedBudget;
+	}
 
-		boolean isNewBudget = budget.getBudgetId() == 0;
+	private void checkAndSendNotifications(Budget budget) {
+	    if (budget.getAmount().compareTo(budget.getThreshold_amount()) >= 0) {
+	        sendNotification(budget, NotificationType.BUDGET_LIMIT,
+	            "Your budget for " + budget.getCategory().getName() + " has reached its limit.");
+	    }
 
-		// Save budget to the repository (new or updated)
-		Budget savedBudget = budgetRepository.save(budget);
+	    long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), budget.getPeriodEnd());
+	    if (daysUntilDue <= 3) {
+	        sendNotification(budget, NotificationType.BUDGET_DUE,
+	            "Your budget for " + budget.getCategory().getName() + " is about to be due in 3 days or less.");
+	    }
+	}
 
-		// If it's a new budget, calculate sum of past transactions in the category that
-		// are
-		// within the budget's period, then update the budget amount.
-		if (isNewBudget) {
-			// Fetch all past transactions of the budget's category within the defined
-			// period
-			List<Transaction> pastTransactions = transactionRepository.findByCategory_IdAndTransactionDateBetween(
-					savedBudget.getCategory().getId(), savedBudget.getPeriodStart(), savedBudget.getPeriodEnd());
-
-			BigDecimal pastTransactionsSum = pastTransactions.stream().map(Transaction::getAmount)
-					.reduce(BigDecimal.ZERO, BigDecimal::add);
-
-			// Update the budget's amount with the sum of past transactions
-			savedBudget.setAmount(pastTransactionsSum);
-
-			// Save the updated budget to the repository again with the new amount
-			savedBudget = budgetRepository.save(savedBudget);
-		}
-
-		// Check if the budget reaches its limit
-		if (savedBudget.getAmount().compareTo(savedBudget.getThreshold_amount()) >= 0) {
-			// Create a notification DTO
-			NotificationDTO notificationDTO = new NotificationDTO();
-			notificationDTO.setUserId(savedBudget.getUser().getId());
-			notificationDTO.setNotificationType(NotificationType.BUDGET_LIMIT);
-			notificationDTO.setEventId(Long.valueOf(savedBudget.getBudgetId()));
-			notificationDTO
-					.setMessage("Your budget for " + savedBudget.getCategory().getName() + " has reached its limit.");
-			notificationDTO.setTimestamp(LocalDateTime.now());
-
-			// Send the notification
-			notificationService.sendNotification(notificationDTO);
-		}
-
-		long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), savedBudget.getPeriodEnd());
-		if (daysUntilDue <= 3) {
-			NotificationDTO notificationDTO = new NotificationDTO();
-			notificationDTO.setUserId(savedBudget.getUser().getId());
-			notificationDTO.setNotificationType(NotificationType.BUDGET_DUE);
-			notificationDTO.setEventId(Long.valueOf(savedBudget.getBudgetId()));
-			notificationDTO.setMessage(
-					"Your budget for " + savedBudget.getCategory().getName() + " has about to due in 3 days or less.");
-			notificationDTO.setTimestamp(LocalDateTime.now());
-
-			notificationService.sendNotification(notificationDTO);
-		}
-
-		return savedBudget;
+	private void sendNotification(Budget budget, NotificationType type, String message) {
+	    NotificationDTO notificationDTO = new NotificationDTO();
+	    notificationDTO.setUserId(budget.getUser().getId());
+	    notificationDTO.setNotificationType(type);
+	    notificationDTO.setEventId(Long.valueOf(budget.getBudgetId()));
+	    notificationDTO.setMessage(message);
+	    notificationDTO.setTimestamp(LocalDateTime.now());
+	    notificationService.sendNotification(notificationDTO);
 	}
 
 	// @Scheduled(fixedDelayString = "PT1H") // This will run the task every hour
@@ -196,6 +177,30 @@ public class BudgetServiceImpl implements BudgetService {
 		if (isDeletion) {
 			adjustBudget(userId, categoryId, oldTransactionDate, oldAmount.negate());
 		}
+		
+		// Case 4: Check if the budget period has changed, and reset the budget amount if no transactions within the new period
+	    Optional<Budget> oldBudgetOpt = budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId, categoryId, oldTransactionDate, oldTransactionDate);
+	    Optional<Budget> newBudgetOpt = budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId, categoryId, newTransactionDate, newTransactionDate);
+
+	    if (oldBudgetOpt.isPresent() && newBudgetOpt.isPresent() && !oldBudgetOpt.get().equals(newBudgetOpt.get())) {
+	        Budget newBudget = newBudgetOpt.get();
+
+	        // Check if there are any transactions within the new budget period
+	        List<Transaction> transactionsInNewPeriod = transactionRepository.findByCategory_IdAndTransactionDateBetween(categoryId, newBudget.getPeriodStart(), newBudget.getPeriodEnd());
+
+	        if (transactionsInNewPeriod.isEmpty()) {
+	            // If no transactions within the new period, reset the budget amount to 0
+	            newBudget.setAmount(BigDecimal.ZERO);
+	        } else {
+	            // If there are transactions within the new period, recalculate the budget amount
+	            BigDecimal newBudgetAmount = transactionsInNewPeriod.stream()
+	                    .map(Transaction::getAmount)
+	                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+	            newBudget.setAmount(newBudgetAmount);
+	        }
+
+	        budgetRepository.save(newBudget);
+	    }
 	}
 
 	private void adjustBudget(Long userId, Long categoryId, LocalDate transactionDate, BigDecimal amountAdjustment) {
@@ -249,14 +254,19 @@ public class BudgetServiceImpl implements BudgetService {
 
 	@Override
 	public List<Budget> getValidBudget(int userId) {
-		LocalDate today = LocalDate.now();
-		LocalDate lastDayOfMonth = today.with(TemporalAdjusters.lastDayOfMonth());
-		return budgetRepository.findByUserIdAndPeriodEndBetween(userId, today, lastDayOfMonth);
+	    LocalDate today = LocalDate.now();
+	    return budgetRepository.findByUserIdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId, today, today);
 	}
 
 	@Override
-	public List<Budget> getNotValidBudget(int userId) {
-		LocalDate today = LocalDate.now();
-		return budgetRepository.findByUserIdAndPeriodEndLessThan(userId, today);
+	public List<Budget> getPastBudgets(int userId) {
+	    LocalDate today = LocalDate.now();
+	    return budgetRepository.findByUserIdAndPeriodEndLessThan(userId, today);
+	}
+
+	@Override
+	public List<Budget> getFutureBudgets(int userId) {
+	    LocalDate today = LocalDate.now();
+	    return budgetRepository.findByUserIdAndPeriodStartGreaterThan(userId, today);
 	}
 }
