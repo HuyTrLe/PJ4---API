@@ -31,7 +31,9 @@ public interface BudgetService {
 	
 	List<Budget> getValidBudget(int userId);
 	
-	List<Budget> getNotValidBudget(int userId);
+	List<Budget> getPastBudgets(int userId);
+	
+	List<Budget> getFutureBudgets(int userId);
 	
 	Budget createAndInitializeBudget(Long categoryId, BigDecimal initialAmount);
 }

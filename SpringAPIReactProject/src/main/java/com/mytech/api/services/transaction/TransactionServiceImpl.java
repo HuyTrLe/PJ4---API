@@ -379,7 +379,15 @@ public class TransactionServiceImpl implements TransactionService {
 
 		// Lưu lại mục tiêu tiết kiệm đã được cập nhật
 		saving_goalsRepository.save(selectedSavingGoal);
+	}
 
+	@Override
+	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
+		PageRequest pageable = PageRequest.of(0, 5);
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransactionforWallet(userId, walletId,
+				pageable);
+		List<TransactionView> transactions = transactionsPage.getContent();
+		return transactions;
 	}
 
 }

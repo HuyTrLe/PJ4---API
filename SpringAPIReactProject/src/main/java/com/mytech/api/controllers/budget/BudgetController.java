@@ -119,9 +119,18 @@ public class BudgetController {
         return ResponseEntity.ok(validBudgetDTOs);
     }
     
-    @GetMapping("not_valid/user/{userId}")
-    public ResponseEntity<List<BudgetDTO>> getNotValidBudgetsByUserId(@PathVariable int userId) {
-        List<Budget> validBudgets = budgetService.getNotValidBudget(userId);
+    @GetMapping("past/user/{userId}")
+    public ResponseEntity<List<BudgetDTO>> getPastBudgets(@PathVariable int userId) {
+        List<Budget> validBudgets = budgetService.getPastBudgets(userId);
+        List<BudgetDTO> validBudgetDTOs = validBudgets.stream()
+                .map(budget -> modelMapper.map(budget, BudgetDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(validBudgetDTOs);
+    }
+    
+    @GetMapping("future/user/{userId}")
+    public ResponseEntity<List<BudgetDTO>> getFutureBudgets(@PathVariable int userId) {
+        List<Budget> validBudgets = budgetService.getFutureBudgets(userId);
         List<BudgetDTO> validBudgetDTOs = validBudgets.stream()
                 .map(budget -> modelMapper.map(budget, BudgetDTO.class))
                 .collect(Collectors.toList());
