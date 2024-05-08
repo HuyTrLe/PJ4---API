@@ -34,6 +34,8 @@ public interface TransactionService {
     List<Transaction> getTotalExpenseByWalletId(int userId, int walletId, Enum type);
 
     List<Transaction> getTransactionsByWalletId(int userId, Integer walletId);
+    
+    List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId);
 
     List<TransactionView> getTop5NewTransaction(int userId);
 

@@ -341,4 +341,12 @@ public class TransactionServiceImpl implements TransactionService {
 		return transactionRepository.getTransactionReport(param.getUserId(), param.getFromDate(), param.getToDate());
 	}
 
+	@Override
+	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
+		PageRequest pageable = PageRequest.of(0, 5);
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransactionforWallet(userId, walletId, pageable);
+		List<TransactionView> transactions = transactionsPage.getContent();
+		return transactions;
+	}
+
 }

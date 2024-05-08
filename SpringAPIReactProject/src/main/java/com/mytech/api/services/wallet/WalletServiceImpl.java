@@ -36,5 +36,4 @@ public class WalletServiceImpl implements WalletService {
 	public void deleteWallet(int walletId) {
 		walletRepository.deleteById(walletId);
 	}
-
 }

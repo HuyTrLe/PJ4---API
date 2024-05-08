@@ -155,6 +155,15 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
+	
+	@GetMapping("/getTop5NewTransactionforWallet/users/{userId}/wallets/{walletId}")
+	public ResponseEntity<?> getTop5NewTransactionforWallet(@PathVariable Integer userId,@PathVariable Integer walletId) {
+		List<TransactionView> transactions = transactionService.getTop5NewTransactionforWallet(userId, walletId);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
 
 	@GetMapping("/getTop5TransactionHightestMoney/users/{userId}")
 	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@PathVariable Integer userId) {
