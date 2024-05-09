@@ -34,6 +34,8 @@ import com.mytech.api.services.budget.BudgetService;
 import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.wallet.WalletService;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @Service
 public class TransactionServiceImpl implements TransactionService {
 
@@ -118,7 +120,7 @@ public class TransactionServiceImpl implements TransactionService {
 		// }
 
 		if (wallet.getWalletType() == 3) {
-			adjustGoalsAndTransaction(transaction);
+			adjustGoalsAndSaveTransaction(transaction);
 		}
 
 		// Since there are sufficient funds, update the wallet balance
@@ -162,6 +164,10 @@ public class TransactionServiceImpl implements TransactionService {
 		boolean isDeletion = true;
 
 		budgetService.adjustBudgetForTransaction(transaction, isDeletion, transactionAmount, transactionDate);
+
+		if (transaction.getWallet().getWalletType() == 3) {
+			adjustGoalsAndDeleteTransaction(transaction);
+		}
 
 		transactionRepository.delete(transaction);
 	}
@@ -219,6 +225,10 @@ public class TransactionServiceImpl implements TransactionService {
 		// Fetch wallet and get current balance
 		Wallet wallet = existingTransaction.getWallet();
 		BigDecimal walletBalance = wallet.getBalance();
+
+		if (wallet.getWalletType() == 3) {
+			adjustGoalsAndUpdateTransaction(transactionId, transactionDTO);
+		}
 
 		// Revert the original transaction from the balance
 		BigDecimal correctedBalance = walletBalance;
@@ -354,7 +364,16 @@ public class TransactionServiceImpl implements TransactionService {
 		return transactionRepository.getTransactionReport(param.getUserId(), param.getFromDate(), param.getToDate());
 	}
 
-	private void adjustGoalsAndTransaction(Transaction transaction) {
+	@Override
+	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
+		PageRequest pageable = PageRequest.of(0, 5);
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransactionforWallet(userId, walletId,
+				pageable);
+		List<TransactionView> transactions = transactionsPage.getContent();
+		return transactions;
+	}
+
+	private void adjustGoalsAndSaveTransaction(Transaction transaction) {
 
 		Wallet existingWallet = walletService.getWalletById(transaction.getWallet().getWalletId());
 		Category existingCategory = categoryService.getByCateId(transaction.getCategory().getId());
@@ -372,22 +391,54 @@ public class TransactionServiceImpl implements TransactionService {
 			walletBalance = existingWallet.getBalance().subtract(transactionAmount);
 			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
 		}
-
-		if (walletBalance.compareTo(BigDecimal.ZERO) < 0) {
-			throw new InsufficientFundsException("Not enough balance in the wallet for the updated transaction.");
-		}
-
 		// Lưu lại mục tiêu tiết kiệm đã được cập nhật
 		saving_goalsRepository.save(selectedSavingGoal);
 	}
 
-	@Override
-	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
-		PageRequest pageable = PageRequest.of(0, 5);
-		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransactionforWallet(userId, walletId,
-				pageable);
-		List<TransactionView> transactions = transactionsPage.getContent();
-		return transactions;
+	@Transactional
+	private void adjustGoalsAndUpdateTransaction(Integer transactionId, TransactionDTO transactionDTO) {
+		Transaction existingTransaction = transactionRepository.findById(transactionId)
+				.orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + transactionId));
+		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWalletId());
+		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategoryId());
+		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transactionDTO.getSavingGoalId())
+				.orElseThrow(() -> new EntityNotFoundException(
+						"Saving goal not found with id: " + transactionDTO.getSavingGoalId()));
+
+		BigDecimal oldAmount = existingTransaction.getAmount();
+		BigDecimal newAmount = transactionDTO.getAmount();
+		BigDecimal difference = newAmount.subtract(oldAmount);
+		BigDecimal walletBalanceUpdate = existingCategory.getType() == CateTypeENum.INCOME ? difference
+				: difference.negate();
+
+		BigDecimal updatedWalletBalance = existingWallet.getBalance().add(walletBalanceUpdate);
+
+		existingWallet.setBalance(updatedWalletBalance);
+		selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(walletBalanceUpdate));
+		saving_goalsRepository.save(selectedSavingGoal);
+		walletRepository.save(existingWallet); // Assuming there's a method to save wallet updates
+	}
+
+	private void adjustGoalsAndDeleteTransaction(Transaction transaction) {
+		Wallet existingWallet = walletService.getWalletById(transaction.getWallet().getWalletId());
+		Category existingCategory = categoryService.getByCateId(transaction.getCategory().getId());
+		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
+				.orElseThrow(() -> new EntityNotFoundException(
+						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
+
+		BigDecimal transactionAmount = transaction.getAmount();
+		// Adjust balances based on the type of transaction
+		if (existingCategory.getType() == CateTypeENum.INCOME) {
+			// Reverse the income effect: subtract from wallet and goal
+			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
+		} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
+			// Reverse the expense effect: add back to wallet and goal
+			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
+		}
+
+		// Save the updated wallet and saving goal information
+		walletRepository.save(existingWallet);
+		saving_goalsRepository.save(selectedSavingGoal);
 	}
 
 }
