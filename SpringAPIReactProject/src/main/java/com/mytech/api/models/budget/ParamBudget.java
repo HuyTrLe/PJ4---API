@@ -16,4 +16,5 @@ public class ParamBudget {
 	private int userId;
 	private LocalDate fromDate;
 	private LocalDate toDate;
+	private int categoryId;
 }

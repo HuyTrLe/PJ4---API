@@ -467,4 +467,9 @@ public class TransactionServiceImpl implements TransactionService {
 
 	}
 
+	@Override
+	public List<TransactionData> getTransactionWithBudget(ParamBudget param) {
+		return transactionRepository.getTransactionWithBudget(param.getUserId(),param.getCategoryId(), param.getFromDate(), param.getToDate());
+	}
+
 }

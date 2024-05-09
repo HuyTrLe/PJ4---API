@@ -37,13 +37,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
 	List<Transaction> findByCategory_Id(Long categoryId);
 
-	@Query("SELECT new com.mytech.api.models.transaction.TransactionView(c.name, t.amount, ci.path) "
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionView(c.name, t.amount, ci.path, t.transactionDate) "
 			+ "FROM Transaction t " + "JOIN t.category c " + "JOIN c.icon ci "
 			+ "WHERE t.user.id = :userId order by t.id desc")
 	Page<TransactionView> getTop5NewTransaction(int userId, Pageable pageable);
 
 
-	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(t.category.name, t.amount, c.icon.path) " +
+	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(t.category.name, t.amount, c.icon.path, t.transactionDate) " +
 			"FROM Transaction t " +
 			"JOIN t.category c " +
 			"WHERE t.user.id = :userId  and c.type = com.mytech.api.models.category.CateTypeENum.EXPENSE and t.transactionDate between :fromDate and :toDate " +
@@ -86,7 +86,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = :type " + 
             "ORDER BY t.id DESC")
 	List<TransactionData> FindTransaction(int userId, LocalDate fromDate, LocalDate toDate,CateTypeENum  type);
-	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(t.category.name, t.amount, c.icon.path) "
+	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(c.name, t.amount, c.icon.path, t.transactionDate) "
 			+ "FROM Transaction t " + "JOIN t.category c "
 			+ "WHERE t.user.id = :userId and c.type = com.mytech.api.models.category.CateTypeENum.EXPENSE "
 			+ "ORDER BY t.amount DESC")
@@ -98,6 +98,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			+ "JOIN t.category c " + "JOIN c.icon ci "
 			+ "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate " + "ORDER BY t.id DESC")
 	List<TransactionData> getTransactionWithTime(int userId, LocalDate fromDate, LocalDate toDate);
+	
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" + "t.transactionId,c.name, ci.path, t.amount, c.type, "
+			+ "(SELECT SUM(tx.amount) FROM Transaction tx " + "JOIN tx.category tc "
+			+ "WHERE tc.type = c.type AND tx.user.id = :userId " + "GROUP BY tc.type),c.id,t.transactionDate ) " + "FROM Transaction t "
+			+ "JOIN t.category c " + "JOIN c.icon ci "
+			+ "WHERE t.user.id = :userId and c.id = :categoryId and t.transactionDate between :fromDate and :toDate " + "ORDER BY t.id DESC")
+	List<TransactionData> getTransactionWithBudget(int userId,long categoryId, LocalDate fromDate, LocalDate toDate);
 
 
 

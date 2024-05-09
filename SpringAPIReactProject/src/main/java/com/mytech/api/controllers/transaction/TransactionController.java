@@ -367,5 +367,14 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
+	
+	@PostMapping("/getTransactionWithBudget")
+	public ResponseEntity<?> getTransactionWithBudget(@RequestBody @Valid ParamBudget paramBudget) {
+		List<TransactionData> transactions = transactionService.getTransactionWithBudget(paramBudget);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
 
 }

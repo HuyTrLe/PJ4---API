@@ -44,7 +44,7 @@ public interface TransactionService {
     List<TransactionView> getTop5TransactionHightestMoney(ParamBudget param);
    
     List<TransactionData> getTransactionWithTime(ParamBudget param);
-    
+    List<TransactionData> getTransactionWithBudget(ParamBudget param);
     List<TransactionReport> getTransactionReport(ParamBudget param);
     List<TransactionReport> getTransactionReportMonth(ParamBudget param);
     
