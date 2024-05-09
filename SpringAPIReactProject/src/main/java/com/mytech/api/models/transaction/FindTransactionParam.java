@@ -14,13 +14,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionData{
-	private int transactionID;
-	private String categoryName;
-	private String cateIcon;
-	private BigDecimal amount;
-	private CateTypeENum Type;
-	private BigDecimal totalAmount;
-	private Long categoryId;
-	private LocalDate transactionDate;
+public class FindTransactionParam{
+	private int userId;
+	private LocalDate fromDate;
+	private LocalDate toDate;
+	private String type;
 }

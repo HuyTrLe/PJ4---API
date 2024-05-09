@@ -16,4 +16,12 @@ public interface DebtsRepository extends JpaRepository<Debt, Long> {
     // boolean existsById(@Param("debtId") Long debtId);
 
     void deleteDebtById(Long debtId);
+    
+    @Query("SELECT d FROM Debt d WHERE d.user.id = :userId and d.isPaid = false")
+    List<Debt> findDebtActive(Long userId);
+    
+    @Query("SELECT d FROM Debt d WHERE d.user.id = :userId and d.isPaid = true")
+    List<Debt> findDebtPaid(Long userId);
+    
+
 }

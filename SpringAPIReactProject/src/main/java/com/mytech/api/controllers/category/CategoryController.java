@@ -21,6 +21,7 @@ import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
+import com.mytech.api.models.category.CategoryResponse;
 import com.mytech.api.models.user.User;
 import com.mytech.api.services.category.CategoryService;
 
@@ -104,6 +105,16 @@ public class CategoryController {
 	@GetMapping("/{categoryId}")
 	public ResponseEntity<Category> getCategoryById(@PathVariable Long categoryId) {
 		Category category = categoryService.getByCateId(categoryId);
+		if (category != null) {
+			return ResponseEntity.ok(category);
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+	
+	@GetMapping("/getCategoryByCategoryId/{categoryId}")
+	public ResponseEntity<CategoryResponse> getCategoryByCategoryId(@PathVariable Long categoryId) {
+		CategoryResponse category = categoryService.getCategoryByCategoryId(categoryId);
 		if (category != null) {
 			return ResponseEntity.ok(category);
 		} else {

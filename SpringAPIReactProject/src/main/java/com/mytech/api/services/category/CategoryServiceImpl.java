@@ -16,7 +16,11 @@ import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
+
+import com.mytech.api.models.category.CategoryResponse;
+
 import com.mytech.api.models.transaction.Transaction;
+
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CateIconRepository;
@@ -250,6 +254,11 @@ public class CategoryServiceImpl implements CategoryService {
 		resultCategory.setType(category.getType());
 
 		return resultCategory;
+	}
+
+	@Override
+	public CategoryResponse getCategoryByCategoryId(Long categoryId) {
+		return categoryRepository.getCategoryByCategoryId(categoryId);
 	}
 
 }

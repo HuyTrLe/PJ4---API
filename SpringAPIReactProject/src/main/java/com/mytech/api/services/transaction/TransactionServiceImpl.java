@@ -2,6 +2,7 @@ package com.mytech.api.services.transaction;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
@@ -17,7 +18,11 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+
+import com.mytech.api.models.transaction.FindTransactionParam;
+
 import com.mytech.api.models.saving_goals.SavingGoal;
+
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
@@ -344,9 +349,9 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	@Override
-	public List<TransactionView> getTop5TransactionHightestMoney(int userId) {
+	public List<TransactionView> getTop5TransactionHightestMoney(ParamBudget param) {
 		Pageable pageable = PageRequest.of(0, 5);
-		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(userId,
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(param.getUserId(),param.getFromDate(),param.getToDate(),
 				pageable);
 		List<TransactionView> transactions = transactionsPage.getContent();
 		return transactions;
@@ -365,6 +370,18 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	@Override
+	public List<TransactionReport> getTransactionReportMonth(ParamBudget param) {
+		LocalDate previousMonthStart = param.getFromDate().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()); // April 1, 2024
+		LocalDate previousMonthEnd = param.getFromDate().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()); // April 30, 2024
+		return transactionRepository.getTransactionReportMonth(param.getUserId(), param.getFromDate(), param.getToDate(),previousMonthStart,previousMonthEnd);
+	}
+
+	@Override
+	public List<TransactionData> FindTransaction(FindTransactionParam param) {
+		var result = CateTypeENum.valueOf(param.getType().toUpperCase());
+		return transactionRepository.FindTransaction(param.getUserId(), param.getFromDate(), param.getToDate(), result);
+	}
+	
 	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
 		PageRequest pageable = PageRequest.of(0, 5);
 		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransactionforWallet(userId, walletId,
@@ -447,6 +464,7 @@ public class TransactionServiceImpl implements TransactionService {
 		// Save the updated wallet and saving goal information
 		walletRepository.save(existingWallet);
 		saving_goalsRepository.save(selectedSavingGoal);
+
 	}
 
 }

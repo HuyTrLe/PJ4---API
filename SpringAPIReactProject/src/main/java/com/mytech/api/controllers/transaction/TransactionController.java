@@ -33,6 +33,7 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
@@ -163,9 +164,9 @@ public class TransactionController {
 		return ResponseEntity.notFound().build();
 	}
 
-	@GetMapping("/getTop5TransactionHightestMoney/users/{userId}")
-	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@PathVariable Integer userId) {
-		List<TransactionView> transactions = transactionService.getTop5TransactionHightestMoney(userId);
+	@PostMapping("/getTop5TransactionHightestMoney")
+	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@RequestBody @Valid ParamBudget paramBudget) {
+		List<TransactionView> transactions = transactionService.getTop5TransactionHightestMoney(paramBudget);
 		if (!transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
 		}
@@ -184,6 +185,14 @@ public class TransactionController {
 	@PostMapping("/GetTransactionReport")
 	public ResponseEntity<?> GetTransactionReport(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionReport> transactions = transactionService.getTransactionReport(paramBudget);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
+	@PostMapping("/GetTransactionReportMonth")
+	public ResponseEntity<?> GetTransactionReportMonth(@RequestBody @Valid ParamBudget paramBudget) {
+		List<TransactionReport> transactions = transactionService.getTransactionReportMonth(paramBudget);
 		if (transactions != null && !transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
 		}
@@ -348,6 +357,15 @@ public class TransactionController {
 				.map(transaction -> modelMapper.map(transaction, TransactionDTO.class))
 				.collect(Collectors.toList());
 		return ResponseEntity.ok(transactionDTOs);
+	}
+	
+	@PostMapping("/FindTransaction")
+	public ResponseEntity<?> FindTransaction(@RequestBody @Valid FindTransactionParam param) {
+		List<TransactionData> transactions = transactionService.FindTransaction(param);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
 	}
 
 }

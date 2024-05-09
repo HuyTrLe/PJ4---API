@@ -96,4 +96,16 @@ public class DebtServiceImpl implements DebtService {
             throw new IllegalArgumentException("Debt not found with ID: " + debtId);
         }
     }
+
+	@Override
+	public List<Debt> findDebtActive(Long userId) {		
+		return debtRepository.findDebtActive(userId);
+	}
+
+	@Override
+	public List<Debt> findDebtPaid(Long userId) {
+		return debtRepository.findDebtPaid(userId);
+	}
+
+
 }
