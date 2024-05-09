@@ -380,7 +380,11 @@ public class TransactionServiceImpl implements TransactionService {
 		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
 				.orElseThrow(() -> new RuntimeException(
 						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
-
+		if (selectedSavingGoal.getCurrentAmount().compareTo(selectedSavingGoal.getTargetAmount()) >= 0 ||
+				(selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
+			throw new IllegalArgumentException(
+					"This saving goal has either reached its target amount or is past its end date.");
+		}
 		BigDecimal walletBalance = existingWallet.getBalance();
 		BigDecimal transactionAmount = transaction.getAmount(); // Extracting transaction amount
 
@@ -404,7 +408,11 @@ public class TransactionServiceImpl implements TransactionService {
 		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transactionDTO.getSavingGoalId())
 				.orElseThrow(() -> new EntityNotFoundException(
 						"Saving goal not found with id: " + transactionDTO.getSavingGoalId()));
-
+		if (selectedSavingGoal.getCurrentAmount().compareTo(selectedSavingGoal.getTargetAmount()) >= 0 ||
+				(selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
+			throw new IllegalArgumentException(
+					"This saving goal has either reached its target amount or is past its end date.");
+		}
 		BigDecimal oldAmount = existingTransaction.getAmount();
 		BigDecimal newAmount = transactionDTO.getAmount();
 		BigDecimal difference = newAmount.subtract(oldAmount);
