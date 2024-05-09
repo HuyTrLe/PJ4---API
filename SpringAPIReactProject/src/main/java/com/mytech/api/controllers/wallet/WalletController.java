@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -97,12 +98,23 @@ public class WalletController {
         if (existingWallet == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet not found with id: " + walletId);
         }
-        modelMapper.map(walletDTO, existingWallet);
-        existingWallet.setWalletId(walletId);
-        Wallet updatedWallet = walletService.saveWallet(existingWallet);
+
+        // Create a copy of existingWallet to keep the original intact
+        Wallet updatedWallet = new Wallet();
+        BeanUtils.copyProperties(existingWallet, updatedWallet);
+
+        // Map the updated data from walletDTO to the copied wallet object
+        modelMapper.map(walletDTO, updatedWallet);
+        updatedWallet.setWalletId(walletId);
+
+        // Save the updated wallet
+        updatedWallet = walletService.saveWallet(updatedWallet);
+
+        // Return the updated wallet DTO in the response
         WalletDTO updatedWalletDTO = modelMapper.map(updatedWallet, WalletDTO.class);
         return ResponseEntity.ok(updatedWalletDTO);
     }
+
 
     @DeleteMapping("/delete/{walletId}")
     public ResponseEntity<String> deleteCategory(@PathVariable int walletId, Authentication authentication) {

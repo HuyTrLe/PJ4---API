@@ -30,11 +30,15 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 	boolean existsByNameAndIdNot(String name, Long id);
 
 	void deleteCategoryById(Long categoryId);
-	
+		
 	@Query("SELECT new com.mytech.api.models.category.CategoryResponse(c.id, c.name, c.type, ci.path, us.id) FROM Category c "
 			+ "JOIN c.icon ci "
 			+ "JOIN c.user us "
 			+ "WHERE c.id = :id")
 	CategoryResponse getCategoryByCategoryId(Long id);
+
+	Category findFirstByName(String categoryName);
+	
+	List<Category> findByName(String categoryName);
 
 }
