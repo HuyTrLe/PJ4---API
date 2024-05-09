@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
+import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 
@@ -52,4 +53,8 @@ public class TransactionRecurring {
     @ManyToOne
     @JoinColumn(name = "recurrence_id")
     private Recurrence recurrence;
+
+    @ManyToOne
+    @JoinColumn(name = "saving_goal_id")
+    private SavingGoal savingGoal;
 }

@@ -23,5 +23,6 @@ public class TransactionRecurringDTO {
 
     private Long categoryId;
     private String notes;
+    private Long savingGoalId;
     private RecurrenceDTO recurrence;
 }
