@@ -28,4 +28,8 @@ public interface DebtService {
 
     List<Debt> findDebtPaid(Long userId);
     
+    List<Debt> findDebt(Long userId);
+    
+    List<Debt> findLoan(Long userId);
+    
 }

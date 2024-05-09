@@ -23,5 +23,15 @@ public interface DebtsRepository extends JpaRepository<Debt, Long> {
     @Query("SELECT d FROM Debt d WHERE d.user.id = :userId and d.isPaid = true")
     List<Debt> findDebtPaid(Long userId);
     
+    @Query("SELECT d FROM Debt d "
+    		+ "JOIN d.category c "
+    		+ "WHERE d.user.id = :userId and c.name = 'Debt'")
+    List<Debt> findDebt(Long userId);
+    
+    
+    @Query("SELECT d FROM Debt d "
+    		+ "JOIN d.category c "
+    		+ "WHERE d.user.id = :userId and c.name = 'Loan'")
+    List<Debt> findLoan(Long userId);
 
 }

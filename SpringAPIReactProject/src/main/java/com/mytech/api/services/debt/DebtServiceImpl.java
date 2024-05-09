@@ -107,5 +107,15 @@ public class DebtServiceImpl implements DebtService {
 		return debtRepository.findDebtPaid(userId);
 	}
 
+	@Override
+	public List<Debt> findDebt(Long userId) {
+		return debtRepository.findDebt(userId);
+	}
+
+	@Override
+	public List<Debt> findLoan(Long userId) {
+		return debtRepository.findLoan(userId);
+	}
+
 
 }

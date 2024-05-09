@@ -129,4 +129,29 @@ public class DebtController {
                  .collect(Collectors.toList());
  		return ResponseEntity.ok(debtDTOs);
     }
+    
+    @GetMapping("/findDebt/user/{userId}")
+    public ResponseEntity<?> findDebt(@PathVariable Long userId) {
+    	 List<Debt> debts = debtService.findDebt(userId);
+         if (debts.isEmpty()) {
+             return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
+         }
+         List<DebtDTO> debtDTOs = debts.stream()
+                 .map(debt -> modelMapper.map(debt, DebtDTO.class))
+                 .collect(Collectors.toList());
+ 		return ResponseEntity.ok(debtDTOs);
+    }
+    
+    @GetMapping("/findLoan/user/{userId}")
+    public ResponseEntity<?> findLoan(@PathVariable Long userId) {
+    	System.out.println(userId);
+    	 List<Debt> debts = debtService.findLoan(userId);
+         if (debts.isEmpty()) {
+             return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
+         }
+         List<DebtDTO> debtDTOs = debts.stream()
+                 .map(debt -> modelMapper.map(debt, DebtDTO.class))
+                 .collect(Collectors.toList());
+ 		return ResponseEntity.ok(debtDTOs);
+    }
 }
