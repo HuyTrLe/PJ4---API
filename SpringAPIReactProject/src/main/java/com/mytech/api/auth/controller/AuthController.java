@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.view.RedirectView;
 
 import com.mytech.api.auth.UpdateUser.EmailandUsername.DTO.UserProfileDTO;
 import com.mytech.api.auth.UpdateUser.EmailandUsername.UpdateEmailService;
@@ -229,6 +228,24 @@ public class AuthController {
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
+	@PostMapping("/updateProfile/setPassword")
+	@PreAuthorize("#passwordDTO.userId == authentication.principal.id")
+	public ResponseEntity<?> setUserPassword(@Valid @RequestBody PasswordDTO passwordDTO,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+					.collect(Collectors.joining("\n"));
+			System.out.println(errors);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+		}
+		try {
+			ResponseEntity<?> response = updatePasswordService.setUserPassword(passwordDTO);
+			return response;
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body("Internal Server Error");
+		}
+	}
+
 	@PostMapping("/updateProfile/updatePassword")
 	@PreAuthorize("#passwordDTO.userId == authentication.principal.id")
 	public ResponseEntity<?> updateUserPassword(@Valid @RequestBody PasswordDTO passwordDTO,
@@ -258,16 +275,17 @@ public class AuthController {
 		}
 	}
 
-	@PutMapping("/updateEmailUsernameProfile/{userId}")
-	public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UserProfileDTO userDTO,
+	@PostMapping("/updateEmailUsernameProfile")
+	@PreAuthorize("#userProfileDTO.userId == authentication.principal.id")
+	public ResponseEntity<?> updateUser(@Valid @RequestBody UserProfileDTO userProfileDTO,
 			BindingResult result) {
 		if (result.hasErrors()) {
 			String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
 					.collect(Collectors.joining("\n"));
 			System.out.println(errors);
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
 		}
-		return updateEmailService.updateUser(userId, userDTO);
+		return updateEmailService.updateUser(userProfileDTO);
 	}
 
 	@GetMapping("/updateEmailUsernameProfile/confirmToken")

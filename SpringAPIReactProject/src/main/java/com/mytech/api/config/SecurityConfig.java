@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.mytech.api.auth.jwt.AuthEntryPointJwt;
 import com.mytech.api.auth.jwt.AuthTokenFilter;
 import com.mytech.api.auth.oauth2.CustomOAuth2UserService;
+import com.mytech.api.auth.oauth2.OAuth2AuthenticationFailureHandler;
 import com.mytech.api.auth.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.mytech.api.auth.services.UserDetailServiceImpl;
 
@@ -36,6 +37,9 @@ public class SecurityConfig {
 
 	@Autowired
 	OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+	@Autowired
+	OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
 	@Bean
 	AuthTokenFilter authenticationJwtTokenFilter() {
@@ -93,7 +97,8 @@ public class SecurityConfig {
 								.baseUri("/oauth2/callback/*"))
 						.userInfoEndpoint(userInfo -> userInfo
 								.userService(customOAuth2UserService))
-						.successHandler(oAuth2AuthenticationSuccessHandler))
+						.successHandler(oAuth2AuthenticationSuccessHandler)
+						.failureHandler(oAuth2AuthenticationFailureHandler))
 				.exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPointJwt));
 		http.authenticationProvider(authenticationProvider());
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

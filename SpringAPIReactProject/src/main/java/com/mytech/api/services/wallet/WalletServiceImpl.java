@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.wallet.WalletRepository;
 
@@ -12,7 +13,7 @@ public class WalletServiceImpl implements WalletService {
 
 	private final WalletRepository walletRepository;
 
-	public WalletServiceImpl(WalletRepository walletRepository) {
+	public WalletServiceImpl(WalletRepository walletRepository, UserRepository userRepository) {
 		this.walletRepository = walletRepository;
 	}
 
@@ -35,5 +36,4 @@ public class WalletServiceImpl implements WalletService {
 	public void deleteWallet(int walletId) {
 		walletRepository.deleteById(walletId);
 	}
-
 }

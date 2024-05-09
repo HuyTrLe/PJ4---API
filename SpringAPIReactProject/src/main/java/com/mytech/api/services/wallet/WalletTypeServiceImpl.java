@@ -13,6 +13,15 @@ public class WalletTypeServiceImpl implements WalletTypeService {
 
 	public WalletTypeServiceImpl(WalletTypeRepository typeRepository) {
 		this.typeRepository = typeRepository;
+		seedWalletTypes();
+	}
+
+	private void seedWalletTypes() {
+		if (typeRepository.count() == 0) {
+			typeRepository.save(new WalletType(1, "Cash"));
+			typeRepository.save(new WalletType(2, "ATM"));
+			typeRepository.save(new WalletType(3, "Goals"));
+		}
 	}
 
 	@Override

@@ -22,9 +22,9 @@ import com.mytech.api.models.recurrence.RecurrenceDTO;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.repositories.recurrence.RecurrenceRepository;
-import com.mytech.api.repositories.transaction.TransactionRepository;
 import com.mytech.api.services.bill.BillService;
 import com.mytech.api.services.transaction.TransactionRecurringService;
+import com.mytech.api.services.transaction.TransactionService;
 
 import jakarta.transaction.Transactional;
 
@@ -43,7 +43,7 @@ public class UpdateBillsJob extends QuartzJobBean {
     private ModelMapper modelMapper;
 
     @Autowired
-    private TransactionRepository transactionRepository;
+    private TransactionService transactionService;
 
     @Autowired
     private TransactionRecurringService TransactionRecurringService;
@@ -111,7 +111,7 @@ public class UpdateBillsJob extends QuartzJobBean {
                         default:
                             break;
                     }
-                    transactionRepository.save(transaction);
+                    transactionService.saveTransaction(transaction);
                     logger.info("Updated bill ID: {} with new due date: {}", bill.getBillId(), nextDueDate);
                 }
             }
@@ -143,6 +143,7 @@ public class UpdateBillsJob extends QuartzJobBean {
                     recurrenceRepository.save(recurrence);
                     Transaction transaction = new Transaction();
                     transaction.setUser(transactionRecurring.getUser());
+                    transaction.setSavingGoal(transactionRecurring.getSavingGoal());
                     transaction.setAmount(transactionRecurring.getAmount());
                     transaction.setCategory(transactionRecurring.getCategory());
                     transaction.setWallet(transactionRecurring.getWallet());
@@ -172,7 +173,7 @@ public class UpdateBillsJob extends QuartzJobBean {
                         default:
                             break;
                     }
-                    transactionRepository.save(transaction);
+                    transactionService.saveTransaction(transaction);
                     logger.info("Updated bill ID: {} with new due date: {}",
                             transactionRecurring.getTransactionRecurringId(),
                             nextDueDate);

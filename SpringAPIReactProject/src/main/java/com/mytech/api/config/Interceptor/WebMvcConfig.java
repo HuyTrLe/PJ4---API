@@ -32,7 +32,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/transactions/allIncome/users/**")
                 .addPathPatterns("/api/transactions/allExpense/users/**")
                 .addPathPatterns("/api/transactions/users/**")
-                .addPathPatterns("/api/auth/updateEmailUsernameProfile/**")
                 .addPathPatterns("/api/auth/users/**")
                 .addPathPatterns("/api/transactionsRecurring/users/**")
                 .addPathPatterns("/api/transactions/getTop5NewTransaction/users/**")

@@ -1,5 +1,7 @@
 package com.mytech.api.models.category;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +16,7 @@ public class CategoryDTO {
 	@NotBlank(message = "Category name cannot be blank")
 	private String name;
 
+	@Enumerated(EnumType.STRING)
 	private CateTypeENum type;
 	private Cat_IconDTO icon;
 	private Long userId;

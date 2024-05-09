@@ -1,12 +1,12 @@
 package com.mytech.api.services.category;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,28 +16,44 @@ import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
+
 import com.mytech.api.models.category.CategoryResponse;
+
+import com.mytech.api.models.transaction.Transaction;
+
 import com.mytech.api.models.user.User;
+import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CateIconRepository;
 import com.mytech.api.repositories.categories.CategoryRepository;
+import com.mytech.api.repositories.transaction.TransactionRepository;
+import com.mytech.api.repositories.wallet.WalletRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
-	@Autowired
-	CategoryRepository categoryRepository;
-	@Autowired
-	CateIconRepository catIconRepository;
-	@Autowired
-	UserRepository userRepository;
-	@Autowired
-	ModelMapper modelMapper;
+	private final CategoryRepository categoryRepository;
+	private final CateIconRepository catIconRepository;
+	private final UserRepository userRepository;
+	private final ModelMapper modelMapper;
+	private final WalletRepository walletRepository;
+	private final TransactionRepository transactionRepository;
+
+	public CategoryServiceImpl(CategoryRepository categoryRepository, CateIconRepository catIconRepository,
+			UserRepository userRepository, ModelMapper modelMapper, WalletRepository walletRepository,
+			TransactionRepository transactionRepository) {
+		this.catIconRepository = catIconRepository;
+		this.categoryRepository = categoryRepository;
+		this.userRepository = userRepository;
+		this.modelMapper = modelMapper;
+		this.walletRepository = walletRepository;
+		this.transactionRepository = transactionRepository;
+		seedCatIcons();
+	}
 
 	@Transactional
 	public void seedCategoriesForNewUsers(User user) {
 		if (categoryRepository.countByUser(user) == 0) {
-			seedCatIcons();
 			List<Cat_Icon> icons = catIconRepository.findAll();
 			List<Category> defaultCategories = createDefaultCategories(icons, user);
 			if (categoryRepository.existsByUserAndIconIn(user, icons)) {
@@ -64,7 +80,6 @@ public class CategoryServiceImpl implements CategoryService {
 			catIconRepository.save(new Cat_Icon("grocery.png"));
 			catIconRepository.save(new Cat_Icon("home.png"));
 			catIconRepository.save(new Cat_Icon("homebill.png"));
-			catIconRepository.save(new Cat_Icon("loan.png"));
 			catIconRepository.save(new Cat_Icon("other.png"));
 			catIconRepository.save(new Cat_Icon("phonebill.png"));
 			catIconRepository.save(new Cat_Icon("salary.png"));
@@ -72,6 +87,12 @@ public class CategoryServiceImpl implements CategoryService {
 			catIconRepository.save(new Cat_Icon("transport.png"));
 			catIconRepository.save(new Cat_Icon("travel.png"));
 			catIconRepository.save(new Cat_Icon("waterbill.png"));
+			catIconRepository.save(new Cat_Icon("outgoingtransfer.png"));
+			catIconRepository.save(new Cat_Icon("incomingtransfer.png"));
+			catIconRepository.save(new Cat_Icon("debt.png"));
+			catIconRepository.save(new Cat_Icon("loan.png"));
+			catIconRepository.save(new Cat_Icon("repayment.png"));
+			catIconRepository.save(new Cat_Icon("debtcollection.png"));
 		}
 	}
 
@@ -89,14 +110,19 @@ public class CategoryServiceImpl implements CategoryService {
 				new Category("Grocery", CateTypeENum.EXPENSE, icons.get(10), user),
 				new Category("Home", CateTypeENum.EXPENSE, icons.get(11), user),
 				new Category("Home Bill", CateTypeENum.EXPENSE, icons.get(12), user),
-				new Category("Loan", CateTypeENum.DEBT, icons.get(13), user),
-				new Category("Other Income", CateTypeENum.INCOME, icons.get(14), user),
-				new Category("Phone Bill", CateTypeENum.EXPENSE, icons.get(15), user),
-				new Category("Salary", CateTypeENum.INCOME, icons.get(16), user),
-				new Category("Shopping", CateTypeENum.EXPENSE, icons.get(17), user),
-				new Category("Transport", CateTypeENum.EXPENSE, icons.get(18), user),
-				new Category("Travel", CateTypeENum.EXPENSE, icons.get(19), user),
-				new Category("Water Bill", CateTypeENum.EXPENSE, icons.get(20), user));
+				new Category("Other Income", CateTypeENum.INCOME, icons.get(13), user),
+				new Category("Phone Bill", CateTypeENum.EXPENSE, icons.get(14), user),
+				new Category("Salary", CateTypeENum.INCOME, icons.get(15), user),
+				new Category("Shopping", CateTypeENum.EXPENSE, icons.get(16), user),
+				new Category("Transport", CateTypeENum.EXPENSE, icons.get(17), user),
+				new Category("Travel", CateTypeENum.EXPENSE, icons.get(18), user),
+				new Category("Water Bill", CateTypeENum.EXPENSE, icons.get(19), user),
+				new Category("Outgoing Transfer", CateTypeENum.EXPENSE, icons.get(20), user),
+				new Category("Incoming Transfer", CateTypeENum.INCOME, icons.get(21), user),
+				new Category("Debt", CateTypeENum.DEBT, icons.get(22), user),
+				new Category("Loan", CateTypeENum.DEBT, icons.get(23), user),
+				new Category("Repayment", CateTypeENum.DEBT, icons.get(24), user),
+				new Category("Debt Collection", CateTypeENum.DEBT, icons.get(25), user));
 
 	}
 
@@ -114,6 +140,29 @@ public class CategoryServiceImpl implements CategoryService {
 	@Transactional
 	public void deleteCategoryById(Long categoryId) {
 		if (existsCategoryById(categoryId)) {
+			Category category = categoryRepository.findById(categoryId)
+					.orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+			List<Transaction> transactions = category.getTransaction();
+
+			for (Transaction transaction : transactions) {
+				Wallet wallet = transaction.getWallet();
+				BigDecimal balanceAdjustment = transaction.getAmount();
+
+				if (transaction.getIncome() != null) {
+					wallet.setBalance(wallet.getBalance().subtract(balanceAdjustment));
+				} else if (transaction.getExpense() != null) {
+					wallet.setBalance(wallet.getBalance().add(balanceAdjustment));
+				}
+
+				if (wallet.getBalance().compareTo(BigDecimal.ZERO) < 0) {
+					throw new RuntimeException("Reverting the transaction results in a negative wallet balance.");
+				}
+
+				walletRepository.save(wallet);
+				transactionRepository.delete(transaction);
+			}
+
 			categoryRepository.deleteById(categoryId);
 		} else {
 			throw new EntityNotFoundException("Category not found");
@@ -128,6 +177,9 @@ public class CategoryServiceImpl implements CategoryService {
 
 	@Override
 	public CategoryDTO createCategory(CategoryDTO categoryDTO) {
+		if (categoryRepository.existsByName(categoryDTO.getName())) {
+			throw new IllegalArgumentException("Category name already exists");
+		}
 		User user = userRepository.findById(categoryDTO.getUserId())
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
 		Cat_Icon catIcon = catIconRepository.findById(categoryDTO.getIcon().getId())
@@ -151,6 +203,10 @@ public class CategoryServiceImpl implements CategoryService {
 			// Check if the categoryType is being updated
 			if (!existingCategory.getType().equals(updateCategoryDTO.getType())) {
 				throw new IllegalArgumentException("Cannot update category type");
+			}
+
+			if (categoryRepository.existsByNameAndIdNot(updateCategoryDTO.getName(), categoryId)) {
+				throw new IllegalArgumentException("Category name already exists");
 			}
 
 			// Copy the fields that can be updated

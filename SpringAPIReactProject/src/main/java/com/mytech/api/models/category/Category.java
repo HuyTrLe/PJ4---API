@@ -41,6 +41,7 @@ public class Category {
 	private String name;
 
 	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
 	private CateTypeENum type;
 
 	@ManyToOne

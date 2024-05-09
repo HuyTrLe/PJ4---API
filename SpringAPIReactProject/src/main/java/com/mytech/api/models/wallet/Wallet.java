@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mytech.api.models.expense.Expense;
+import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.user.User;
 
@@ -59,7 +61,13 @@ public class Wallet {
 	@Column(name = "currency", nullable = false)
 	private String currency;
 
-	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Transaction> transactions = new ArrayList<>();
+
+	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Expense> expenses = new ArrayList<>();
+
+	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Income> incomes = new ArrayList<>();
 
 }

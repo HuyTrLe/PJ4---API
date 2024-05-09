@@ -27,10 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
-
-import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.InsufficientFundsException;
-
+import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
@@ -156,6 +154,15 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
+	
+	@GetMapping("/getTop5NewTransactionforWallet/users/{userId}/wallets/{walletId}")
+	public ResponseEntity<?> getTop5NewTransactionforWallet(@PathVariable Integer userId,@PathVariable Integer walletId) {
+		List<TransactionView> transactions = transactionService.getTop5NewTransactionforWallet(userId, walletId);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
 
 	@PostMapping("/getTop5TransactionHightestMoney")
 	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@RequestBody @Valid ParamBudget paramBudget) {
@@ -165,7 +172,7 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@PostMapping("/GetTransactionWithTime")
 	public ResponseEntity<?> GetTransactionWithTime(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionData> transactions = transactionService.getTransactionWithTime(paramBudget);
@@ -174,6 +181,7 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
+
 	@PostMapping("/GetTransactionReport")
 	public ResponseEntity<?> GetTransactionReport(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionReport> transactions = transactionService.getTransactionReport(paramBudget);

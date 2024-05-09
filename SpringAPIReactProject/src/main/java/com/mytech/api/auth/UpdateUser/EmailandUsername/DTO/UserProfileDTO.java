@@ -9,6 +9,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class UserProfileDTO {
+    private Long userId;
+
     @NotBlank(message = "Username cannot be blank.")
     private String username;
 
