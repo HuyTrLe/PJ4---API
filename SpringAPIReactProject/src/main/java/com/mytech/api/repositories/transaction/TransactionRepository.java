@@ -92,9 +92,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			+ "ORDER BY t.amount DESC")
 	Page<TransactionView> getTop5TransactionHightestMoney(int userId, Pageable pageable);
 
-	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" + "c.name, ci.path, t.amount, c.type, "
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" + "t.transactionId,c.name, ci.path, t.amount, c.type, "
 			+ "(SELECT SUM(tx.amount) FROM Transaction tx " + "JOIN tx.category tc "
-			+ "WHERE tc.type = c.type AND tx.user.id = :userId " + "GROUP BY tc.type) ) " + "FROM Transaction t "
+			+ "WHERE tc.type = c.type AND tx.user.id = :userId " + "GROUP BY tc.type),c.id,t.transactionDate ) " + "FROM Transaction t "
 			+ "JOIN t.category c " + "JOIN c.icon ci "
 			+ "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate " + "ORDER BY t.id DESC")
 	List<TransactionData> getTransactionWithTime(int userId, LocalDate fromDate, LocalDate toDate);
