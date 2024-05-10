@@ -57,7 +57,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 user.setProvider(AuthProvider.valueOf(oAuth2UserRequest.getClientRegistration().getRegistrationId()));
             }
             user.setProviderId(oAuth2UserInfo.getId());
-            user.setUsername(oAuth2UserInfo.getUsername());
             user = updateExistingUser(oAuth2UserRequest, user, oAuth2UserInfo);
         } else {
             user = registerNewUser(oAuth2UserRequest, oAuth2UserInfo);
@@ -86,7 +85,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .setProvider(AuthProvider.valueOf(oAuth2UserRequest.getClientRegistration().getRegistrationId()));
         }
         existingUser.setProviderId(oAuth2UserInfo.getId());
-        existingUser.setUsername(oAuth2UserInfo.getUsername());
         return userRepository.save(existingUser);
     }
 

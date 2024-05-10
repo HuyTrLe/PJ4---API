@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.user.User;
 
@@ -69,5 +70,8 @@ public class Wallet {
 
 	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Income> incomes = new ArrayList<>();
+
+	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<SavingGoal> savingGoals = new ArrayList<>();
 
 }
