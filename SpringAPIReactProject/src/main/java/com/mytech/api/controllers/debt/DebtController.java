@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.services.MyUserDetails;
@@ -41,12 +45,21 @@ public class DebtController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<DebtDTO>> getAllDebtsByUser(@PathVariable Long userId) {
-        List<DebtDTO> debts = debtService.getDebtsByUserId(userId);
-        if (debts.isEmpty()) {
-            return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Page<DebtDTO>> getAllDebtsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Debt> debtPage = debtService.getDebtsByUserId(userId, pageable);
+
+        Page<DebtDTO> debtDTOPage = debtPage.map(debt -> modelMapper.map(debt, DebtDTO.class));
+        
+        if (!debtDTOPage.hasContent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(debts, HttpStatus.OK);
+        
+        return new ResponseEntity<>(debtDTOPage, HttpStatus.OK);
     }
 
     @GetMapping("/{debtId}")
