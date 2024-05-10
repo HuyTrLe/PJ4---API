@@ -24,6 +24,7 @@ import com.mytech.api.models.bill.BillDTO;
 import com.mytech.api.models.bill.BillResponse;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
+import com.mytech.api.models.debt.ReportDebt;
 import com.mytech.api.services.debt.DebtService;
 
 import jakarta.validation.Valid;
@@ -153,5 +154,16 @@ public class DebtController {
                  .map(debt -> modelMapper.map(debt, DebtDTO.class))
                  .collect(Collectors.toList());
  		return ResponseEntity.ok(debtDTOs);
+    }
+    
+    @GetMapping("/reportDebt/user/{userId}")
+    public ResponseEntity<?> reportDebt(@PathVariable Long userId) {
+
+    	 List<ReportDebt> debts = debtService.ReportDEBT(userId);
+         if (debts.isEmpty()) {
+             return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
+         }
+         
+ 		return ResponseEntity.ok(debts);
     }
 }

@@ -2,6 +2,7 @@ package com.mytech.api.services.debt;
 
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
+import com.mytech.api.models.debt.ReportDebt;
 
 import java.util.List;
 
@@ -31,5 +32,7 @@ public interface DebtService {
     List<Debt> findDebt(Long userId);
     
     List<Debt> findLoan(Long userId);
+    
+    List<ReportDebt> ReportDEBT(Long userId);
     
 }

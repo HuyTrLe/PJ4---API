@@ -1,5 +1,7 @@
 package com.mytech.api.services.debt;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,6 +15,7 @@ import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
+import com.mytech.api.models.debt.ReportDebt;
 import com.mytech.api.models.user.User;
 import com.mytech.api.repositories.categories.CategoryRepository;
 import com.mytech.api.repositories.debt.DebtsRepository;
@@ -116,6 +119,34 @@ public class DebtServiceImpl implements DebtService {
 	public List<Debt> findLoan(Long userId) {
 		return debtRepository.findLoan(userId);
 	}
+
+	@Override
+	public List<ReportDebt> ReportDEBT(Long userId) {
+		List<ReportDebt> result = new ArrayList<>();
+		LocalDate currentDate = LocalDate.now();
+		var debtTTH = debtRepository.GetDebtTTH(userId);
+		result.add(debtTTH);
+		var GetDebtTSTH = debtRepository.GetDebtTSTH(userId);
+		result.add(GetDebtTSTH);
+		var GetDebtCTCTTH = debtRepository.GetDebtCTCTTH(userId,currentDate);
+		result.add(GetDebtCTCTTH);
+		var GetDebtCTQTH = debtRepository.GetDebtCTQTH(userId,currentDate);
+		result.add(GetDebtCTQTH);
+		
+		var GetLoanTTH = debtRepository.GetLoanTTH(userId);
+		result.add(GetLoanTTH);
+		var GetLoanTSTH = debtRepository.GetLoanTSTH(userId);
+		result.add(GetLoanTSTH);
+		var GetLoanCTCTTH = debtRepository.GetLoanCTCTTH(userId,currentDate);
+		result.add(GetLoanCTCTTH);
+		var GetLoanCTQTH = debtRepository.GetLoanCTQTH(userId,currentDate);
+		result.add(GetLoanCTQTH);
+		
+		
+		return result;
+	}
+	
+	
 
 
 }
