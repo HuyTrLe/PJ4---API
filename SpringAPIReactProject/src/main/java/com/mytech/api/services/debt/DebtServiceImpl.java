@@ -160,7 +160,18 @@ public class DebtServiceImpl implements DebtService {
 		return result;
 	}
 	
-	public void checkAndSendDebtNotifications(Debt debt) {
+	public void checkAndSendDebtNotifications() {
+        List<User> users = userRepository.findAll();
+        LocalDate today = LocalDate.now();
+        for (User user : users) {
+            List<Debt> activeDebts = debtRepository.findDebtValid(user.getId(), today);
+            for (Debt debt : activeDebts) {
+            	checkAndSendDebtNotifications(debt);
+            }
+        }
+    }
+	
+   public void checkAndSendDebtNotifications(Debt debt) {
 	    // Check if the debt is soon
 	    long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), debt.getDueDate());
 	    if (daysUntilDue <= 3) {

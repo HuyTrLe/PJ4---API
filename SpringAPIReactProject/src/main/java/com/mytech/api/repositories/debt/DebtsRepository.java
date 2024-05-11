@@ -21,6 +21,9 @@ public interface DebtsRepository extends JpaRepository<Debt, Long> {
 
     void deleteDebtById(Long debtId);
     
+    @Query("SELECT d FROM Debt d WHERE d.user.id = :userId and d.dueDate >= :currentDate")
+    List<Debt> findDebtValid(Long userId, LocalDate currentDate);
+    
     @Query("SELECT d FROM Debt d WHERE d.user.id = :userId and d.isPaid = false")
     List<Debt> findDebtActive(Long userId);
     
