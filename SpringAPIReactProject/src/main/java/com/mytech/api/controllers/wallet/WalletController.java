@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.wallet.TransferRequest;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.models.wallet.WalletDTO;
 import com.mytech.api.repositories.wallet.WalletRepository;
@@ -53,9 +53,7 @@ public class WalletController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
 
-        Wallet wallet = modelMapper.map(walletDTO, Wallet.class);
-        Wallet savedWallet = walletService.saveWallet(wallet);
-        WalletDTO savedWalletDTO = modelMapper.map(savedWallet, WalletDTO.class);
+        WalletDTO savedWalletDTO = walletService.createWallet(walletDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedWalletDTO);
     }
 
@@ -93,28 +91,9 @@ public class WalletController {
                     .collect(Collectors.joining("; "));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
-
-        Wallet existingWallet = walletService.getWalletById(walletId);
-        if (existingWallet == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet not found with id: " + walletId);
-        }
-
-        // Create a copy of existingWallet to keep the original intact
-        Wallet updatedWallet = new Wallet();
-        BeanUtils.copyProperties(existingWallet, updatedWallet);
-
-        // Map the updated data from walletDTO to the copied wallet object
-        modelMapper.map(walletDTO, updatedWallet);
-        updatedWallet.setWalletId(walletId);
-
-        // Save the updated wallet
-        updatedWallet = walletService.saveWallet(updatedWallet);
-
-        // Return the updated wallet DTO in the response
-        WalletDTO updatedWalletDTO = modelMapper.map(updatedWallet, WalletDTO.class);
-        return ResponseEntity.ok(updatedWalletDTO);
+        WalletDTO updatedWallet = walletService.updateWallet(walletId, walletDTO);
+        return ResponseEntity.ok(updatedWallet);
     }
-
 
     @DeleteMapping("/delete/{walletId}")
     public ResponseEntity<String> deleteCategory(@PathVariable int walletId, Authentication authentication) {
@@ -127,6 +106,20 @@ public class WalletController {
         walletService.deleteWallet(walletId);
 
         return ResponseEntity.ok("Wallets deleted successfully");
+    }
+
+    @PostMapping("/transfer")
+    // @PreAuthorize("#transferRequest.userId == authentication.principal.id")
+    public ResponseEntity<String> transferUSDToVND(@RequestBody TransferRequest transferRequest) {
+        try {
+            walletService.transferUSDToVND(transferRequest);
+            return ResponseEntity.ok("Transfer successful");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while processing the transfer");
+        }
     }
 
 }

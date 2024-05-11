@@ -3,6 +3,7 @@ package com.mytech.api.controllers.saving_goals;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
 import com.mytech.api.services.saving_goals.SavingGoalsService;
 
@@ -27,9 +29,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/savinggoals")
 public class Saving_goalsController {
     private final SavingGoalsService savingGoalsService;
+    private final ModelMapper modelMapper;
 
-    public Saving_goalsController(SavingGoalsService savingGoalService) {
+    public Saving_goalsController(SavingGoalsService savingGoalService, ModelMapper modelMapper) {
         this.savingGoalsService = savingGoalService;
+        this.modelMapper = modelMapper;
     }
 
     @GetMapping("/user/{userId}")
@@ -39,6 +43,18 @@ public class Saving_goalsController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(savingGoals, HttpStatus.OK);
+    }
+
+    @GetMapping("/wallets/{walletId}/users/{userId}")
+    @PreAuthorize("#userId == authentication.principal.id")
+    public ResponseEntity<List<SavingGoalDTO>> getAllSavingGoalByUserByWallet(@PathVariable int userId,
+            @PathVariable Integer walletId) {
+        List<SavingGoal> savingGoals = savingGoalsService.getSavingGoalsByWalletId(userId, walletId);
+        List<SavingGoalDTO> savingGoalDTOs = savingGoals.stream()
+                .map(savingGoal -> modelMapper.map(savingGoal, SavingGoalDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(savingGoalDTOs);
+
     }
 
     @DeleteMapping("/delete/{savingGoalId}")
@@ -73,7 +89,7 @@ public class Saving_goalsController {
 
     @PutMapping("/update/{savingGoalId}")
     @PreAuthorize("#updatedSavingGoalDTO.userId == authentication.principal.id")
-    public ResponseEntity<SavingGoalDTO> updateSavingGoal(@PathVariable Long savingGoalId,
+    public ResponseEntity<?> updateSavingGoal(@PathVariable Long savingGoalId,
             @RequestBody SavingGoalDTO updatedSavingGoalDTO) {
         try {
             SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);

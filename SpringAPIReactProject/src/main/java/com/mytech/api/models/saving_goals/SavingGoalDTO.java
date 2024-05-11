@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,8 @@ public class SavingGoalDTO {
 	private String name;
 
 	private BigDecimal targetAmount;
+
+	@Min(value = 0, message = "Current amount must be greater than or equal to 0")
 	private BigDecimal currentAmount;
 	@FutureOrPresent(message = "Start date must be in future or present")
 	private LocalDate startDate;
