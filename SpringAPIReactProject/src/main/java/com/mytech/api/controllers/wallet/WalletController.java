@@ -112,10 +112,7 @@ public class WalletController {
     // @PreAuthorize("#transferRequest.userId == authentication.principal.id")
     public ResponseEntity<String> transferUSDToVND(@RequestBody TransferRequest transferRequest) {
         try {
-            walletService.transferUSDToVND(
-                    transferRequest.getSourceWalletId(),
-                    transferRequest.getDestinationWalletId(),
-                    transferRequest.getAmount());
+            walletService.transferUSDToVND(transferRequest);
             return ResponseEntity.ok("Transfer successful");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

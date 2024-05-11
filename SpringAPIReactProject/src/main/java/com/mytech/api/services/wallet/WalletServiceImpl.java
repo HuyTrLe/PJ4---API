@@ -1,24 +1,11 @@
 package com.mytech.api.services.wallet;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.category.Category;
@@ -26,6 +13,7 @@ import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.wallet.TransferRequest;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.models.wallet.WalletDTO;
 import com.mytech.api.repositories.categories.CategoryRepository;
@@ -211,34 +199,33 @@ public class WalletServiceImpl implements WalletService {
 	}
 
 	@Override
-	public void transferUSDToVND(int sourceWalletId, int destinationWalletId, BigDecimal amount) {
-		Wallet sourceWallet = walletRepository.findById(sourceWalletId)
-				.orElseThrow(() -> new RuntimeException("Source wallet not found with id: " + sourceWalletId));
+	public void transferUSDToVND(TransferRequest transferRequest) {
+		Wallet sourceWallet = walletRepository.findById(transferRequest.getSourceWalletId())
+				.orElseThrow(() -> new RuntimeException(
+						"Source wallet not found with id: " + transferRequest.getSourceWalletId()));
 
-		Wallet destinationWallet = walletRepository.findById(destinationWalletId)
+		Wallet destinationWallet = walletRepository.findById(transferRequest.getDestinationWalletId())
 				.orElseThrow(
-						() -> new RuntimeException("Destination wallet not found with id: " + destinationWalletId));
+						() -> new RuntimeException(
+								"Destination wallet not found with id: " + transferRequest.getDestinationWalletId()));
 
 		// Kiểm tra nếu ví nguồn là USD và ví đích là VND
 		if (!sourceWallet.getCurrency().equals("USD") || !destinationWallet.getCurrency().equals("VND")) {
 			throw new IllegalArgumentException("Transfer is only allowed from USD wallet to VND wallet");
 		}
 
-		// Tải tỷ giá hối đoái từ API
-		BigDecimal exchangeRate = getUSDToVNDExchangeRate();
-
 		// Tính toán số tiền tương ứng trong VND
-		BigDecimal amountInVND = amount.multiply(exchangeRate);
+		BigDecimal amountInVND = transferRequest.getAmount().multiply(transferRequest.getExchangeRate());
 
 		// Kiểm tra số dư của ví nguồn đủ để thực hiện giao dịch không
-		if (sourceWallet.getBalance().compareTo(amount) < 0) {
+		if (sourceWallet.getBalance().compareTo(transferRequest.getAmount()) < 0) {
 			throw new IllegalArgumentException("Insufficient funds in source wallet");
 		}
 
 		// Tạo giao dịch chuyển tiền đi từ ví nguồn
 		Transaction outgoingTransaction = new Transaction();
 		outgoingTransaction.setTransactionDate(LocalDate.now());
-		outgoingTransaction.setAmount(amount);
+		outgoingTransaction.setAmount(transferRequest.getAmount());
 		outgoingTransaction.setWallet(sourceWallet);
 		outgoingTransaction.setCategory(categoryRepository.findByName("Outgoing Transfer")
 				.stream().findFirst().orElse(null));
@@ -258,59 +245,13 @@ public class WalletServiceImpl implements WalletService {
 		transactionRepository.save(incomingTransaction);
 
 		// Cập nhật số dư cho cả hai ví
-		BigDecimal newSourceBalance = sourceWallet.getBalance().subtract(amount);
+		BigDecimal newSourceBalance = sourceWallet.getBalance().subtract(transferRequest.getAmount());
 		sourceWallet.setBalance(newSourceBalance);
 		walletRepository.save(sourceWallet);
 
 		BigDecimal newDestinationBalance = destinationWallet.getBalance().add(amountInVND);
 		destinationWallet.setBalance(newDestinationBalance);
 		walletRepository.save(destinationWallet);
-	}
-
-	private BigDecimal getUSDToVNDExchangeRate() {
-		try {
-			// Tạo URL cho API
-			URL url = new URL("https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=10");
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("GET");
-
-			// Đọc dữ liệu trả về từ API
-			BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			StringBuilder response = new StringBuilder();
-			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-
-			// Tìm vị trí của dấu "<?xml" đầu tiên trong dữ liệu
-			int startIndex = response.indexOf("<?xml");
-
-			// Loại bỏ bất kỳ nội dung trước dấu "<?xml"
-			String xmlData = response.substring(startIndex);
-
-			// Phân tích dữ liệu XML để lấy tỷ giá
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			InputSource is = new InputSource(new StringReader(xmlData));
-			Document document = builder.parse(is);
-
-			// Xử lý dữ liệu XML và trả về tỷ giá
-			NodeList exrateList = document.getElementsByTagName("Exrate");
-			for (int i = 0; i < exrateList.getLength(); i++) {
-				Node exrateNode = exrateList.item(i);
-				if (exrateNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element exrateElement = (Element) exrateNode;
-					if (exrateElement.getAttribute("CurrencyCode").equals("USD")) {
-						String transferRate = exrateElement.getAttribute("Transfer").replace(",", "");
-						return new BigDecimal(transferRate);
-					}
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		throw new RuntimeException("Failed to get USD to VND exchange rate");
 	}
 
 	@Override

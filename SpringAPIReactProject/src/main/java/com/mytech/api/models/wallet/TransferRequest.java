@@ -16,5 +16,6 @@ public class TransferRequest {
     private int sourceWalletId;
     private int destinationWalletId;
     private BigDecimal amount;
+    private BigDecimal exchangeRate;
 
 }

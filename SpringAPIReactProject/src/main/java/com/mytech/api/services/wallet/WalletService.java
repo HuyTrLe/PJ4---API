@@ -1,8 +1,8 @@
 package com.mytech.api.services.wallet;
 
-import java.math.BigDecimal;
 import java.util.List;
 
+import com.mytech.api.models.wallet.TransferRequest;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.models.wallet.WalletDTO;
 
@@ -17,6 +17,6 @@ public interface WalletService {
 
 	WalletDTO updateWallet(int walletId, WalletDTO walletDTO);
 
-	void transferUSDToVND(int sourceWalletId, int destinationWalletId, BigDecimal amount);
+	void transferUSDToVND(TransferRequest transferRequest);
 
 }
