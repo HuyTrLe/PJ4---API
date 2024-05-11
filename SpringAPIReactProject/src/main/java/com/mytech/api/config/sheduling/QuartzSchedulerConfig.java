@@ -18,12 +18,19 @@ public class QuartzSchedulerConfig {
     }
 
     @Bean
-    Trigger updateBillsJobTrigger() {
+    JobDetail updateTransactionReccurenceJobDetail() {
+        return JobBuilder.newJob().ofType(UpdateTransactionReccuringJob.class).storeDurably()
+                .withIdentity("uupdateTransactionReccringsJob")
+                .withDescription("Update Transaction Recurring job").build();
+    }
+
+    @Bean
+    Trigger jobTrigger() {
         return TriggerBuilder.newTrigger()
                 .forJob(updateBillsJobDetail())
-                .withIdentity("updateBillsJobTrigger")
-                .withDescription("Trigger for update bills job")
-                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(10, 9))
+                .withIdentity("jobTrigger")
+                .withDescription("Trigger for job")
+                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(18, 27))
                 .build();
     }
 }

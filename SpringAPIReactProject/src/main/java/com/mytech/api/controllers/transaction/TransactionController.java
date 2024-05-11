@@ -41,10 +41,10 @@ import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
+import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 import com.mytech.api.services.transaction.TransactionService;
-import com.mytech.api.services.wallet.WalletService;
 
 import jakarta.validation.Valid;
 
@@ -58,7 +58,7 @@ public class TransactionController {
 	@Autowired
 	UserRepository userRepository;
 	@Autowired
-	WalletService walletService;
+	WalletRepository walletRepository;
 	@Autowired
 	RecurrenceService recurrenceService;
 	@Autowired
@@ -88,11 +88,8 @@ public class TransactionController {
 		if (!existingUser.isPresent()) {
 			return new ResponseEntity<>("User not found with id: " + transactionDTO.getUserId(), HttpStatus.NOT_FOUND);
 		}
-		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWalletId());
-		if (existingWallet == null) {
-			return new ResponseEntity<>("Wallet not found with id: " + transactionDTO.getWalletId(),
-					HttpStatus.NOT_FOUND);
-		}
+		Wallet existingWallet = walletRepository.findById(transactionDTO.getWalletId())
+				.orElseThrow(() -> new RuntimeException("Wallet not found with id: " + transactionDTO.getWalletId()));
 		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategoryId());
 		if (existingCategory == null) {
 			return new ResponseEntity<>("Category not found with id: " + transactionDTO.getCategoryId(),
@@ -118,14 +115,18 @@ public class TransactionController {
 				transaction.setIncome(income);
 				break;
 			case EXPENSE:
-				Expense expense = new Expense();
-				expense.setUser(existingUser.get());
-				expense.setWallet(existingWallet);
-				expense.setAmount(transaction.getAmount());
-				expense.setExpenseDate(transaction.getTransactionDate());
-				expense.setCategory(existingCategory);
-				expense.setTransaction(transaction);
-				transaction.setExpense(expense);
+				if (!"USD".equals(existingWallet.getCurrency())) {
+					Expense expense = new Expense();
+					expense.setUser(existingUser.get());
+					expense.setWallet(existingWallet);
+					expense.setAmount(transaction.getAmount());
+					expense.setExpenseDate(transaction.getTransactionDate());
+					expense.setCategory(existingCategory);
+					expense.setTransaction(transaction);
+					transaction.setExpense(expense);
+				} else {
+					return ResponseEntity.badRequest().body("Expense transaction not allowed for USD wallet");
+				}
 				break;
 			default:
 				break;
@@ -154,9 +155,10 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@GetMapping("/getTop5NewTransactionforWallet/users/{userId}/wallets/{walletId}")
-	public ResponseEntity<?> getTop5NewTransactionforWallet(@PathVariable Integer userId,@PathVariable Integer walletId) {
+	public ResponseEntity<?> getTop5NewTransactionforWallet(@PathVariable Integer userId,
+			@PathVariable Integer walletId) {
 		List<TransactionView> transactions = transactionService.getTop5NewTransactionforWallet(userId, walletId);
 		if (transactions != null && !transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
@@ -165,7 +167,8 @@ public class TransactionController {
 	}
 
 	@PostMapping("/getTop5TransactionHightestMoney")
-	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(@RequestBody @Valid ParamBudget paramBudget) {
+	public ResponseEntity<List<TransactionView>> getTop5TransactionHightestMoney(
+			@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionView> transactions = transactionService.getTop5TransactionHightestMoney(paramBudget);
 		if (!transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
@@ -190,6 +193,7 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
+
 	@PostMapping("/GetTransactionReportMonth")
 	public ResponseEntity<?> GetTransactionReportMonth(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionReport> transactions = transactionService.getTransactionReportMonth(paramBudget);
@@ -337,7 +341,7 @@ public class TransactionController {
 		}
 
 		wallet.setBalance(newBalance);
-		walletService.saveWallet(wallet);
+		walletRepository.save(wallet);
 
 		transactionService.deleteTransaction(transactionId);
 		return ResponseEntity.noContent().build();
@@ -358,7 +362,7 @@ public class TransactionController {
 				.collect(Collectors.toList());
 		return ResponseEntity.ok(transactionDTOs);
 	}
-	
+
 	@PostMapping("/FindTransaction")
 	public ResponseEntity<?> FindTransaction(@RequestBody @Valid FindTransactionParam param) {
 		List<TransactionData> transactions = transactionService.FindTransaction(param);
@@ -367,7 +371,7 @@ public class TransactionController {
 		}
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@PostMapping("/getTransactionWithBudget")
 	public ResponseEntity<?> getTransactionWithBudget(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionData> transactions = transactionService.getTransactionWithBudget(paramBudget);

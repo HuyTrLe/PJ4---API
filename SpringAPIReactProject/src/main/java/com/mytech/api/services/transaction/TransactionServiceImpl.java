@@ -18,11 +18,8 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
-
-import com.mytech.api.models.transaction.FindTransactionParam;
-
 import com.mytech.api.models.saving_goals.SavingGoal;
-
+import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
@@ -220,6 +217,10 @@ public class TransactionServiceImpl implements TransactionService {
 		Transaction existingTransaction = transactionRepository.findById(transactionId)
 				.orElseThrow(() -> new RuntimeException("Transaction not found with id: " + transactionId));
 
+		if (existingTransaction.getNotes() != null && existingTransaction.getNotes().contains("Transfer Money")) {
+			throw new IllegalArgumentException("Transaction Transfer Money cannot be updated");
+		}
+
 		BigDecimal oldAmount = existingTransaction.getAmount();
 		Category oldCategory = existingTransaction.getCategory();
 		LocalDate oldTransactionDate = existingTransaction.getTransactionDate();
@@ -311,22 +312,27 @@ public class TransactionServiceImpl implements TransactionService {
 		} else if (oldCategory.getType() == CateTypeENum.INCOME) {
 			Income income = incomeRepository.findByTransaction(existingTransaction);
 			if (income != null) {
-				if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.EXPENSE) {
-					existingTransaction.setIncome(null);
+				if (!"USD".equals(existingTransaction.getWallet().getCurrency())) {
+					if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.EXPENSE) {
+						// Tạo một khoản chi mới
+						existingTransaction.setIncome(null);
 
-					// Create a new Expense record since the new category is EXPENSE
-					Expense newExpense = new Expense();
-					newExpense.setTransaction(existingTransaction); // Link the transaction
-					newExpense.setAmount(transactionDTO.getAmount()); // Use updated amount
-					newExpense.setExpenseDate(transactionDTO.getTransactionDate()); // Use updated transaction date
-					newExpense.setCategory(existingTransaction.getCategory()); // Use the new (updated) category
-					newExpense.setWallet(existingTransaction.getWallet()); // Use associated wallet
-					newExpense.setUser(existingTransaction.getUser()); // Use associated user
-					expenseRepository.save(newExpense); // Persist the new Expense entity
+						Expense newExpense = new Expense();
+						newExpense.setTransaction(existingTransaction); // Liên kết với giao dịch
+						newExpense.setAmount(transactionDTO.getAmount()); // Sử dụng số tiền đã cập nhật
+						newExpense.setExpenseDate(transactionDTO.getTransactionDate()); // Sử dụng ngày giao dịch đã cập
+																						// nhật
+						newExpense.setCategory(existingTransaction.getCategory()); // Sử dụng danh mục mới (đã cập nhật)
+						newExpense.setWallet(existingTransaction.getWallet()); // Sử dụng ví liên kết
+						newExpense.setUser(existingTransaction.getUser()); // Sử dụng người dùng liên kết
+						expenseRepository.save(newExpense); // Lưu thực thể khoản chi mới
+					} else {
+						// Update bản ghi thu nhập hiện có nếu không có thay đổi danh mục
+						income.setAmount(transactionDTO.getAmount()); // Cập nhật số tiền
+						incomeRepository.save(income); // Lưu các cập nhật
+					}
 				} else {
-					// Update the existing Income record if there's no category change
-					income.setAmount(transactionDTO.getAmount()); // Update the amount
-					incomeRepository.save(income); // Persist the updates
+					throw new IllegalArgumentException("Expense transaction not allowed for USD wallet");
 				}
 			}
 		}
@@ -351,7 +357,8 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public List<TransactionView> getTop5TransactionHightestMoney(ParamBudget param) {
 		Pageable pageable = PageRequest.of(0, 5);
-		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(param.getUserId(),param.getFromDate(),param.getToDate(),
+		Page<TransactionView> transactionsPage = transactionRepository.getTop5TransactionHightestMoney(
+				param.getUserId(), param.getFromDate(), param.getToDate(),
 				pageable);
 		List<TransactionView> transactions = transactionsPage.getContent();
 		return transactions;
@@ -371,9 +378,14 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@Override
 	public List<TransactionReport> getTransactionReportMonth(ParamBudget param) {
-		LocalDate previousMonthStart = param.getFromDate().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()); // April 1, 2024
-		LocalDate previousMonthEnd = param.getFromDate().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()); // April 30, 2024
-		return transactionRepository.getTransactionReportMonth(param.getUserId(), param.getFromDate(), param.getToDate(),previousMonthStart,previousMonthEnd);
+		LocalDate previousMonthStart = param.getFromDate().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()); // April
+																														// 1,
+																														// 2024
+		LocalDate previousMonthEnd = param.getFromDate().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()); // April
+																													// 30,
+																													// 2024
+		return transactionRepository.getTransactionReportMonth(param.getUserId(), param.getFromDate(),
+				param.getToDate(), previousMonthStart, previousMonthEnd);
 	}
 
 	@Override
@@ -381,7 +393,7 @@ public class TransactionServiceImpl implements TransactionService {
 		var result = CateTypeENum.valueOf(param.getType().toUpperCase());
 		return transactionRepository.FindTransaction(param.getUserId(), param.getFromDate(), param.getToDate(), result);
 	}
-	
+
 	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
 		PageRequest pageable = PageRequest.of(0, 5);
 		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransactionforWallet(userId, walletId,
@@ -397,10 +409,9 @@ public class TransactionServiceImpl implements TransactionService {
 		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
 				.orElseThrow(() -> new RuntimeException(
 						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
-		if (selectedSavingGoal.getCurrentAmount().compareTo(selectedSavingGoal.getTargetAmount()) >= 0 ||
-				(selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
+		if ((selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
 			throw new IllegalArgumentException(
-					"This saving goal has either reached its target amount or is past its end date.");
+					"This saving goal has either reached its is past its end date.");
 		}
 		BigDecimal walletBalance = existingWallet.getBalance();
 		BigDecimal transactionAmount = transaction.getAmount(); // Extracting transaction amount
@@ -425,8 +436,7 @@ public class TransactionServiceImpl implements TransactionService {
 		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transactionDTO.getSavingGoalId())
 				.orElseThrow(() -> new EntityNotFoundException(
 						"Saving goal not found with id: " + transactionDTO.getSavingGoalId()));
-		if (selectedSavingGoal.getCurrentAmount().compareTo(selectedSavingGoal.getTargetAmount()) >= 0 ||
-				(selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
+		if ((selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
 			throw new IllegalArgumentException(
 					"This saving goal has either reached its target amount or is past its end date.");
 		}
@@ -469,7 +479,8 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@Override
 	public List<TransactionData> getTransactionWithBudget(ParamBudget param) {
-		return transactionRepository.getTransactionWithBudget(param.getUserId(),param.getCategoryId(), param.getFromDate(), param.getToDate());
+		return transactionRepository.getTransactionWithBudget(param.getUserId(), param.getCategoryId(),
+				param.getFromDate(), param.getToDate());
 	}
 
 }

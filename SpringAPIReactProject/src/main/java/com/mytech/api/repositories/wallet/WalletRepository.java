@@ -16,4 +16,10 @@ public interface WalletRepository extends JpaRepository<Wallet, Integer> {
 
 	@Query("SELECT w FROM Wallet w WHERE w.user.id = :userId")
 	List<Wallet> getWalletsByUserId(@Param("userId") int userId);
+
+	boolean existsByWalletNameAndWalletIdNot(String name, int id);
+
+	boolean existsByWalletName(String walletName);
+
+	boolean existsByCurrency(String currency);
 }
