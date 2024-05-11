@@ -26,4 +26,21 @@ public class QuartzSchedulerConfig {
                 .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(10, 9))
                 .build();
     }
+    
+    @Bean
+    JobDetail debtNotificationJobDetail() {
+        return JobBuilder.newJob(DebtNotificationJob.class)
+                .withIdentity("debtNotificationJob")
+                .storeDurably()
+                .build();
+    }
+
+    @Bean
+    Trigger debtNotificationJobTrigger() {
+        return TriggerBuilder.newTrigger()
+                .forJob(debtNotificationJobDetail())
+                .withIdentity("debtNotificationTrigger")
+                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(12, 0)) // Run at 9:00 AM every day
+                .build();
+    }
 }

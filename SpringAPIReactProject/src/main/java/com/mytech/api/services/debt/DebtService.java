@@ -26,6 +26,7 @@ public interface DebtService {
 
     boolean existsDebtById(Long debtId);
     
+    void checkAndSendDebtNotifications(Debt debt);
 
     List<Debt> findDebtActive(Long userId);
 
