@@ -17,6 +17,7 @@ import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
+import com.mytech.api.models.debt.DetailReportDebtParam;
 import com.mytech.api.models.debt.ReportDebt;
 import com.mytech.api.models.debt.ReportDebtParam;
 import com.mytech.api.models.user.User;
@@ -113,13 +114,13 @@ public class DebtServiceImpl implements DebtService {
 	}
 
 	@Override
-	public List<Debt> findDebt(Long userId) {
-		return debtRepository.findDebt(userId);
+	public List<Debt> findDebt(ReportDebtParam param) {
+		return debtRepository.findDebt(param.getUserId(),param.getFromDate(),param.getToDate());
 	}
 
 	@Override
-	public List<Debt> findLoan(Long userId) {
-		return debtRepository.findLoan(userId);
+	public List<Debt> findLoan(ReportDebtParam param) {
+		return debtRepository.findLoan(param.getUserId(),param.getFromDate(),param.getToDate());
 	}
 
 	@Override
@@ -146,6 +147,39 @@ public class DebtServiceImpl implements DebtService {
 		
 		
 		return result;
+	}
+
+	@Override
+	public List<Debt> getDetailReport(DetailReportDebtParam param) {
+		List<Debt> listdebt = null;
+		LocalDate currentDate = LocalDate.now();
+		switch(param.getIndex()) {
+		case 0:
+			listdebt = debtRepository.GetDetailDebtTTH(param.getUserId(), param.getFromDate(), param.getToDate());
+			break;
+		case 1:
+			listdebt = debtRepository.GetDetailDebtTSTH(param.getUserId(), param.getFromDate(), param.getToDate());
+			break;
+		case 2:
+			listdebt = debtRepository.GetDetailDebtCTCTTH(param.getUserId(),currentDate, param.getFromDate(), param.getToDate());
+			break;
+		case 3:
+			listdebt = debtRepository.GetDetailDebtCTQTH(param.getUserId(),currentDate, param.getFromDate(), param.getToDate());
+			break;
+		case 4:
+			listdebt = debtRepository.GetDetailLoanTTH(param.getUserId(), param.getFromDate(), param.getToDate());
+			break;
+		case 5:
+			listdebt = debtRepository.GetDetailLoanTSTH(param.getUserId(), param.getFromDate(), param.getToDate());
+			break;
+		case 6:
+			listdebt = debtRepository.GetDetailLoanCTCTTH(param.getUserId(),currentDate, param.getFromDate(), param.getToDate());
+			break;
+		case 7:
+			listdebt = debtRepository.GetDetailLoanCTQTH(param.getUserId(),currentDate, param.getFromDate(), param.getToDate());
+			break;
+		}
+		return listdebt;
 	}
 	
 	

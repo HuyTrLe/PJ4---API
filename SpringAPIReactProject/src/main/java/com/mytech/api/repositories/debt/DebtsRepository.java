@@ -29,50 +29,86 @@ public interface DebtsRepository extends JpaRepository<Debt, Long> {
     
     @Query("SELECT d FROM Debt d "
     		+ "JOIN d.category c "
-    		+ "WHERE d.user.id = :userId and c.name = 'Debt'")
-    List<Debt> findDebt(Long userId);
+    		+ "WHERE d.user.id = :userId and c.name = 'Debt' and d.dueDate between :fromDate and :toDate")
+    List<Debt> findDebt(Long userId,LocalDate fromDate,LocalDate toDate);
     
     
     @Query("SELECT d FROM Debt d "
     		+ "JOIN d.category c "
-    		+ "WHERE d.user.id = :userId and c.name = 'Loan'")
-    List<Debt> findLoan(Long userId);
+    		+ "WHERE d.user.id = :userId and c.name = 'Loan' and d.dueDate between :fromDate and :toDate")
+    List<Debt> findLoan(Long userId,LocalDate fromDate,LocalDate toDate);
     
     //Report
 
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Paid before due',COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.id = 23 AND d.isPaid = true AND d.paidDate <= d.dueDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.name = 'Debt' AND d.isPaid = true AND d.paidDate <= d.dueDate")
     ReportDebt GetDebtTTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Paid after due', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.id = 23 AND d.isPaid = true AND d.paidDate > d.dueDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.name = 'Debt' AND d.isPaid = true AND d.paidDate > d.dueDate")
     ReportDebt GetDebtTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not pay before due', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 23 AND d.isPaid = false AND d.dueDate >= :currentDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Debt' AND d.isPaid = false AND d.dueDate >= :currentDate")
     ReportDebt GetDebtCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not pay overdue', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 23 AND d.isPaid = false AND d.dueDate < :currentDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Debt' AND d.isPaid = false AND d.dueDate < :currentDate")
     ReportDebt GetDebtCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Received before due', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = true AND d.paidDate <= d.dueDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = true AND d.paidDate <= d.dueDate")
     ReportDebt GetLoanTTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Received after due', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = true AND d.paidDate > d.dueDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = true AND d.paidDate > d.dueDate")
     ReportDebt GetLoanTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not receive before due', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = false AND d.dueDate >= :currentDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = false AND d.dueDate >= :currentDate")
     ReportDebt GetLoanCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not receive overdue', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = false AND d.dueDate < :currentDate")
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = false AND d.dueDate < :currentDate")
     ReportDebt GetLoanCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
 
 
+    //
+    
+    //Detail Report
+  
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and "
+    		+ "( d.category.name = 'Debt' AND d.isPaid = true AND d.paidDate <= d.dueDate) ")
+    List<Debt> GetDetailDebtTTH(Long userId,LocalDate fromDate,LocalDate toDate);
+    
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.name = 'Debt' AND d.isPaid = true AND d.paidDate > d.dueDate")
+    List<Debt> GetDetailDebtTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
+    
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Debt' AND d.isPaid = false AND d.dueDate >= :currentDate")
+    List<Debt> GetDetailDebtCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
+    
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Debt' AND d.isPaid = false AND d.dueDate < :currentDate")
+    List<Debt> GetDetailDebtCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
+    
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = true AND d.paidDate <= d.dueDate")
+    List<Debt> GetDetailLoanTTH(Long userId,LocalDate fromDate,LocalDate toDate);
+    
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = true AND d.paidDate > d.dueDate")
+    List<Debt> GetDetailLoanTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
+    
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = false AND d.dueDate >= :currentDate")
+    List<Debt> GetDetailLoanCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
+    
+    @Query("SELECT d "
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.name = 'Loan' AND d.isPaid = false AND d.dueDate < :currentDate")
+    List<Debt> GetDetailLoanCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     //
     
 

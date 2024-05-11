@@ -30,6 +30,8 @@ import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
 import com.mytech.api.models.debt.ReportDebt;
 import com.mytech.api.models.debt.ReportDebtParam;
+import com.mytech.api.models.debt.DetailReportDebtParam;
+
 import com.mytech.api.services.debt.DebtService;
 
 import jakarta.validation.Valid;
@@ -145,9 +147,12 @@ public class DebtController {
  		return ResponseEntity.ok(debtDTOs);
     }
     
-    @GetMapping("/findDebt/user/{userId}")
-    public ResponseEntity<?> findDebt(@PathVariable Long userId) {
-    	 List<Debt> debts = debtService.findDebt(userId);
+    @PostMapping("/findDebt")
+    public ResponseEntity<?> findDebt(@RequestBody ReportDebtParam param) {
+    	System.out.println(param.getUserId());
+    	System.out.println(param.getFromDate());
+    	System.out.println(param.getToDate());
+    	 List<Debt> debts = debtService.findDebt(param);
          if (debts.isEmpty()) {
              return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
          }
@@ -157,10 +162,10 @@ public class DebtController {
  		return ResponseEntity.ok(debtDTOs);
     }
     
-    @GetMapping("/findLoan/user/{userId}")
-    public ResponseEntity<?> findLoan(@PathVariable Long userId) {
-    	System.out.println(userId);
-    	 List<Debt> debts = debtService.findLoan(userId);
+    @PostMapping("/findLoan")
+    public ResponseEntity<?> findLoan(@RequestBody ReportDebtParam param) {
+
+    	 List<Debt> debts = debtService.findLoan(param);
          if (debts.isEmpty()) {
              return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
          }
@@ -179,5 +184,19 @@ public class DebtController {
          }
          
  		return ResponseEntity.ok(debts);
+    }
+    
+    @PostMapping("/getDetailReportDebtParam")
+    public ResponseEntity<?> DetailReportDebtParam(@RequestBody DetailReportDebtParam param) {
+
+    	 List<Debt> debts = debtService.getDetailReport(param);
+         if (debts.isEmpty()) {
+             return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
+         }
+         List<DebtDTO> debtDTOs = debts.stream()
+                 .map(debt -> modelMapper.map(debt, DebtDTO.class))
+                 .collect(Collectors.toList());
+         
+ 		return ResponseEntity.ok(debtDTOs);
     }
 }

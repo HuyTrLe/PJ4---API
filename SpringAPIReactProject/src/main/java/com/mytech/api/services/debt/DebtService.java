@@ -2,6 +2,7 @@ package com.mytech.api.services.debt;
 
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
+import com.mytech.api.models.debt.DetailReportDebtParam;
 import com.mytech.api.models.debt.ReportDebt;
 import com.mytech.api.models.debt.ReportDebtParam;
 
@@ -32,10 +33,12 @@ public interface DebtService {
 
     List<Debt> findDebtPaid(Long userId);
     
-    List<Debt> findDebt(Long userId);
+    List<Debt> findDebt(ReportDebtParam param);
     
-    List<Debt> findLoan(Long userId);
+    List<Debt> findLoan(ReportDebtParam param);
     
     List<ReportDebt> ReportDEBT(ReportDebtParam param);
+    
+    List<Debt> getDetailReport(DetailReportDebtParam param);
     
 }
