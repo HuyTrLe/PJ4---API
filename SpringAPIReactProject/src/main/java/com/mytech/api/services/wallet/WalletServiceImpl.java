@@ -167,27 +167,32 @@ public class WalletServiceImpl implements WalletService {
 		existingWallet = walletRepository.save(existingWallet);
 		BigDecimal balanceDifference = existingWallet.getBalance().subtract(oldBalance);
 		if (balanceDifference.compareTo(BigDecimal.ZERO) != 0) {
-			if (existingWallet.getWalletType() == 3 && !existingWallet.getSavingGoals().isEmpty()) {
-				SavingGoal selectedSavingGoal = existingWallet.getSavingGoals().get(0);
-				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(balanceDifference));
+			Long selectedGoalId = walletDTO.getSavingGoalId();
+			if (selectedGoalId != null) {
+				SavingGoal selectedSavingGoal = saving_goalsRepository.findById(selectedGoalId)
+						.orElseThrow(() -> new RuntimeException("Selected saving goal not found"));
+				BigDecimal currentAmount = selectedSavingGoal.getCurrentAmount() != null
+						? selectedSavingGoal.getCurrentAmount()
+						: BigDecimal.ZERO;
+
+				BigDecimal newGoalBalance = currentAmount.add(balanceDifference);
+				selectedSavingGoal.setCurrentAmount(newGoalBalance);
 				saving_goalsRepository.save(selectedSavingGoal);
-			}
-			Transaction adjustmentTransaction = new Transaction();
-			adjustmentTransaction.setWallet(existingWallet);
-			adjustmentTransaction.setTransactionDate(LocalDate.now());
-			adjustmentTransaction.setAmount(balanceDifference.abs());
-			adjustmentTransaction.setUser(existingWallet.getUser());
-			Category category = null;
-			if (balanceDifference.compareTo(BigDecimal.ZERO) > 0) {
-				category = categoryRepository.findByName("Incoming Transfer")
-						.stream().findFirst().orElse(null);
+				Transaction goalTransaction = new Transaction();
+				goalTransaction.setWallet(existingWallet);
+				goalTransaction.setTransactionDate(LocalDate.now());
+				goalTransaction.setAmount(balanceDifference.abs());
+				goalTransaction.setUser(existingWallet.getUser());
+				Category category = balanceDifference.compareTo(BigDecimal.ZERO) > 0
+						? categoryRepository.findByName("Incoming Transfer").stream().findFirst().orElse(null)
+						: categoryRepository.findByName("Outgoing Transfer").stream().findFirst().orElse(null);
+				if (category != null) {
+					goalTransaction.setCategory(category);
+					transactionRepository.save(goalTransaction);
+				}
 			} else {
-				category = categoryRepository.findByName("Outgoing Transfer")
-						.stream().findFirst().orElse(null);
-			}
-			if (category != null) {
-				adjustmentTransaction.setCategory(category);
-				transactionRepository.save(adjustmentTransaction);
+				existingWallet.setBalance(existingWallet.getBalance().add(balanceDifference));
+				existingWallet = walletRepository.save(existingWallet);
 			}
 		}
 
@@ -209,20 +214,20 @@ public class WalletServiceImpl implements WalletService {
 						() -> new RuntimeException(
 								"Destination wallet not found with id: " + transferRequest.getDestinationWalletId()));
 
-		// Kiểm tra nếu ví nguồn là USD và ví đích là VND
+		// Check if the source is USD and the destination is VND
 		if (!sourceWallet.getCurrency().equals("USD") || !destinationWallet.getCurrency().equals("VND")) {
 			throw new IllegalArgumentException("Transfer is only allowed from USD wallet to VND wallet");
 		}
 
-		// Tính toán số tiền tương ứng trong VND
+		// Calculate the corresponding amount in VND
 		BigDecimal amountInVND = transferRequest.getAmount().multiply(transferRequest.getExchangeRate());
 
-		// Kiểm tra số dư của ví nguồn đủ để thực hiện giao dịch không
+		// Check if the source wallet has enough balance
 		if (sourceWallet.getBalance().compareTo(transferRequest.getAmount()) < 0) {
 			throw new IllegalArgumentException("Insufficient funds in source wallet");
 		}
 
-		// Tạo giao dịch chuyển tiền đi từ ví nguồn
+		// Create outgoing transaction from the source wallet
 		Transaction outgoingTransaction = new Transaction();
 		outgoingTransaction.setTransactionDate(LocalDate.now());
 		outgoingTransaction.setAmount(transferRequest.getAmount());
@@ -233,7 +238,7 @@ public class WalletServiceImpl implements WalletService {
 		outgoingTransaction.setNotes("Transfer Money");
 		transactionRepository.save(outgoingTransaction);
 
-		// Tạo giao dịch chuyển tiền đến ví đích
+		// Create incoming transaction to the destination wallet
 		Transaction incomingTransaction = new Transaction();
 		incomingTransaction.setTransactionDate(LocalDate.now());
 		incomingTransaction.setAmount(amountInVND);
@@ -244,7 +249,7 @@ public class WalletServiceImpl implements WalletService {
 		incomingTransaction.setNotes("Transfer Money");
 		transactionRepository.save(incomingTransaction);
 
-		// Cập nhật số dư cho cả hai ví
+		// Update the balance for both wallets
 		BigDecimal newSourceBalance = sourceWallet.getBalance().subtract(transferRequest.getAmount());
 		sourceWallet.setBalance(newSourceBalance);
 		walletRepository.save(sourceWallet);
@@ -252,6 +257,15 @@ public class WalletServiceImpl implements WalletService {
 		BigDecimal newDestinationBalance = destinationWallet.getBalance().add(amountInVND);
 		destinationWallet.setBalance(newDestinationBalance);
 		walletRepository.save(destinationWallet);
+
+		// Check if the transfer is to a savings goal wallet and update the goal
+		if (transferRequest.getSavingGoalId() != null) {
+			SavingGoal goal = saving_goalsRepository.findById(transferRequest.getSavingGoalId())
+					.orElseThrow(() -> new RuntimeException(
+							"Savings goal not found with id: " + transferRequest.getSavingGoalId()));
+			goal.setCurrentAmount(goal.getCurrentAmount().add(amountInVND));
+			saving_goalsRepository.save(goal);
+		}
 	}
 
 	@Override
