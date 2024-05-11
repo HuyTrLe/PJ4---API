@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,9 +42,8 @@ public class DebtServiceImpl implements DebtService {
 //    }
 
     @Override
-    public List<DebtDTO> getDebtsByUserId(Long userId) {
-        List<Debt> debts = debtRepository.findByUserId(userId);
-        return debts.stream().map(debt -> modelMapper.map(debt, DebtDTO.class)).collect(Collectors.toList());
+    public Page<Debt> getDebtsByUserId(Long userId, Pageable pageable) {
+        return debtRepository.findByUserId(userId, pageable);
     }
 
     @Override

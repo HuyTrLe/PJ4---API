@@ -7,13 +7,15 @@ import com.mytech.api.models.debt.ReportDebtParam;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 
 public interface DebtService {
 
     //List<DebtDTO> getAllDebts();
 
-    List<DebtDTO> getDebtsByUserId(Long userId);
+    Page<Debt> getDebtsByUserId(Long userId, Pageable pageable);
 
     DebtDTO getDebtById(Long debtId);
 

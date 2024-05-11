@@ -3,6 +3,8 @@ package com.mytech.api.repositories.debt;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -12,7 +14,7 @@ import com.mytech.api.models.debt.ReportDebt;
 public interface DebtsRepository extends JpaRepository<Debt, Long> {
 
     @Query("SELECT d FROM Debt d WHERE d.user.id = :userId")
-    List<Debt> findByUserId(Long userId);
+    Page<Debt> findByUserId(Long userId, Pageable pageable);
 
     // @Query("SELECT COUNT(d) > 0 FROM Debt d WHERE d.id = :debtId")
     // boolean existsById(@Param("debtId") Long debtId);
@@ -37,38 +39,40 @@ public interface DebtsRepository extends JpaRepository<Debt, Long> {
     List<Debt> findLoan(Long userId);
     
     //Report
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã trả trước thời hạn',COUNT(d)) "
+
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Paid before due',COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.id = 23 AND d.isPaid = true AND d.paidDate <= d.dueDate")
     ReportDebt GetDebtTTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã trả sau thời hạn', COUNT(d)) "
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Paid after due', COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.id = 23 AND d.isPaid = true AND d.paidDate > d.dueDate")
     ReportDebt GetDebtTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa trả chưa tới thời hạn', COUNT(d)) "
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not pay before due', COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 23 AND d.isPaid = false AND d.dueDate >= :currentDate")
     ReportDebt GetDebtCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa trả qua thời hạn', COUNT(d)) "
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not pay overdue', COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 23 AND d.isPaid = false AND d.dueDate < :currentDate")
     ReportDebt GetDebtCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã nhận trước thời hạn', COUNT(d)) "
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Received before due', COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = true AND d.paidDate <= d.dueDate")
     ReportDebt GetLoanTTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã nhận sau thời hạn', COUNT(d)) "
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Received after due', COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = true AND d.paidDate > d.dueDate")
     ReportDebt GetLoanTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa nhận chưa tới thời hạn', COUNT(d)) "
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not receive before due', COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = false AND d.dueDate >= :currentDate")
     ReportDebt GetLoanCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
-    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa nhận qua thời hạn', COUNT(d)) "
+    @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Not receive overdue', COUNT(d)) "
     		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = false AND d.dueDate < :currentDate")
     ReportDebt GetLoanCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
-    
+
+
     //
     
 
