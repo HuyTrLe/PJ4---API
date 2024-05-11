@@ -25,6 +25,7 @@ import com.mytech.api.models.bill.BillResponse;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
 import com.mytech.api.models.debt.ReportDebt;
+import com.mytech.api.models.debt.ReportDebtParam;
 import com.mytech.api.services.debt.DebtService;
 
 import jakarta.validation.Valid;
@@ -156,10 +157,10 @@ public class DebtController {
  		return ResponseEntity.ok(debtDTOs);
     }
     
-    @GetMapping("/reportDebt/user/{userId}")
-    public ResponseEntity<?> reportDebt(@PathVariable Long userId) {
+    @PostMapping("/reportDebt")
+    public ResponseEntity<?> reportDebt(@RequestBody ReportDebtParam param) {
 
-    	 List<ReportDebt> debts = debtService.ReportDEBT(userId);
+    	 List<ReportDebt> debts = debtService.ReportDEBT(param);
          if (debts.isEmpty()) {
              return new ResponseEntity<>(debts, HttpStatus.NOT_FOUND);
          }

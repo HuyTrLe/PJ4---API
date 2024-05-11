@@ -16,6 +16,7 @@ import com.mytech.api.models.category.Category;
 import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
 import com.mytech.api.models.debt.ReportDebt;
+import com.mytech.api.models.debt.ReportDebtParam;
 import com.mytech.api.models.user.User;
 import com.mytech.api.repositories.categories.CategoryRepository;
 import com.mytech.api.repositories.debt.DebtsRepository;
@@ -121,25 +122,25 @@ public class DebtServiceImpl implements DebtService {
 	}
 
 	@Override
-	public List<ReportDebt> ReportDEBT(Long userId) {
+	public List<ReportDebt> ReportDEBT(ReportDebtParam param) {
 		List<ReportDebt> result = new ArrayList<>();
 		LocalDate currentDate = LocalDate.now();
-		var debtTTH = debtRepository.GetDebtTTH(userId);
+		var debtTTH = debtRepository.GetDebtTTH(param.getUserId(),param.getFromDate(),param.getToDate());
 		result.add(debtTTH);
-		var GetDebtTSTH = debtRepository.GetDebtTSTH(userId);
+		var GetDebtTSTH = debtRepository.GetDebtTSTH(param.getUserId(),param.getFromDate(),param.getToDate());
 		result.add(GetDebtTSTH);
-		var GetDebtCTCTTH = debtRepository.GetDebtCTCTTH(userId,currentDate);
+		var GetDebtCTCTTH = debtRepository.GetDebtCTCTTH(param.getUserId(),currentDate,param.getFromDate(),param.getToDate());
 		result.add(GetDebtCTCTTH);
-		var GetDebtCTQTH = debtRepository.GetDebtCTQTH(userId,currentDate);
+		var GetDebtCTQTH = debtRepository.GetDebtCTQTH(param.getUserId(),currentDate,param.getFromDate(),param.getToDate());
 		result.add(GetDebtCTQTH);
 		
-		var GetLoanTTH = debtRepository.GetLoanTTH(userId);
+		var GetLoanTTH = debtRepository.GetLoanTTH(param.getUserId(),param.getFromDate(),param.getToDate());
 		result.add(GetLoanTTH);
-		var GetLoanTSTH = debtRepository.GetLoanTSTH(userId);
+		var GetLoanTSTH = debtRepository.GetLoanTSTH(param.getUserId(),param.getFromDate(),param.getToDate());
 		result.add(GetLoanTSTH);
-		var GetLoanCTCTTH = debtRepository.GetLoanCTCTTH(userId,currentDate);
+		var GetLoanCTCTTH = debtRepository.GetLoanCTCTTH(param.getUserId(),currentDate,param.getFromDate(),param.getToDate());
 		result.add(GetLoanCTCTTH);
-		var GetLoanCTQTH = debtRepository.GetLoanCTQTH(userId,currentDate);
+		var GetLoanCTQTH = debtRepository.GetLoanCTQTH(param.getUserId(),currentDate,param.getFromDate(),param.getToDate());
 		result.add(GetLoanCTQTH);
 		
 		

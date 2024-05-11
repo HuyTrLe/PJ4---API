@@ -38,36 +38,36 @@ public interface DebtsRepository extends JpaRepository<Debt, Long> {
     
     //Report
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã trả trước thời hạn',COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 23 AND d.isPaid = true AND d.paidDate <= d.dueDate")
-    ReportDebt GetDebtTTH(Long userId);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.id = 23 AND d.isPaid = true AND d.paidDate <= d.dueDate")
+    ReportDebt GetDebtTTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã trả sau thời hạn', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 23 AND d.isPaid = true AND d.paidDate > d.dueDate")
-    ReportDebt GetDebtTSTH(Long userId);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate and d.category.id = 23 AND d.isPaid = true AND d.paidDate > d.dueDate")
+    ReportDebt GetDebtTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa trả chưa tới thời hạn', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 23 AND d.isPaid = false AND d.dueDate >= :currentDate")
-    ReportDebt GetDebtCTCTTH(Long userId,LocalDate currentDate);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 23 AND d.isPaid = false AND d.dueDate >= :currentDate")
+    ReportDebt GetDebtCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa trả qua thời hạn', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 23 AND d.isPaid = false AND d.dueDate < :currentDate")
-    ReportDebt GetDebtCTQTH(Long userId,LocalDate currentDate);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 23 AND d.isPaid = false AND d.dueDate < :currentDate")
+    ReportDebt GetDebtCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã nhận trước thời hạn', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 24 AND d.isPaid = true AND d.paidDate <= d.dueDate")
-    ReportDebt GetLoanTTH(Long userId);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = true AND d.paidDate <= d.dueDate")
+    ReportDebt GetLoanTTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Đã nhận sau thời hạn', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 24 AND d.isPaid = true AND d.paidDate > d.dueDate")
-    ReportDebt GetLoanTSTH(Long userId);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = true AND d.paidDate > d.dueDate")
+    ReportDebt GetLoanTSTH(Long userId,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa nhận chưa tới thời hạn', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 24 AND d.isPaid = false AND d.dueDate >= :currentDate")
-    ReportDebt GetLoanCTCTTH(Long userId,LocalDate currentDate);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = false AND d.dueDate >= :currentDate")
+    ReportDebt GetLoanCTCTTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
     @Query("SELECT new com.mytech.api.models.debt.ReportDebt('Chưa nhận qua thời hạn', COUNT(d)) "
-    		+ "FROM Debt d WHERE d.user.id = :userId and d.category.id = 24 AND d.isPaid = false AND d.dueDate < :currentDate")
-    ReportDebt GetLoanCTQTH(Long userId,LocalDate currentDate);
+    		+ "FROM Debt d WHERE d.user.id = :userId and d.dueDate between :fromDate and :toDate  and d.category.id = 24 AND d.isPaid = false AND d.dueDate < :currentDate")
+    ReportDebt GetLoanCTQTH(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     
     //
     
