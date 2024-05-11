@@ -8,6 +8,7 @@ public enum NotificationType {
     SAVING_GOAL_DUE,
     SAVING_GOAL_LIMIT,
     DEBT_REMINDER,
+    LOAN_REMINDER,
     RECURRENCE_ALERT,
     INCOME_ALERT,
     EXPENSE_ALERT,
