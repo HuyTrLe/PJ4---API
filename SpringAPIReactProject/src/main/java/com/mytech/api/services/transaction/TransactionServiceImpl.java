@@ -379,7 +379,7 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public List<TransactionData> FindTransaction(FindTransactionParam param) {
 		var result = CateTypeENum.valueOf(param.getType().toUpperCase());
-		return transactionRepository.FindTransaction(param.getUserId(), param.getFromDate(), param.getToDate(), result);
+		return transactionRepository.FindTransaction(param.getUserId(), param.getFromDate(), param.getToDate(), result,param.getWalletId());
 	}
 	
 	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
