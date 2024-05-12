@@ -153,13 +153,19 @@ public class WalletServiceImpl implements WalletService {
 
 		// If balance difference is not zero, handle accordingly
 		if (balanceDifference.compareTo(BigDecimal.ZERO) != 0) {
-			Long selectedGoalId = walletDTO.getSavingGoalId();
-			if (existingWallet.getWalletType() == 3 && selectedGoalId != null) {
-				if (selectedGoalId != 0) {
-					// Adjust saving goal balance
-					SavingGoal selectedSavingGoal = saving_goalsRepository.findById(selectedGoalId)
-							.orElseThrow(() -> new RuntimeException("Selected saving goal not found"));
-
+			if (existingWallet.getWalletType() == 3) {
+				// Fetch associated goals
+				List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(walletId);
+				if (!goals.isEmpty()) {
+					// If there are goals, a valid goal ID must be selected
+					Long savingGoalId = walletDTO.getSavingGoalId();
+					if (savingGoalId == null || savingGoalId == 0) {
+						throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
+					}
+					SavingGoal selectedSavingGoal = goals.stream()
+							.filter(g -> g.getId().equals(savingGoalId))
+							.findFirst()
+							.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
 					BigDecimal currentAmount = selectedSavingGoal.getCurrentAmount() != null
 							? selectedSavingGoal.getCurrentAmount()
 							: BigDecimal.ZERO;
@@ -184,8 +190,6 @@ public class WalletServiceImpl implements WalletService {
 						goalTransaction.setCategory(category);
 						transactionRepository.save(goalTransaction);
 					}
-				} else {
-					throw new IllegalArgumentException("Please select a saving goal.");
 				}
 			} else {
 				// Create transaction for the balance adjustment
@@ -258,6 +262,40 @@ public class WalletServiceImpl implements WalletService {
 				.stream().findFirst().orElse(null));
 		incomingTransaction.setUser(destinationWallet.getUser());
 		incomingTransaction.setNotes("Transfer Money");
+
+		if (destinationWallet.getWalletType() == 3) {
+			// Fetch saving goals associated with the destination wallet
+			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(destinationWallet.getWalletId());
+
+			// Check if there are saving goals associated with this wallet
+			if (!goals.isEmpty()) {
+				// A saving goal ID must be provided since goals are available
+				Long savingGoalId = transferRequest.getSavingGoalId();
+				if (savingGoalId == null || savingGoalId == 0) {
+					throw new IllegalArgumentException(
+							"A saving goal must be selected for transfers to goal-type wallets");
+				}
+
+				// Validate the selected saving goal
+				SavingGoal goal = goals.stream()
+						.filter(g -> g.getId().equals(savingGoalId))
+						.findFirst()
+						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+
+				// Update the selected saving goal's current amount
+				goal.setCurrentAmount(goal.getCurrentAmount().add(amountInVND));
+				saving_goalsRepository.save(goal);
+
+				// Associate the saving goal with the incoming transaction
+				incomingTransaction.setSavingGoal(goal);
+			} else {
+				// No goals available, add amount directly to the wallet balance
+				BigDecimal newWalletBalance = destinationWallet.getBalance().add(amountInVND);
+				destinationWallet.setBalance(newWalletBalance);
+				walletRepository.save(destinationWallet);
+			}
+		}
+
 		incomingTransaction = transactionRepository.save(incomingTransaction);
 
 		// Update the balance for both wallets
@@ -276,18 +314,6 @@ public class WalletServiceImpl implements WalletService {
 		createExpenseTransaction(sourceWallet, transferRequest.getAmount(), outgoingTransaction,
 				categoryRepository.findByName("Outgoing Transfer").stream().findFirst().orElse(null));
 
-		// Check if the transfer is to a savings goal wallet and update the goal
-		if (destinationWallet.getWalletType() == 3 && transferRequest.getSavingGoalId() != null) {
-			if (transferRequest.getSavingGoalId() != 0) {
-				SavingGoal goal = saving_goalsRepository.findById(transferRequest.getSavingGoalId())
-						.orElseThrow(() -> new RuntimeException(
-								"Savings goal not found with id: " + transferRequest.getSavingGoalId()));
-				goal.setCurrentAmount(goal.getCurrentAmount().add(amountInVND));
-				saving_goalsRepository.save(goal);
-			} else {
-				throw new IllegalArgumentException("Please select a saving goal.");
-			}
-		}
 	}
 
 	@Override
