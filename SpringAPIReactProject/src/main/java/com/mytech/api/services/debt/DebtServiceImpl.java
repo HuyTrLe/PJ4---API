@@ -1,6 +1,8 @@
 package com.mytech.api.services.debt;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,10 +22,18 @@ import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.debt.DebtDTO;
 import com.mytech.api.models.debt.DetailReportDebtParam;
 import com.mytech.api.models.debt.ReportDebt;
+
 import com.mytech.api.models.debt.ReportDebtParam;
+
+import com.mytech.api.models.notifications.Notification;
+import com.mytech.api.models.notifications.NotificationDTO;
+import com.mytech.api.models.notifications.NotificationType;
+
 import com.mytech.api.models.user.User;
 import com.mytech.api.repositories.categories.CategoryRepository;
 import com.mytech.api.repositories.debt.DebtsRepository;
+import com.mytech.api.repositories.notification.NotificationsRepository;
+import com.mytech.api.services.notification.NotificationService;
 
 @Service
 public class DebtServiceImpl implements DebtService {
@@ -32,6 +43,12 @@ public class DebtServiceImpl implements DebtService {
     private CategoryRepository categoryRepository;
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private NotificationsRepository notificationsRepository;
+    
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     ModelMapper modelMapper;
@@ -88,7 +105,6 @@ public class DebtServiceImpl implements DebtService {
         existingDebt.setUser(user);
 
         Debt updatedDebt = debtRepository.save(existingDebt);
-
         return modelMapper.map(updatedDebt, DebtDTO.class);
     }
 
@@ -182,7 +198,58 @@ public class DebtServiceImpl implements DebtService {
 		return listdebt;
 	}
 	
+	public void checkAndSendDebtNotifications() {
+        List<User> users = userRepository.findAll();
+        LocalDate today = LocalDate.now();
+        for (User user : users) {
+            List<Debt> activeDebts = debtRepository.findDebtValid(user.getId(), today);
+            for (Debt debt : activeDebts) {
+            	checkAndSendDebtNotifications(debt);
+            }
+        }
+    }
 	
+   public void checkAndSendDebtNotifications(Debt debt) {
+	    // Check if the debt is soon
+	    long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), debt.getDueDate());
+	    if (daysUntilDue <= 3) {
+	        NotificationType notificationType = getNotificationType(debt);
+	        Notification lastNotification = notificationsRepository.findTopByEventIdAndNotificationTypeOrderByTimestampDesc(
+	            debt.getId(), notificationType
+	        );
+
+	        if (lastNotification == null || 
+	            ChronoUnit.DAYS.between(lastNotification.getTimestamp().toLocalDate(), LocalDate.now()) >= 1) {
+	            sendNotification(debt, notificationType,
+	                "Your " + notificationType.name().replace("_", " ").toLowerCase() + " for '" + debt.getCreditor() + "' is about to be due in 3 days or less.");
+	        }
+	    }
+	}
+
+	private NotificationType getNotificationType(Debt debt) {
+		String categoryName = debt.getCategory().getName();
+		System.out.println("debt category: " + debt.getCategory());
+        if (categoryName.equals("Debt")) {
+            return NotificationType.DEBT_REMINDER;
+        } else if (categoryName.equals("Loan")) {
+            return NotificationType.LOAN_REMINDER;
+        } else {
+            throw new IllegalArgumentException("Unsupported debt category: " + categoryName);
+        }
+	}
+
+
+	
+	private void sendNotification(Debt debt, NotificationType type, String message) {
+	    NotificationDTO notificationDTO = new NotificationDTO();
+	    notificationDTO.setUserId(debt.getUser().getId());
+	    notificationDTO.setNotificationType(type);
+	    notificationDTO.setEventId(debt.getId());
+	    notificationDTO.setMessage(message);
+	    notificationDTO.setTimestamp(LocalDateTime.now());
+	    
+	    notificationService.sendNotification(notificationDTO);
+	}
 
 
 }

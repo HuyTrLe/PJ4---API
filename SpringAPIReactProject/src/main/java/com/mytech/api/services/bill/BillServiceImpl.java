@@ -1,7 +1,6 @@
 package com.mytech.api.services.bill;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,6 +88,7 @@ public class BillServiceImpl implements BillService {
 			return new ResponseEntity<>("Wallet not found with id: " + billDTO.getWalletId(),
 					HttpStatus.NOT_FOUND);
 		}
+
 		Recurrence newRecurrence = recurrenceConverter.convertToEntity(billDTO.getRecurrence());
 		newRecurrence.setStartDate(billDTO.getRecurrence().getStartDate());
 		newRecurrence.setUser(existingUser.get());
@@ -147,13 +147,13 @@ public class BillServiceImpl implements BillService {
 	@Override
 	public List<Bill> findBillActive(int userId) {
 		LocalDate currentDate = LocalDate.now();
-		return billRepository.findBillActive(userId,currentDate);
+		return billRepository.findBillActive(userId, currentDate);
 	}
 
 	@Override
 	public List<Bill> findBillExpired(int userId) {
 		LocalDate currentDate = LocalDate.now();
-		return billRepository.findBillExpired(userId,currentDate);
+		return billRepository.findBillExpired(userId, currentDate);
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.mytech.api.repositories.notification;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,4 +19,6 @@ public interface NotificationsRepository extends JpaRepository<Notification, Lon
 
     @Query("SELECT n FROM Notification n WHERE n.eventId = :eventId  and n.notificationType = :notificationType")
     Notification checkExistNotification(Long eventId, NotificationType notificationType);
+    
+    Notification findTopByEventIdAndNotificationTypeOrderByTimestampDesc(Long eventId, NotificationType notificationType);
 }

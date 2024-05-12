@@ -27,7 +27,8 @@ public interface DebtService {
     void deleteDebtById(Long debtId);
 
     boolean existsDebtById(Long debtId);
-    
+
+    void checkAndSendDebtNotifications(Debt debt);
 
     List<Debt> findDebtActive(Long userId);
 

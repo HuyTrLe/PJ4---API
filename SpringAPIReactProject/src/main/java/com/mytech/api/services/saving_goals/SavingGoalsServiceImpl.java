@@ -2,8 +2,6 @@ package com.mytech.api.services.saving_goals;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,12 +11,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.mytech.api.models.notifications.NotificationDTO;
-import com.mytech.api.models.notifications.NotificationType;
+import com.mytech.api.models.category.Category;
+import com.mytech.api.models.expense.Expense;
+import com.mytech.api.models.income.Income;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
+import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.wallet.Wallet;
+import com.mytech.api.repositories.categories.CategoryRepository;
+import com.mytech.api.repositories.expense.ExpenseRepository;
+import com.mytech.api.repositories.income.IncomeRepository;
 import com.mytech.api.repositories.saving_goals.Saving_goalsRepository;
+import com.mytech.api.repositories.transaction.TransactionRepository;
 import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.notification.NotificationService;
 
@@ -35,6 +39,18 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
 
     @Autowired
     WalletRepository walletRepository;
+
+    @Autowired
+    CategoryRepository categoryRepository;
+
+    @Autowired
+    TransactionRepository transactionRepository;
+
+    @Autowired
+    IncomeRepository incomeRepository;
+
+    @Autowired
+    ExpenseRepository expenseRepository;
 
     @Override
     public List<SavingGoalDTO> getAllSavingGoals() {
@@ -56,20 +72,15 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         // Lấy thông tin mục tiêu tiết kiệm cần xóa từ cơ sở dữ liệu
         SavingGoal savingGoalToDelete = savingGoalsRepository.findById(savingGoalId)
                 .orElseThrow(() -> new RuntimeException("Saving Goal not found with ID: " + savingGoalId));
-
         // Lấy ví liên kết với mục tiêu tiết kiệm
         Wallet wallet = savingGoalToDelete.getWallet();
-
         // Lấy số tiền hiện tại của mục tiêu tiết kiệm
         BigDecimal currentAmount = savingGoalToDelete.getCurrentAmount();
-
         // Trừ số tiền hiện tại của mục tiêu tiết kiệm khỏi số dư của ví
         BigDecimal newBalance = wallet.getBalance().subtract(currentAmount);
         wallet.setBalance(newBalance);
-
         // Lưu cập nhật số dư của ví vào cơ sở dữ liệu
         walletRepository.save(wallet);
-
         // Xóa mục tiêu tiết kiệm khỏi cơ sở dữ liệu
         savingGoalsRepository.deleteById(savingGoalId);
     }
@@ -85,13 +96,9 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         Wallet wallet = walletRepository.findById(savingGoalDTO.getWalletId())
                 .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
 
-        // Update wallet balance if current amount > 0
-        if (savingGoal.getCurrentAmount().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal newBalance = wallet.getBalance().add(savingGoal.getCurrentAmount());
-            wallet.setBalance(newBalance);
-            walletRepository.save(wallet);
+        if (savingGoal.getTargetAmount().compareTo(savingGoal.getCurrentAmount()) <= 0) {
+            throw new IllegalArgumentException("Target amount must be greater than current amount");
         }
-
         // Set end date based on the type
         if (savingGoalDTO.getEndDateType() == null) {
             throw new IllegalArgumentException("You need to choose either Forever or End Date for Goals");
@@ -104,82 +111,35 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             savingGoal.setEndDate(savingGoalDTO.getEndDate());
         }
 
+        // Update wallet balance if current amount > 0
+        if (savingGoal.getCurrentAmount().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal newBalance = wallet.getBalance().add(savingGoal.getCurrentAmount());
+            wallet.setBalance(newBalance);
+            walletRepository.save(wallet);
+            Transaction incomeTransaction = new Transaction();
+            incomeTransaction.setWallet(wallet);
+            incomeTransaction.setTransactionDate(LocalDate.now());
+            incomeTransaction.setAmount(savingGoal.getCurrentAmount().abs());
+            incomeTransaction.setUser(wallet.getUser());
+
+            List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
+            if (!incomeCategories.isEmpty()) {
+                Category incomeCategory = incomeCategories.get(0);
+                incomeTransaction.setCategory(incomeCategory);
+                incomeTransaction = transactionRepository.save(incomeTransaction);
+                Income income = new Income();
+                income.setAmount(savingGoal.getCurrentAmount().abs());
+                income.setIncomeDate(LocalDate.now());
+                income.setUser(wallet.getUser());
+                income.setTransaction(incomeTransaction);
+                income.setWallet(wallet);
+                income.setCategory(incomeCategory);
+                incomeRepository.save(income);
+            }
+        }
+
         SavingGoal createdSavingGoal = savingGoalsRepository.save(savingGoal);
-
-        // Send notifications if needed
-        // if
-        // (createdSavingGoal.getCurrentAmount().compareTo(createdSavingGoal.getTargetAmount())
-        // >= 0) {
-        // sendSavingGoalLimitNotification(createdSavingGoal);
-        // }
-
-        // sendSavingGoalNotification(createdSavingGoal);
-
         return modelMapper.map(createdSavingGoal, SavingGoalDTO.class);
-    }
-
-    private void sendSavingGoalLimitNotification(SavingGoal savingGoal) {
-        NotificationDTO notificationDTO = new NotificationDTO();
-        notificationDTO.setUserId(savingGoal.getUser().getId());
-        notificationDTO.setNotificationType(NotificationType.SAVING_GOAL_LIMIT);
-        notificationDTO.setEventId(savingGoal.getId());
-        notificationDTO.setMessage("Your budget for " + savingGoal.getName() + " has reached its limit.");
-        notificationDTO.setTimestamp(LocalDateTime.now());
-        notificationService.sendNotification(notificationDTO);
-    }
-
-    private void sendSavingGoalNotification(SavingGoal savingGoal) {
-        long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), savingGoal.getEndDate());
-        if (daysUntilDue <= 3) {
-            NotificationDTO notificationDTO = new NotificationDTO();
-            notificationDTO.setUserId(savingGoal.getUser().getId());
-            notificationDTO.setNotificationType(NotificationType.SAVING_GOAL_DUE);
-            notificationDTO.setEventId(savingGoal.getId());
-            notificationDTO.setMessage("Your goal for " + savingGoal.getName() + " is due in 3 days or less.");
-            notificationDTO.setTimestamp(LocalDateTime.now());
-            notificationService.sendNotification(notificationDTO);
-        }
-    }
-
-    private void sendLimitNotification(SavingGoal savingGoal) {
-        // Create and send a notification for goal limit
-        NotificationDTO notificationDTO = new NotificationDTO();
-        notificationDTO.setUserId(savingGoal.getUser().getId());
-        notificationDTO.setNotificationType(NotificationType.SAVING_GOAL_LIMIT);
-        notificationDTO.setEventId(Long.valueOf(savingGoal.getId()));
-        notificationDTO.setMessage("Your goal for " + savingGoal.getName() + " has reached its limit.");
-        notificationDTO.setTimestamp(LocalDateTime.now());
-        notificationService.sendNotification(notificationDTO);
-    }
-
-    private void sendDueNotification(SavingGoal savingGoal) {
-        // Create and send a notification for goal due
-        NotificationDTO notificationDTO = new NotificationDTO();
-        notificationDTO.setUserId(savingGoal.getUser().getId());
-        notificationDTO.setNotificationType(NotificationType.SAVING_GOAL_DUE);
-        notificationDTO.setEventId(Long.valueOf(savingGoal.getId()));
-        notificationDTO.setMessage(
-                "Your goal for " + savingGoal.getName() + " is about to be due in 3 days or less.");
-        notificationDTO.setTimestamp(LocalDateTime.now());
-        notificationService.sendNotification(notificationDTO);
-    }
-
-    public void checkGoalsPeriodically() {
-        List<SavingGoal> allSavingGoals = savingGoalsRepository.findAll();
-        LocalDate today = LocalDate.now();
-
-        for (SavingGoal savingGoal : allSavingGoals) {
-            // Check if the goal reaches its limit
-            if (savingGoal.getCurrentAmount().compareTo(savingGoal.getTargetAmount()) >= 0) {
-                sendLimitNotification(savingGoal);
-            }
-
-            // Check if the goal is about to be due
-            long daysUntilDue = ChronoUnit.DAYS.between(today, savingGoal.getEndDate());
-            if (daysUntilDue <= 3) {
-                sendDueNotification(savingGoal);
-            }
-        }
     }
 
     @Override
@@ -207,10 +167,70 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         BigDecimal newWalletBalance = wallet.getBalance().add(difference);
         wallet.setBalance(newWalletBalance);
 
+        if (difference.compareTo(BigDecimal.ZERO) != 0) {
+            Transaction adjustmentTransaction = new Transaction();
+            adjustmentTransaction.setWallet(wallet);
+            adjustmentTransaction.setTransactionDate(LocalDate.now());
+            adjustmentTransaction.setAmount(difference.abs()); // Số tiền điều chỉnh là giá trị tuyệt đối của sự khác
+                                                               // biệt
+            adjustmentTransaction.setUser(wallet.getUser());
+
+            // Xác định danh mục dựa trên dấu của sự khác biệt
+            Category category = null;
+            if (difference.compareTo(BigDecimal.ZERO) > 0) {
+                // Tìm danh mục thu nhập
+                List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
+                if (!incomeCategories.isEmpty()) {
+                    category = incomeCategories.get(0); // Lấy danh mục thu nhập đầu tiên
+                }
+            } else {
+                // Tìm danh mục chi tiêu
+                List<Category> expenseCategories = categoryRepository.findByName("Outgoing Transfer");
+                if (!expenseCategories.isEmpty()) {
+                    category = expenseCategories.get(0); // Lấy danh mục chi tiêu đầu tiên
+                }
+            }
+
+            if (category != null) {
+                // Gán danh mục cho giao dịch điều chỉnh
+                adjustmentTransaction.setCategory(category);
+
+                // Lưu giao dịch điều chỉnh vào cơ sở dữ liệu
+                adjustmentTransaction = transactionRepository.save(adjustmentTransaction);
+
+                // Tùy thuộc vào dấu của sự khác biệt, tạo giao dịch thu nhập hoặc chi tiêu
+                if (difference.compareTo(BigDecimal.ZERO) > 0) {
+                    // Tạo giao dịch thu nhập
+                    Income income = new Income();
+                    income.setAmount(difference.abs()); // Số tiền thu nhập là giá trị tuyệt đối của sự khác biệt
+                    income.setIncomeDate(LocalDate.now());
+                    income.setUser(wallet.getUser());
+                    income.setTransaction(adjustmentTransaction);
+                    income.setWallet(wallet);
+                    income.setCategory(category);
+
+                    // Lưu giao dịch thu nhập vào cơ sở dữ liệu
+                    incomeRepository.save(income);
+                } else {
+                    // Tạo giao dịch chi tiêu
+                    Expense expense = new Expense();
+                    expense.setAmount(difference.abs()); // Số tiền chi tiêu là giá trị tuyệt đối của sự khác biệt
+                    expense.setExpenseDate(LocalDate.now());
+                    expense.setUser(wallet.getUser());
+                    expense.setTransaction(adjustmentTransaction);
+                    expense.setWallet(wallet);
+                    expense.setCategory(category);
+                    // Lưu giao dịch chi tiêu vào cơ sở dữ liệu
+                    expenseRepository.save(expense);
+                }
+            }
+        }
+        if (newAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Current amount cannot be negative.");
+        }
         // Lưu mục tiêu tiết kiệm và cập nhật số dư của ví vào cơ sở dữ liệu
         savingGoalsRepository.save(existingSavingGoal);
         walletRepository.save(wallet);
-
         // Trả về DTO của mục tiêu tiết kiệm đã được cập nhật
         return modelMapper.map(existingSavingGoal, SavingGoalDTO.class);
     }
@@ -223,6 +243,11 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         } else {
             throw new IllegalArgumentException("Saving Goal not found with ID: " + savingGoalId);
         }
+    }
+
+    @Override
+    public List<SavingGoal> getSavingGoalsByWalletId(int userId, Integer walletId) {
+        return savingGoalsRepository.findByUserIdAndWallet_WalletId(userId, walletId);
     }
 
 }

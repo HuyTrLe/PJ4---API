@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class QuartzSchedulerConfig {
+public class QuartzSchedulerConfig {	
 
     @Bean
     JobDetail updateBillsJobDetail() {
@@ -18,12 +18,36 @@ public class QuartzSchedulerConfig {
     }
 
     @Bean
-    Trigger updateBillsJobTrigger() {
+    JobDetail updateTransactionReccurenceJobDetail() {
+        return JobBuilder.newJob().ofType(UpdateTransactionReccuringJob.class).storeDurably()
+                .withIdentity("uupdateTransactionReccringsJob")
+                .withDescription("Update Transaction Recurring job").build();
+    }
+
+    @Bean
+    Trigger jobTrigger() {
         return TriggerBuilder.newTrigger()
                 .forJob(updateBillsJobDetail())
-                .withIdentity("updateBillsJobTrigger")
-                .withDescription("Trigger for update bills job")
-                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(10, 9))
+                .withIdentity("jobTrigger")
+                .withDescription("Trigger for job")
+                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(18, 27))
+                .build();
+    }
+    
+    @Bean
+    JobDetail debtNotificationJobDetail() {
+        return JobBuilder.newJob(DebtNotificationJob.class)
+                .withIdentity("debtNotificationJob")
+                .storeDurably()
+                .build();
+    }
+
+    @Bean
+    Trigger debtNotificationJobTrigger() {
+        return TriggerBuilder.newTrigger()
+                .forJob(debtNotificationJobDetail())
+                .withIdentity("debtNotificationTrigger")
+                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(12, 0)) // Run at 9:00 AM every day
                 .build();
     }
 }

@@ -20,4 +20,5 @@ public class WalletDTO {
 	private String bankAccountNum;
 	private int walletType;
 	private String currency;
+	private Long savingGoalId;
 }
