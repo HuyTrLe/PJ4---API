@@ -83,9 +83,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             "FROM Transaction t " +
             "JOIN t.category c " +
             "JOIN c.icon ci " +
-            "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = :type " + 
+            "WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = :type AND ( :walletId != 0 and t.wallet.id = :walletId) " + 
             "ORDER BY t.id DESC")
-	List<TransactionData> FindTransaction(int userId, LocalDate fromDate, LocalDate toDate,CateTypeENum  type);
+	List<TransactionData> FindTransaction(int userId, LocalDate fromDate, LocalDate toDate,CateTypeENum  type,int walletId);
 	@Query("SELECT NEW com.mytech.api.models.transaction.TransactionView(c.name, t.amount, c.icon.path, t.transactionDate) "
 			+ "FROM Transaction t " + "JOIN t.category c "
 			+ "WHERE t.user.id = :userId and c.type = com.mytech.api.models.category.CateTypeENum.EXPENSE "

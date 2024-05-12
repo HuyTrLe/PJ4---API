@@ -22,11 +22,11 @@ public interface BillRepository extends JpaRepository<Bill, Integer> {
         List<Bill> findByRecurrence_DueDate(LocalDate dueDate);
         
         @Query("SELECT b FROM Bill b " +
-                "WHERE (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate < b.recurrence.endDate) " +
-                "OR (b.recurrence.endType = 'TIMES' AND :currentDate < b.recurrence.dueDate) OR (b.recurrence.endType = 'FOREVER') AND b.user.id = :userId")
+                "WHERE (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate <= b.recurrence.endDate) " +
+                "OR (b.recurrence.endType = 'TIMES' AND :currentDate <= b.recurrence.dueDate) OR (b.recurrence.endType = 'FOREVER') AND b.user.id = :userId ORDER BY b.id desc")
         List<Bill> findBillActive(int userId,LocalDate currentDate);
         @Query("SELECT b FROM Bill b " +
                 "WHERE (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate > b.recurrence.endDate) " +
-                "OR (b.recurrence.endType = 'TIMES' AND :currentDate > b.recurrence.dueDate) AND b.user.id = :userId")
+                "OR (b.recurrence.endType = 'TIMES' AND :currentDate > b.recurrence.dueDate) AND b.user.id = :userId ORDER BY b.id desc")
         List<Bill> findBillExpired (int userId,LocalDate currentDate);
 }

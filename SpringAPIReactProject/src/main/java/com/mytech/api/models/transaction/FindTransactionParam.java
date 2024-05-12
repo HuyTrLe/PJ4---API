@@ -19,4 +19,5 @@ public class FindTransactionParam{
 	private LocalDate fromDate;
 	private LocalDate toDate;
 	private String type;
+	private int walletId;
 }
