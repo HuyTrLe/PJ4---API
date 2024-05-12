@@ -455,26 +455,33 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	private void adjustGoalsAndDeleteTransaction(Transaction transaction) {
-		Wallet existingWallet = walletService.getWalletById(transaction.getWallet().getWalletId());
-		Category existingCategory = categoryService.getByCateId(transaction.getCategory().getId());
+		// Retrieve the saving goal associated with the transaction
 		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
 				.orElseThrow(() -> new EntityNotFoundException(
 						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
 
+		// Retrieve the wallet associated with the transaction
+		Wallet existingWallet = selectedSavingGoal.getWallet();
+
 		BigDecimal transactionAmount = transaction.getAmount();
+
+		// Determine the category type of the transaction
+		Category existingCategory = transaction.getCategory();
+
 		// Adjust balances based on the type of transaction
 		if (existingCategory.getType() == CateTypeENum.INCOME) {
 			// Reverse the income effect: subtract from wallet and goal
 			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
+			existingWallet.setBalance(existingWallet.getBalance().subtract(transactionAmount));
 		} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
 			// Reverse the expense effect: add back to wallet and goal
 			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
+			existingWallet.setBalance(existingWallet.getBalance().add(transactionAmount));
 		}
 
 		// Save the updated wallet and saving goal information
 		walletRepository.save(existingWallet);
 		saving_goalsRepository.save(selectedSavingGoal);
-
 	}
 
 	@Override

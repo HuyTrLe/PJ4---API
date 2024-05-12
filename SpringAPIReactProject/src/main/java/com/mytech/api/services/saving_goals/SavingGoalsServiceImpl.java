@@ -174,7 +174,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             adjustmentTransaction.setAmount(difference.abs()); // Số tiền điều chỉnh là giá trị tuyệt đối của sự khác
                                                                // biệt
             adjustmentTransaction.setUser(wallet.getUser());
-
+            adjustmentTransaction.setSavingGoal(existingSavingGoal);
             // Xác định danh mục dựa trên dấu của sự khác biệt
             Category category = null;
             if (difference.compareTo(BigDecimal.ZERO) > 0) {
