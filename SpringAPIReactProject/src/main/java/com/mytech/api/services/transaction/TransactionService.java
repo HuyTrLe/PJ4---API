@@ -1,6 +1,5 @@
 package com.mytech.api.services.transaction;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -17,8 +16,10 @@ import com.mytech.api.models.transaction.TransactionView;
 public interface TransactionService {
     Transaction saveTransaction(Transaction transaction);
 
+    TransactionDTO createTransaction(TransactionDTO transactionDTO);
+
     Transaction getTransactionById(Integer transactionId);
-    
+
     TransactionDTO updateTransaction(Integer transactionId, TransactionDTO transactionDTO);
 
     List<Transaction> getAllTransactionsByAllWallet(int userId);
@@ -36,17 +37,20 @@ public interface TransactionService {
     List<Transaction> getTotalExpenseByWalletId(int userId, int walletId, Enum type);
 
     List<Transaction> getTransactionsByWalletId(int userId, Integer walletId);
-    
+
     List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId);
 
     List<TransactionView> getTop5NewTransaction(int userId);
 
     List<TransactionView> getTop5TransactionHightestMoney(ParamBudget param);
-   
+
     List<TransactionData> getTransactionWithTime(ParamBudget param);
+
     List<TransactionData> getTransactionWithBudget(ParamBudget param);
+
     List<TransactionReport> getTransactionReport(ParamBudget param);
+
     List<TransactionReport> getTransactionReportMonth(ParamBudget param);
-    
+
     List<TransactionData> FindTransaction(FindTransactionParam param);
 }
