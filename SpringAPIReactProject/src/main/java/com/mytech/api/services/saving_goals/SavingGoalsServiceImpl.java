@@ -112,6 +112,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             }
             savingGoal.setEndDate(savingGoalDTO.getEndDate());
         }
+        SavingGoal createdSavingGoal = savingGoalsRepository.save(savingGoal);
 
         // Update wallet balance if current amount > 0
         if (savingGoal.getCurrentAmount().compareTo(BigDecimal.ZERO) > 0) {
@@ -123,6 +124,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             incomeTransaction.setTransactionDate(LocalDate.now());
             incomeTransaction.setAmount(savingGoal.getCurrentAmount().abs());
             incomeTransaction.setUser(wallet.getUser());
+            incomeTransaction.setSavingGoal(createdSavingGoal);
 
             List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
             if (!incomeCategories.isEmpty()) {
@@ -140,7 +142,6 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             }
         }
 
-        SavingGoal createdSavingGoal = savingGoalsRepository.save(savingGoal);
         return modelMapper.map(createdSavingGoal, SavingGoalDTO.class);
     }
 
@@ -176,7 +177,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             adjustmentTransaction.setAmount(difference.abs()); // Số tiền điều chỉnh là giá trị tuyệt đối của sự khác
                                                                // biệt
             adjustmentTransaction.setUser(wallet.getUser());
-
+            adjustmentTransaction.setSavingGoal(existingSavingGoal);
             // Xác định danh mục dựa trên dấu của sự khác biệt
             Category category = null;
             if (difference.compareTo(BigDecimal.ZERO) > 0) {
