@@ -78,7 +78,7 @@ public class WalletServiceImpl implements WalletService {
 		// (USD)");
 		// }
 
-		BigDecimal newBalance = wallet.getBalance().add(wallet.getBalance());
+		BigDecimal newBalance = wallet.getBalance();
 		wallet.setBalance(newBalance);
 		walletRepository.save(wallet);
 		Transaction transaction = new Transaction();
