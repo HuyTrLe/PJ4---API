@@ -76,7 +76,6 @@ public class UpdateTransactionReccuringJob extends QuartzJobBean {
                     recurrenceRepository.save(recurrence);
                     Transaction transaction = new Transaction();
                     transaction.setUser(transactionRecurring.getUser());
-                    transaction.setSavingGoal(transactionRecurring.getSavingGoal());
                     transaction.setAmount(transactionRecurring.getAmount());
                     transaction.setCategory(transactionRecurring.getCategory());
                     transaction.setWallet(transactionRecurring.getWallet());

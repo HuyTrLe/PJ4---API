@@ -81,7 +81,7 @@ public class Saving_goalsController {
             String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
                     .collect(Collectors.joining("\n"));
             System.out.println(errors);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
         SavingGoalDTO createdSavingGoalDTO = savingGoalsService.createSavingGoal(savingGoalRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSavingGoalDTO);
@@ -90,14 +90,14 @@ public class Saving_goalsController {
     @PutMapping("/update/{savingGoalId}")
     @PreAuthorize("#updatedSavingGoalDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateSavingGoal(@PathVariable Long savingGoalId,
-            @RequestBody SavingGoalDTO updatedSavingGoalDTO) {
-        try {
-            SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);
-            return ResponseEntity.ok(updatedSavingGoal);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            @Valid @RequestBody SavingGoalDTO updatedSavingGoalDTO, BindingResult result) {
+        if (result.hasErrors()) {
+            String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining("\n"));
+            System.out.println(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
+        SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);
+        return ResponseEntity.ok(updatedSavingGoal);
     }
 }

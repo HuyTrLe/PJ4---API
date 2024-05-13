@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,9 +21,11 @@ public class SavingGoalDTO {
 	@NotBlank(message = "Name cannot be blank")
 	private String name;
 
+	@Min(value = 0, message = "Target amount must be greater than or equal to 0")
+	@NotNull(message = "Target Amount cannot be null")
 	private BigDecimal targetAmount;
 
-	@Min(value = 0, message = "Current amount must be greater than or equal to 0")
+	@NotNull(message = "Current Amount cannot be null")
 	private BigDecimal currentAmount;
 	@FutureOrPresent(message = "Start date must be in future or present")
 	private LocalDate startDate;

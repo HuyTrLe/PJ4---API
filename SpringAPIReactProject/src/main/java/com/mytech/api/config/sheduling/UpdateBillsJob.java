@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
 
+import com.mytech.api.auth.email.EmailNotification;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
@@ -32,6 +33,9 @@ import jakarta.transaction.Transactional;
 public class UpdateBillsJob extends QuartzJobBean {
 
     private static final Logger logger = LoggerFactory.getLogger(UpdateBillsJob.class);
+
+    @Autowired
+    private EmailNotification emailService;
 
     @Autowired
     private BillService billService;
@@ -112,71 +116,9 @@ public class UpdateBillsJob extends QuartzJobBean {
                             break;
                     }
                     transactionService.saveTransaction(transaction);
+                    String emailContent = buildEmailContent(transaction);
+                    emailService.send(bill.getUser().getEmail(), emailContent);
                     logger.info("Updated bill ID: {} with new due date: {}", bill.getBillId(), nextDueDate);
-                }
-            }
-        }
-
-        for (TransactionRecurring transactionRecurring : transactionDueDates) {
-            Recurrence recurrence = transactionRecurring.getRecurrence();
-            if (recurrence != null) {
-                RecurrenceDTO recurrenceDTO = modelMapper.map(recurrence, RecurrenceDTO.class);
-
-                if (recurrenceDTO.getTimesCompleted() != null) {
-                    recurrenceDTO.setTimesCompleted(recurrenceDTO.getTimesCompleted() + 1);
-                } else {
-                    recurrenceDTO.setTimesCompleted(1);
-                }
-
-                if (recurrence.getTimes() != 0 && recurrenceDTO.getTimesCompleted() != null) {
-                    if (recurrenceDTO.getTimesCompleted() >= recurrence.getTimes()) {
-                        continue;
-                    }
-                }
-                if (recurrence.getEndDate() != null && currentDate.isAfter(recurrence.getEndDate())) {
-                    continue;
-                }
-
-                LocalDate nextDueDate = calculateDueDate(recurrence, currentDate);
-                if (nextDueDate != null) {
-                    recurrence.setDueDate(nextDueDate);
-                    recurrenceRepository.save(recurrence);
-                    Transaction transaction = new Transaction();
-                    transaction.setUser(transactionRecurring.getUser());
-                    transaction.setSavingGoal(transactionRecurring.getSavingGoal());
-                    transaction.setAmount(transactionRecurring.getAmount());
-                    transaction.setCategory(transactionRecurring.getCategory());
-                    transaction.setWallet(transactionRecurring.getWallet());
-                    transaction.setTransactionDate(currentDate);
-                    transaction.setNotes("Pay Transaction Recurring");
-                    switch (transactionRecurring.getCategory().getType()) {
-                        case INCOME:
-                            Income income = new Income();
-                            income.setUser(transactionRecurring.getUser());
-                            income.setWallet(transactionRecurring.getWallet());
-                            income.setAmount(transactionRecurring.getAmount());
-                            income.setIncomeDate(currentDate);
-                            income.setCategory(transactionRecurring.getCategory());
-                            income.setTransaction(transaction);
-                            transaction.setIncome(income);
-                            break;
-                        case EXPENSE:
-                            Expense expense = new Expense();
-                            expense.setUser(transactionRecurring.getUser());
-                            expense.setWallet(transactionRecurring.getWallet());
-                            expense.setAmount(transactionRecurring.getAmount());
-                            expense.setExpenseDate(currentDate);
-                            expense.setCategory(transactionRecurring.getCategory());
-                            expense.setTransaction(transaction);
-                            transaction.setExpense(expense);
-                            break;
-                        default:
-                            break;
-                    }
-                    transactionService.saveTransaction(transaction);
-                    logger.info("Updated bill ID: {} with new due date: {}",
-                            transactionRecurring.getTransactionRecurringId(),
-                            nextDueDate);
                 }
             }
         }
@@ -230,6 +172,16 @@ public class UpdateBillsJob extends QuartzJobBean {
         }
 
         return dayOfWeekInMonth;
+    }
+
+    private String buildEmailContent(Transaction transaction) {
+        return "Dear " + transaction.getUser().getUsername() + ",\n\n" +
+                "Your payment for the bill '" + transaction.getCategory().getName()
+                + "' has been processed successfully. " +
+                "Amount: " + transaction.getAmount() + "\n" +
+                "Date: " + transaction.getTransactionDate() + "\n\n" +
+                "Thank you for using our services!\n" +
+                "MyTech Support Team";
     }
 
 }
