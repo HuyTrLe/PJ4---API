@@ -157,7 +157,7 @@ public class TransactionServiceImpl implements TransactionService {
 					expense.setTransaction(transaction);
 					transaction.setExpense(expense);
 				} else {
-					new IllegalArgumentException("Expense transaction not allowed for USD wallet");
+					throw new IllegalArgumentException("Expense transaction not allowed for USD wallet");
 				}
 				break;
 			default:
@@ -411,27 +411,23 @@ public class TransactionServiceImpl implements TransactionService {
 		} else if (oldCategory.getType() == CateTypeENum.INCOME) {
 			Income income = incomeRepository.findByTransaction(existingTransaction);
 			if (income != null) {
-				if (!"USD".equals(existingTransaction.getWallet().getCurrency())) {
-					if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.EXPENSE) {
-						// Tạo một khoản chi mới
-						existingTransaction.setIncome(null);
+				if (categoryChanged && existingTransaction.getCategory().getType() == CateTypeENum.EXPENSE) {
+					// Tạo một khoản chi mới
+					existingTransaction.setIncome(null);
 
-						Expense newExpense = new Expense();
-						newExpense.setTransaction(existingTransaction); // Liên kết với giao dịch
-						newExpense.setAmount(transactionDTO.getAmount()); // Sử dụng số tiền đã cập nhật
-						newExpense.setExpenseDate(transactionDTO.getTransactionDate()); // Sử dụng ngày giao dịch đã cập
-																						// nhật
-						newExpense.setCategory(existingTransaction.getCategory()); // Sử dụng danh mục mới (đã cập nhật)
-						newExpense.setWallet(existingTransaction.getWallet()); // Sử dụng ví liên kết
-						newExpense.setUser(existingTransaction.getUser()); // Sử dụng người dùng liên kết
-						expenseRepository.save(newExpense); // Lưu thực thể khoản chi mới
-					} else {
-						// Update bản ghi thu nhập hiện có nếu không có thay đổi danh mục
-						income.setAmount(transactionDTO.getAmount()); // Cập nhật số tiền
-						incomeRepository.save(income); // Lưu các cập nhật
-					}
+					Expense newExpense = new Expense();
+					newExpense.setTransaction(existingTransaction); // Liên kết với giao dịch
+					newExpense.setAmount(transactionDTO.getAmount()); // Sử dụng số tiền đã cập nhật
+					newExpense.setExpenseDate(transactionDTO.getTransactionDate()); // Sử dụng ngày giao dịch đã cập
+																					// nhật
+					newExpense.setCategory(existingTransaction.getCategory()); // Sử dụng danh mục mới (đã cập nhật)
+					newExpense.setWallet(existingTransaction.getWallet()); // Sử dụng ví liên kết
+					newExpense.setUser(existingTransaction.getUser()); // Sử dụng người dùng liên kết
+					expenseRepository.save(newExpense); // Lưu thực thể khoản chi mới
 				} else {
-					throw new IllegalArgumentException("Expense transaction not allowed for USD wallet");
+					// Update bản ghi thu nhập hiện có nếu không có thay đổi danh mục
+					income.setAmount(transactionDTO.getAmount()); // Cập nhật số tiền
+					incomeRepository.save(income); // Lưu các cập nhật
 				}
 			}
 		}
