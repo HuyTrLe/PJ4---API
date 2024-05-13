@@ -51,7 +51,7 @@ public class WalletServiceImpl implements WalletService {
 	public WalletDTO createWallet(WalletDTO walletDTO) {
 		Wallet wallet = modelMapper.map(walletDTO, Wallet.class);
 
-		if (walletRepository.existsByWalletName(wallet.getWalletName())) {
+		if (walletRepository.existsByWalletNameAndUserId(wallet.getWalletName(), wallet.getUser().getId())) {
 			throw new IllegalArgumentException("Wallet name already exists");
 		}
 
@@ -59,8 +59,8 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Wallet Goals cannot have a negative balance");
 		}
 
-		if (wallet.getCurrency().equals("USD") && wallet.getBalance().compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("Wallet USD cannot have a negative balance");
+		if (wallet.getCurrency().equals("USD") && walletRepository.existsByCurrencyAndUserId(wallet.getCurrency(), wallet.getUser().getId())) {
+		    throw new IllegalArgumentException("Only one wallet allowed per currency (USD) for each user");
 		}
 
 		String currency = wallet.getCurrency();
@@ -68,9 +68,9 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Invalid currency");
 		}
 
-		if (currency.equals("USD") && walletRepository.existsByCurrency(currency)) {
-			throw new IllegalArgumentException("Only one wallet allowed per currency (USD)");
-		}
+//		if (currency.equals("USD") && walletRepository.existsByCurrency(currency)) {
+//			throw new IllegalArgumentException("Only one wallet allowed per currency (USD)");
+//		}
 
 		BigDecimal newBalance = wallet.getBalance().add(wallet.getBalance());
 		wallet.setBalance(newBalance);

@@ -19,7 +19,9 @@ public interface WalletRepository extends JpaRepository<Wallet, Integer> {
 
 	boolean existsByWalletNameAndWalletIdNot(String name, int id);
 
-	boolean existsByWalletName(String walletName);
+	boolean existsByWalletNameAndUserId(String walletName, Long userId);
+	
+	boolean existsByCurrencyAndUserId(String currency, Long userId);
 
 	boolean existsByCurrency(String currency);
 }
