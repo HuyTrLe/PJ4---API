@@ -33,6 +33,7 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
@@ -375,6 +376,15 @@ public class TransactionController {
 	@PostMapping("/getTransactionWithBudget")
 	public ResponseEntity<?> getTransactionWithBudget(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionData> transactions = transactionService.getTransactionWithBudget(paramBudget);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
+	
+	@PostMapping("/getTransactionWithSaving")
+	public ResponseEntity<?> getTransactionWithSaving(@RequestBody @Valid TransactionWithSaving param) {
+		List<TransactionData> transactions = transactionService.getTransactionWithSaving(param);
 		if (transactions != null && !transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
 		}

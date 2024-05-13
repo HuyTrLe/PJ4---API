@@ -118,7 +118,7 @@ public class WalletController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred while processing the transfer");
+                    .body(e.getMessage());
         }
     }
 

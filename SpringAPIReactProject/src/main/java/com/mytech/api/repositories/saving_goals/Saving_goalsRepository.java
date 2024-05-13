@@ -1,5 +1,6 @@
 package com.mytech.api.repositories.saving_goals;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,5 +19,16 @@ public interface Saving_goalsRepository extends JpaRepository<SavingGoal, Long> 
 	void deleteSavingGoalById(Long savingGoalId);
 
 	List<SavingGoal> findByUserIdAndWallet_WalletId(int userId, Integer walletId);
+	
+	
+	@Query("SELECT s FROM SavingGoal s WHERE s.user.id = :userId and s.targetAmount > currentAmount")
+	List<SavingGoal> findWorkingByUserId(Long userId);
+	
+	@Query("SELECT s FROM SavingGoal s WHERE s.user.id = :userId and s.targetAmount <= currentAmount")
+	List<SavingGoal> findFinishedByUserId(Long userId);
+	
+	@Query("SELECT s FROM SavingGoal s WHERE s.user.id = :userId and s.id = :savingId")
+	List<SavingGoal> getSavingWithSavingID(int userId,Long savingId);
+
 
 }
