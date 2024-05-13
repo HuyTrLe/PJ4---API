@@ -112,6 +112,9 @@ public class TransactionServiceImpl implements TransactionService {
 		if (category == null) {
 			new IllegalArgumentException("Category not found with id: " + transactionDTO.getCategoryId());
 		}
+		if (transaction.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException("Amount must be non-negative for transactions");
+		}
 
 		transaction.setUser(user);
 		transaction.setWallet(wallet);
@@ -348,6 +351,10 @@ public class TransactionServiceImpl implements TransactionService {
 
 		wallet.setBalance(walletBalance); // Update wallet with new calculated balance
 		walletRepository.save(wallet);
+
+		if (transactionDTO.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException("Amount must be non-negative for transactions");
+		}
 
 		existingTransaction.setCategory(newCategory);
 		existingTransaction.setTransactionDate(transactionDTO.getTransactionDate());

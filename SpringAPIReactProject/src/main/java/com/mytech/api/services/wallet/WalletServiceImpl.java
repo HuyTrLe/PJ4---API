@@ -59,6 +59,10 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Wallet Goals cannot have a negative balance");
 		}
 
+		if ("USD".equals(wallet.getCurrency()) && walletDTO.getBalance().compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException("Wallet USD cannot have a negative balance");
+		}
+
 		if (wallet.getCurrency().equals("USD")
 				&& walletRepository.existsByCurrencyAndUserId(wallet.getCurrency(), wallet.getUser().getId())) {
 			throw new IllegalArgumentException("Only one wallet allowed per currency (USD) for each user");

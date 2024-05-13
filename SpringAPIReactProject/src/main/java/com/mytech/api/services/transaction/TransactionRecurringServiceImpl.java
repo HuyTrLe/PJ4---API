@@ -1,5 +1,6 @@
 package com.mytech.api.services.transaction;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
@@ -76,6 +78,13 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
                     HttpStatus.NOT_FOUND);
         }
 
+        if (transactionRecurring.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Amount must be non-negative for transactions");
+        }
+
+        if (existingCategory.getType() == CateTypeENum.EXPENSE && "USD".equals(existingWallet.getCurrency())) {
+            return new ResponseEntity<>("Expense transaction not allowed for USD wallet", HttpStatus.BAD_REQUEST);
+        }
         Recurrence newRecurrence = recurrenceConverter.convertToEntity(transactionRecurringDTO.getRecurrence());
         newRecurrence.setStartDate(transactionRecurringDTO.getRecurrence().getStartDate());
         newRecurrence.setUser(existingUser.get());
@@ -84,6 +93,7 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
         transactionRecurring.setCategory(existingCategory);
         transactionRecurring.setUser(existingUser.get());
         transactionRecurring.setWallet(existingWallet);
+        transactionRecurring.setAmount(transactionRecurringDTO.getAmount());
         if (existingWallet.getWalletType() == 3) {
             List<SavingGoal> goals = saving_goalsRepository
                     .findByWallet_WalletId(transactionRecurringDTO.getWalletId());
@@ -138,6 +148,10 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
                     HttpStatus.NOT_FOUND);
         }
 
+        if (transactionRecurringDTO.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            return new ResponseEntity<>("Amount must be non-negative for transactions", HttpStatus.BAD_REQUEST);
+        }
+
         Recurrence updateRecurrence = recurrenceConverter.convertToEntity(transactionRecurringDTO.getRecurrence());
         updateRecurrence.setStartDate(transactionRecurringDTO.getRecurrence().getStartDate());
         updateRecurrence.setUser(existingUser.get());
@@ -147,6 +161,7 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
         transactionRecurring.setCategory(existingCategory);
         transactionRecurring.setUser(existingUser.get());
         transactionRecurring.setWallet(existingWallet);
+        transactionRecurring.setAmount(transactionRecurringDTO.getAmount());
         if (existingWallet.getWalletType() == 3) {
             List<SavingGoal> goals = saving_goalsRepository
                     .findByWallet_WalletId(transactionRecurringDTO.getWalletId());
