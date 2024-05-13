@@ -110,6 +110,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             }
             savingGoal.setEndDate(savingGoalDTO.getEndDate());
         }
+        SavingGoal createdSavingGoal = savingGoalsRepository.save(savingGoal);
 
         // Update wallet balance if current amount > 0
         if (savingGoal.getCurrentAmount().compareTo(BigDecimal.ZERO) > 0) {
@@ -121,6 +122,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             incomeTransaction.setTransactionDate(LocalDate.now());
             incomeTransaction.setAmount(savingGoal.getCurrentAmount().abs());
             incomeTransaction.setUser(wallet.getUser());
+            incomeTransaction.setSavingGoal(createdSavingGoal);
 
             List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
             if (!incomeCategories.isEmpty()) {
@@ -138,7 +140,6 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             }
         }
 
-        SavingGoal createdSavingGoal = savingGoalsRepository.save(savingGoal);
         return modelMapper.map(createdSavingGoal, SavingGoalDTO.class);
     }
 

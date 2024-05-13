@@ -78,10 +78,6 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
                     HttpStatus.NOT_FOUND);
         }
 
-        if (transactionRecurring.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Amount must be non-negative for transactions");
-        }
-
         if (existingCategory.getType() == CateTypeENum.EXPENSE && "USD".equals(existingWallet.getCurrency())) {
             return new ResponseEntity<>("Expense transaction not allowed for USD wallet", HttpStatus.BAD_REQUEST);
         }

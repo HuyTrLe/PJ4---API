@@ -112,9 +112,6 @@ public class TransactionServiceImpl implements TransactionService {
 		if (category == null) {
 			new IllegalArgumentException("Category not found with id: " + transactionDTO.getCategoryId());
 		}
-		if (transaction.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("Amount must be non-negative for transactions");
-		}
 
 		transaction.setUser(user);
 		transaction.setWallet(wallet);
@@ -172,6 +169,10 @@ public class TransactionServiceImpl implements TransactionService {
 			potentialNewBalance = potentialNewBalance.add(transaction.getAmount());
 		} else if (transaction.getExpense() != null) {
 			potentialNewBalance = potentialNewBalance.subtract(transaction.getAmount());
+		}
+
+		if (wallet.getWalletType() == 3 && potentialNewBalance.compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException("Insufficient balance in the wallet for the expense transaction");
 		}
 
 		wallet.setBalance(potentialNewBalance);
@@ -343,18 +344,8 @@ public class TransactionServiceImpl implements TransactionService {
 			walletBalance = correctedBalance.subtract(transactionDTO.getAmount());
 		}
 
-		// Check for insufficient funds
-		// if (walletBalance.compareTo(BigDecimal.ZERO) < 0) {
-		// throw new InsufficientFundsException("Not enough balance in the wallet for
-		// the updated transaction.");
-		// }
-
 		wallet.setBalance(walletBalance); // Update wallet with new calculated balance
 		walletRepository.save(wallet);
-
-		if (transactionDTO.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("Amount must be non-negative for transactions");
-		}
 
 		existingTransaction.setCategory(newCategory);
 		existingTransaction.setTransactionDate(transactionDTO.getTransactionDate());
@@ -560,24 +551,23 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	private void adjustGoalsAndDeleteTransaction(Transaction transaction) {
-		// Retrieve the saving goal associated with the transaction
-		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
-				.orElseThrow(() -> new EntityNotFoundException(
-						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
-		Wallet existingWallet = selectedSavingGoal.getWallet();
-		BigDecimal transactionAmount = transaction.getAmount();
-		Category existingCategory = transaction.getCategory();
-		if (existingCategory.getType() == CateTypeENum.INCOME) {
-			// Reverse the income effect: subtract from wallet and goal
-			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
-			existingWallet.setBalance(existingWallet.getBalance().subtract(transactionAmount));
-		} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
-			// Reverse the expense effect: add back to wallet and goal
-			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
-			existingWallet.setBalance(existingWallet.getBalance().add(transactionAmount));
+		// Check if the transaction is associated with a saving goal
+		if (transaction.getSavingGoal() != null) {
+			// Retrieve the saving goal associated with the transaction
+			SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
+					.orElseThrow(() -> new EntityNotFoundException(
+							"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
+			BigDecimal transactionAmount = transaction.getAmount();
+			Category existingCategory = transaction.getCategory();
+			if (existingCategory.getType() == CateTypeENum.INCOME) {
+				// Reverse the income effect: subtract from wallet and goal
+				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
+			} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
+				// Reverse the expense effect: add back to wallet and goal
+				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
+			}
+			saving_goalsRepository.save(selectedSavingGoal);
 		}
-		walletRepository.save(existingWallet);
-		saving_goalsRepository.save(selectedSavingGoal);
 	}
 
 	@Override
