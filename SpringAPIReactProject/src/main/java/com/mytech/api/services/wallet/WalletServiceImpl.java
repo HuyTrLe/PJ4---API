@@ -102,12 +102,16 @@ public class WalletServiceImpl implements WalletService {
 		            List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer", wallet.getUser().getId());
 		            if (!incomeCategories.isEmpty()) {
 		                Category incomeCategory = incomeCategories.get(0);
+		                transaction.setCategory(incomeCategory);
+		                transaction = transactionRepository.save(transaction);
 		                createIncomeTransaction(wallet, newBalance, transaction, incomeCategory);
 		            }
 		        } else {
 		            List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer", wallet.getUser().getId());
 		            if (!expenseCategories.isEmpty()) {
 		                Category expenseCategory = expenseCategories.get(0);
+		                transaction.setCategory(expenseCategory);
+		                transaction = transactionRepository.save(transaction);
 		                createExpenseTransaction(wallet, newBalance, transaction, expenseCategory);
 		            }
 		        }
