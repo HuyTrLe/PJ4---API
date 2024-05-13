@@ -81,40 +81,37 @@ public class WalletServiceImpl implements WalletService {
 		transaction.setAmount(wallet.getBalance().abs());
 		transaction.setUser(wallet.getUser());
 
-		if (currency.equals("USD")) {
-			Category incomeCategory = categoryRepository.findByName("Incoming Transfer")
-					.stream().findFirst().orElse(null);
-			if (incomeCategory != null) {
-				transaction.setCategory(incomeCategory);
-				transaction = transactionRepository.save(transaction);
+		 if (currency.equals("USD")) {
+		        List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer", wallet.getUser().getId());
+		        if (!incomeCategories.isEmpty()) {
+		            Category incomeCategory = incomeCategories.get(0);
+		            transaction.setCategory(incomeCategory);
+		            transaction = transactionRepository.save(transaction);
 
-				// Tạo thu nhập
-				Income income = new Income();
-				income.setAmount(wallet.getBalance().abs());
-				income.setIncomeDate(LocalDate.now());
-				income.setUser(wallet.getUser());
-				income.setTransaction(transaction);
-				income.setWallet(wallet);
-				income.setCategory(incomeCategory);
-				incomeRepository.save(income);
-			}
-		} else if (currency.equals("VND")) {
-
-			if (wallet.getBalance().compareTo(BigDecimal.ZERO) > 0) {
-				List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
-				if (!incomeCategories.isEmpty()) {
-					Category incomeCategory = incomeCategories.get(0);
-					createIncomeTransaction(wallet, newBalance, transaction, incomeCategory);
-				}
-			} else {
-				List<Category> expenseCategories = categoryRepository.findByName("Outgoing Transfer");
-				if (!expenseCategories.isEmpty()) {
-					Category expenseCategory = expenseCategories.get(0);
-					createExpenseTransaction(wallet, newBalance, transaction, expenseCategory);
-				}
-
-			}
-		}
+		            Income income = new Income();
+		            income.setAmount(wallet.getBalance().abs());
+		            income.setIncomeDate(LocalDate.now());
+		            income.setUser(wallet.getUser());
+		            income.setTransaction(transaction);
+		            income.setWallet(wallet);
+		            income.setCategory(incomeCategory);
+		            incomeRepository.save(income);
+		        }
+		    } else if (currency.equals("VND")) {
+		        if (wallet.getBalance().compareTo(BigDecimal.ZERO) > 0) {
+		            List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer", wallet.getUser().getId());
+		            if (!incomeCategories.isEmpty()) {
+		                Category incomeCategory = incomeCategories.get(0);
+		                createIncomeTransaction(wallet, newBalance, transaction, incomeCategory);
+		            }
+		        } else {
+		            List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer", wallet.getUser().getId());
+		            if (!expenseCategories.isEmpty()) {
+		                Category expenseCategory = expenseCategories.get(0);
+		                createExpenseTransaction(wallet, newBalance, transaction, expenseCategory);
+		            }
+		        }
+		    }
 
 		Wallet createdWallet = walletRepository.save(wallet);
 		return modelMapper.map(createdWallet, WalletDTO.class);
@@ -181,14 +178,19 @@ public class WalletServiceImpl implements WalletService {
 					goalTransaction.setUser(existingWallet.getUser());
 					goalTransaction.setSavingGoal(selectedSavingGoal);
 					// Determine category based on balance difference
-					Category category = balanceDifference.compareTo(BigDecimal.ZERO) > 0
-							? categoryRepository.findByName("Incoming Transfer").stream().findFirst().orElse(null)
-							: categoryRepository.findByName("Outgoing Transfer").stream().findFirst().orElse(null);
+					Category category;
+					if (balanceDifference.compareTo(BigDecimal.ZERO) > 0) {
+					    List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer", existingWallet.getUser().getId());
+					    category = !incomeCategories.isEmpty() ? incomeCategories.get(0) : null;
+					} else {
+					    List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer", existingWallet.getUser().getId());
+					    category = !expenseCategories.isEmpty() ? expenseCategories.get(0) : null;
+					}
 
 					// Set category for the transaction
 					if (category != null) {
-						goalTransaction.setCategory(category);
-						transactionRepository.save(goalTransaction);
+					    goalTransaction.setCategory(category);
+					    transactionRepository.save(goalTransaction);
 					}
 				}
 			} else {
@@ -200,14 +202,19 @@ public class WalletServiceImpl implements WalletService {
 				balanceTransaction.setUser(existingWallet.getUser());
 
 				// Determine category based on balance difference
-				Category category = balanceDifference.compareTo(BigDecimal.ZERO) > 0
-						? categoryRepository.findByName("Incoming Transfer").stream().findFirst().orElse(null)
-						: categoryRepository.findByName("Outgoing Transfer").stream().findFirst().orElse(null);
+				Category category;
+				if (balanceDifference.compareTo(BigDecimal.ZERO) > 0) {
+				    List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer", existingWallet.getUser().getId());
+				    category = !incomeCategories.isEmpty() ? incomeCategories.get(0) : null;
+				} else {
+				    List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer", existingWallet.getUser().getId());
+				    category = !expenseCategories.isEmpty() ? expenseCategories.get(0) : null;
+				}
 
 				// Set category for the transaction
 				if (category != null) {
-					balanceTransaction.setCategory(category);
-					transactionRepository.save(balanceTransaction);
+				    balanceTransaction.setCategory(category);
+				    transactionRepository.save(balanceTransaction);
 				}
 			}
 		}
