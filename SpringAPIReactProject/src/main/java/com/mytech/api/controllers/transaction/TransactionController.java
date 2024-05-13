@@ -2,7 +2,6 @@ package com.mytech.api.controllers.transaction;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -30,16 +29,12 @@ import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.InsufficientFundsException;
 import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.category.CateTypeENum;
-import com.mytech.api.models.category.Category;
-import com.mytech.api.models.expense.Expense;
-import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionView;
-import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.category.CategoryService;
@@ -80,61 +75,8 @@ public class TransactionController {
 			System.out.println(errors);
 			return ResponseEntity.badRequest().body(errors);
 		}
-		Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
-		if (transactionDTO.getUserId() == 0) {
-			return new ResponseEntity<>("User ID must be provided", HttpStatus.BAD_REQUEST);
-		}
-		Optional<User> existingUser = userRepository.findById(transactionDTO.getUserId());
-		if (!existingUser.isPresent()) {
-			return new ResponseEntity<>("User not found with id: " + transactionDTO.getUserId(), HttpStatus.NOT_FOUND);
-		}
-		Wallet existingWallet = walletRepository.findById(transactionDTO.getWalletId())
-				.orElseThrow(() -> new RuntimeException("Wallet not found with id: " + transactionDTO.getWalletId()));
-		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategoryId());
-		if (existingCategory == null) {
-			return new ResponseEntity<>("Category not found with id: " + transactionDTO.getCategoryId(),
-					HttpStatus.NOT_FOUND);
-		}
-		transaction.setCategory(existingCategory);
-		transaction.setUser(existingUser.get());
-		transaction.setWallet(existingWallet);
-		transaction.setAmount(transaction.getAmount());
-		transaction.setTransactionDate(transaction.getTransactionDate());
-		System.out.println("Existing Category: " + existingCategory);
-		System.out.println("Category Type: " + existingCategory.getType());
-
-		switch (existingCategory.getType()) {
-			case INCOME:
-				Income income = new Income();
-				income.setUser(existingUser.get());
-				income.setWallet(existingWallet);
-				income.setAmount(transaction.getAmount());
-				income.setIncomeDate(transaction.getTransactionDate());
-				income.setCategory(existingCategory);
-				income.setTransaction(transaction);
-				transaction.setIncome(income);
-				break;
-			case EXPENSE:
-				if (!"USD".equals(existingWallet.getCurrency())) {
-					Expense expense = new Expense();
-					expense.setUser(existingUser.get());
-					expense.setWallet(existingWallet);
-					expense.setAmount(transaction.getAmount());
-					expense.setExpenseDate(transaction.getTransactionDate());
-					expense.setCategory(existingCategory);
-					expense.setTransaction(transaction);
-					transaction.setExpense(expense);
-				} else {
-					return ResponseEntity.badRequest().body("Expense transaction not allowed for USD wallet");
-				}
-				break;
-			default:
-				break;
-		}
-
-		Transaction savedTransaction = transactionService.saveTransaction(transaction);
-		TransactionDTO savedTransactionDTO = modelMapper.map(savedTransaction, TransactionDTO.class);
-		return ResponseEntity.ok(savedTransactionDTO);
+		TransactionDTO savedTransactionDTO = transactionService.createTransaction(transactionDTO);
+		return ResponseEntity.status(HttpStatus.CREATED).body(savedTransactionDTO);
 	}
 
 	@GetMapping("/{transactionId}")

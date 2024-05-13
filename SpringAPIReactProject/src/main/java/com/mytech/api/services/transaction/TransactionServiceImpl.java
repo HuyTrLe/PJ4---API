@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.InsufficientFundsException;
 import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.category.CateTypeENum;
@@ -25,6 +26,7 @@ import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionView;
+import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CategoryRepository;
 import com.mytech.api.repositories.expense.ExpenseRepository;
@@ -51,11 +53,13 @@ public class TransactionServiceImpl implements TransactionService {
 	private final ExpenseRepository expenseRepository;
 	private final Saving_goalsRepository saving_goalsRepository;
 	private final CategoryService categoryService;
+	private final UserRepository userRepository;
 
 	public TransactionServiceImpl(TransactionRepository transactionRepository, BudgetService budgetService,
 			WalletService walletService, ModelMapper modelMapper, CategoryRepository categoryRepository,
 			WalletRepository walletRepository, IncomeRepository incomeRepository, ExpenseRepository expenseRepository,
-			Saving_goalsRepository saving_goalsRepository, CategoryService categoryService) {
+			Saving_goalsRepository saving_goalsRepository, CategoryService categoryService,
+			UserRepository userRepository) {
 		this.transactionRepository = transactionRepository;
 		this.budgetService = budgetService;
 		this.walletService = walletService;
@@ -66,6 +70,7 @@ public class TransactionServiceImpl implements TransactionService {
 		this.expenseRepository = expenseRepository;
 		this.saving_goalsRepository = saving_goalsRepository;
 		this.categoryService = categoryService;
+		this.userRepository = userRepository;
 	}
 
 	private void revertWalletBalanceIfNeeded(Transaction oldTransaction) {
@@ -90,6 +95,87 @@ public class TransactionServiceImpl implements TransactionService {
 
 		// Save the updated wallet balance
 		walletRepository.save(wallet);
+	}
+
+	@Override
+	public TransactionDTO createTransaction(TransactionDTO transactionDTO) {
+		Transaction transaction = modelMapper.map(transactionDTO, Transaction.class);
+		User user = userRepository.findById(transactionDTO.getUserId())
+				.orElseThrow(
+						() -> new IllegalArgumentException("User not found with id: " + transactionDTO.getUserId()));
+
+		Wallet wallet = walletRepository.findById(transactionDTO.getWalletId())
+				.orElseThrow(() -> new IllegalArgumentException(
+						"Wallet not found with id: " + transactionDTO.getWalletId()));
+
+		Category category = categoryService.getByCateId(transactionDTO.getCategoryId());
+		if (category == null) {
+			new IllegalArgumentException("Category not found with id: " + transactionDTO.getCategoryId());
+		}
+
+		transaction.setUser(user);
+		transaction.setWallet(wallet);
+		transaction.setCategory(category);
+		transaction.setAmount(transaction.getAmount());
+		transaction.setTransactionDate(transaction.getTransactionDate());
+		if (wallet.getWalletType() == 3) {
+			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
+			if (!goals.isEmpty()) {
+				Long savingGoalId = transactionDTO.getSavingGoalId();
+				if (savingGoalId == null || savingGoalId == 0) {
+					throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
+				}
+				SavingGoal selectedSavingGoal = goals.stream()
+						.filter(g -> g.getId().equals(savingGoalId))
+						.findFirst()
+						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+
+				adjustGoalsAndSaveTransaction(transaction);
+				transaction.setSavingGoal(selectedSavingGoal);
+			}
+		}
+
+		switch (category.getType()) {
+			case INCOME:
+				Income income = new Income();
+				income.setUser(user);
+				income.setWallet(wallet);
+				income.setAmount(transaction.getAmount());
+				income.setIncomeDate(transaction.getTransactionDate());
+				income.setCategory(category);
+				income.setTransaction(transaction);
+				transaction.setIncome(income);
+				break;
+			case EXPENSE:
+				if (!"USD".equals(wallet.getCurrency())) {
+					Expense expense = new Expense();
+					expense.setUser(user);
+					expense.setWallet(wallet);
+					expense.setAmount(transaction.getAmount());
+					expense.setExpenseDate(transaction.getTransactionDate());
+					expense.setCategory(category);
+					expense.setTransaction(transaction);
+					transaction.setExpense(expense);
+				} else {
+					new IllegalArgumentException("Expense transaction not allowed for USD wallet");
+				}
+				break;
+			default:
+				break;
+		}
+
+		BigDecimal potentialNewBalance = wallet.getBalance();
+		if (transaction.getIncome() != null) {
+			potentialNewBalance = potentialNewBalance.add(transaction.getAmount());
+		} else if (transaction.getExpense() != null) {
+			potentialNewBalance = potentialNewBalance.subtract(transaction.getAmount());
+		}
+
+		wallet.setBalance(potentialNewBalance);
+		walletRepository.save(wallet);
+
+		Transaction createdTransaction = transactionRepository.save(transaction);
+		return modelMapper.map(createdTransaction, TransactionDTO.class);
 	}
 
 	@Override
@@ -232,10 +318,6 @@ public class TransactionServiceImpl implements TransactionService {
 		Wallet wallet = existingTransaction.getWallet();
 		BigDecimal walletBalance = wallet.getBalance();
 
-		if (wallet.getWalletType() == 3) {
-			adjustGoalsAndUpdateTransaction(transactionId, transactionDTO);
-		}
-
 		// Revert the original transaction from the balance
 		BigDecimal correctedBalance = walletBalance;
 		if (oldCategory.getType() == CateTypeENum.INCOME) {
@@ -271,6 +353,23 @@ public class TransactionServiceImpl implements TransactionService {
 		existingTransaction.setTransactionDate(transactionDTO.getTransactionDate());
 		existingTransaction.setNotes(transactionDTO.getNotes());
 		existingTransaction.setAmount(transactionDTO.getAmount());
+
+		if (wallet.getWalletType() == 3) {
+			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
+			if (!goals.isEmpty()) {
+				Long savingGoalId = transactionDTO.getSavingGoalId();
+				if (savingGoalId == null || savingGoalId == 0) {
+					throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
+				}
+				SavingGoal selectedSavingGoal = goals.stream()
+						.filter(g -> g.getId().equals(savingGoalId))
+						.findFirst()
+						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+
+				adjustGoalsAndUpdateTransaction(transactionId, transactionDTO);
+				existingTransaction.setSavingGoal(selectedSavingGoal);
+			}
+		}
 
 		// Adjust budget only if category or amount has changed
 		if (categoryChanged || !oldAmount.equals(transactionDTO.getAmount())) {
@@ -391,7 +490,8 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public List<TransactionData> FindTransaction(FindTransactionParam param) {
 		var result = CateTypeENum.valueOf(param.getType().toUpperCase());
-		return transactionRepository.FindTransaction(param.getUserId(), param.getFromDate(), param.getToDate(), result,param.getWalletId());
+		return transactionRepository.FindTransaction(param.getUserId(), param.getFromDate(), param.getToDate(), result,
+				param.getWalletId());
 	}
 
 	public List<TransactionView> getTop5NewTransactionforWallet(int userId, Integer walletId) {
@@ -420,10 +520,12 @@ public class TransactionServiceImpl implements TransactionService {
 			walletBalance = existingWallet.getBalance().add(transactionAmount);
 			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
 		} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
+			if (walletBalance.compareTo(transactionAmount) < 0) {
+				throw new IllegalArgumentException("Insufficient funds in the wallet for this transaction.");
+			}
 			walletBalance = existingWallet.getBalance().subtract(transactionAmount);
 			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
 		}
-		// Lưu lại mục tiêu tiết kiệm đã được cập nhật
 		saving_goalsRepository.save(selectedSavingGoal);
 	}
 
@@ -455,26 +557,24 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	private void adjustGoalsAndDeleteTransaction(Transaction transaction) {
-		Wallet existingWallet = walletService.getWalletById(transaction.getWallet().getWalletId());
-		Category existingCategory = categoryService.getByCateId(transaction.getCategory().getId());
+		// Retrieve the saving goal associated with the transaction
 		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
 				.orElseThrow(() -> new EntityNotFoundException(
 						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
-
+		Wallet existingWallet = selectedSavingGoal.getWallet();
 		BigDecimal transactionAmount = transaction.getAmount();
-		// Adjust balances based on the type of transaction
+		Category existingCategory = transaction.getCategory();
 		if (existingCategory.getType() == CateTypeENum.INCOME) {
 			// Reverse the income effect: subtract from wallet and goal
 			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
+			existingWallet.setBalance(existingWallet.getBalance().subtract(transactionAmount));
 		} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
 			// Reverse the expense effect: add back to wallet and goal
 			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
+			existingWallet.setBalance(existingWallet.getBalance().add(transactionAmount));
 		}
-
-		// Save the updated wallet and saving goal information
 		walletRepository.save(existingWallet);
 		saving_goalsRepository.save(selectedSavingGoal);
-
 	}
 
 	@Override

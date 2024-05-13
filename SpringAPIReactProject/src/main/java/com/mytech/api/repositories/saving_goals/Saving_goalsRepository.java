@@ -19,4 +19,6 @@ public interface Saving_goalsRepository extends JpaRepository<SavingGoal, Long> 
 
 	List<SavingGoal> findByUserIdAndWallet_WalletId(int userId, Integer walletId);
 
+	List<SavingGoal> findByWallet_WalletId(Integer walletId);
+
 }
