@@ -27,10 +27,11 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
 	boolean existsByName(String name);
 
-	boolean existsByNameAndIdNot(String name, Long id);
+	@Query("SELECT COUNT(c) > 0 FROM Category c WHERE c.name = :name AND c.id != :id")
+	boolean existsByNameAndIdNot(@Param("name") String name, @Param("id") Long id);
 
 	void deleteCategoryById(Long categoryId);
-		
+
 	@Query("SELECT new com.mytech.api.models.category.CategoryResponse(c.id, c.name, c.type, ci.path, us.id) FROM Category c "
 			+ "JOIN c.icon ci "
 			+ "JOIN c.user us "
@@ -38,9 +39,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 	CategoryResponse getCategoryByCategoryId(Long id);
 
 	Category findFirstByName(String categoryName);
-	
+
 	List<Category> findByName(String categoryName);
-	
+
 	List<Category> findByNameAndUserId(String name, Long userId);
 
 }
