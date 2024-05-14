@@ -212,10 +212,10 @@ public class WalletServiceImpl implements WalletService {
 		}
 
 		List<Category> categories = categoryRepository.findByNameAndUserId("Incoming Transfer",
-				sourceWallet.getUser().getId());
+				destinationWallet.getUser().getId());
 		Category categoryOutgoing = categories.isEmpty() ? null : categories.get(0);
 		List<Category> categories2 = categoryRepository.findByNameAndUserId("Outgoing Transfer",
-				destinationWallet.getUser().getId());
+				sourceWallet.getUser().getId());
 		Category categoryIncoming = categories2.isEmpty() ? null : categories2.get(0);
 		// Create outgoing transaction from the source wallet
 		Transaction outgoingTransaction = new Transaction();
