@@ -36,4 +36,8 @@ public interface BudgetService {
 	List<Budget> getFutureBudgets(int userId);
 	
 	Budget createAndInitializeBudget(Long categoryId, BigDecimal initialAmount);
+	
+	List<BudgetResponse> getBudgetPast(ParamBudget param);
+	
+	List<BudgetResponse> getBudgetFuture(ParamBudget param);
 }

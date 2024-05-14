@@ -126,6 +126,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			+ "FROM Transaction t " + "JOIN t.category c " + "JOIN c.icon ci "
 			+ "WHERE t.user.id = :userId and t.wallet.id = :walletId " + "ORDER BY t.id desc")
 	Page<TransactionView> getTop5NewTransactionforWallet(int userId, int walletId, Pageable pageable);
+	
+	
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionData(" + "t.transactionId,c.name, ci.path, t.amount, c.type, "
+			+ "(SELECT SUM(tx.amount) FROM Transaction tx " + "JOIN tx.category tc "
+			+ "WHERE tc.type = c.type AND tx.user.id = :userId " + "GROUP BY tc.type),c.id,t.transactionDate ) " + "FROM Transaction t "
+			+ "JOIN t.category c " + "JOIN c.icon ci "
+			+ "WHERE t.user.id = :userId and t.savingGoal.id = :goalId " + "ORDER BY t.id DESC")
+	List<TransactionData> getTransactionWithSaving(int userId,long goalId);
 
 	@Query("SELECT new com.mytech.api.models.transaction.TransactionSavingGoalsView(t.category.name, t.amount, t.category.icon.path, t.transactionDate, t.savingGoal.id, t.user.id) FROM Transaction t WHERE t.savingGoal.id = :savingGoalId AND t.user.id = :userId")
 	List<TransactionSavingGoalsView> getBySavingGoal_IdAndUser_Id(Long savingGoalId, Long userId);

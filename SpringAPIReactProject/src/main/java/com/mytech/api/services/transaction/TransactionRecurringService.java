@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
+import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.transaction.TransactionRecurringDTO;
 
@@ -23,4 +24,8 @@ public interface TransactionRecurringService {
     ResponseEntity<?> updateTransaction(Integer transactionId, TransactionRecurringDTO transactionRecurringDTO);
 
     List<TransactionRecurring> findByRecurrence_DueDate(LocalDate dueDate);
+    
+    List<TransactionRecurring> findRecuActive(int userId);
+
+	List<TransactionRecurring> findRecuExpired(int userId);
 }

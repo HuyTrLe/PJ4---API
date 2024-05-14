@@ -46,5 +46,11 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
 	List<Budget> findByCategoryAndPeriodOverlaps(@Param("categoryId") Long categoryId,
 			@Param("periodStart") LocalDate periodStart, @Param("periodEnd") LocalDate periodEnd,
 			@Param("budgetId") Integer budgetId);
+	
+	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart < :fromDate ")
+	List<BudgetResponse> getBudgetPast(int userId, LocalDate fromDate);
+	
+	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart > :fromDate ")
+	List<BudgetResponse> getBudgetFuture(int userId, LocalDate fromDate);
 
 }

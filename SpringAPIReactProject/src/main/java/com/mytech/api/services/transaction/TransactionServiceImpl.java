@@ -21,6 +21,7 @@ import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.saving_goals.EndDateType;
 import com.mytech.api.models.saving_goals.SavingGoal;
+import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
@@ -566,6 +567,12 @@ public class TransactionServiceImpl implements TransactionService {
 	public List<TransactionData> getTransactionWithBudget(ParamBudget param) {
 		return transactionRepository.getTransactionWithBudget(param.getUserId(), param.getCategoryId(),
 				param.getFromDate(), param.getToDate());
+	}
+
+	@Override
+	public List<TransactionData> getTransactionWithSaving(TransactionWithSaving param) {
+		
+		return transactionRepository.getTransactionWithSaving(param.getUserId(), param.getGoalId());
 	}
 
 }
