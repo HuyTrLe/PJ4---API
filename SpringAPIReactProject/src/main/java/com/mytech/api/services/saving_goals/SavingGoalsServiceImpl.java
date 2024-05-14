@@ -129,9 +129,15 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             BigDecimal newBalance = wallet.getBalance().add(savingGoal.getCurrentAmount());
             wallet.setBalance(newBalance);
             walletRepository.save(wallet);
+
+            LocalDate transactionDate = LocalDate.now();
+            if (savingGoalDTO.getStartDate().isAfter(transactionDate)) {
+                transactionDate = savingGoalDTO.getStartDate();
+            }
+
             Transaction incomeTransaction = new Transaction();
             incomeTransaction.setWallet(wallet);
-            incomeTransaction.setTransactionDate(LocalDate.now());
+            incomeTransaction.setTransactionDate(transactionDate);
             incomeTransaction.setAmount(savingGoal.getCurrentAmount().abs());
             incomeTransaction.setUser(wallet.getUser());
             incomeTransaction.setSavingGoal(createdSavingGoal);
@@ -144,7 +150,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
                 incomeTransaction = transactionRepository.save(incomeTransaction);
                 Income income = new Income();
                 income.setAmount(savingGoal.getCurrentAmount().abs());
-                income.setIncomeDate(LocalDate.now());
+                income.setIncomeDate(transactionDate);
                 income.setUser(wallet.getUser());
                 income.setTransaction(incomeTransaction);
                 income.setWallet(wallet);
@@ -175,51 +181,55 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         existingSavingGoal.setTargetAmount(updateSavingGoalDTO.getTargetAmount());
         existingSavingGoal.setCurrentAmount(newAmount);
         existingSavingGoal.setStartDate(updateSavingGoalDTO.getStartDate());
-        EndDateType newEndDateType = updateSavingGoalDTO.getEndDateType();
-        if (newEndDateType != null) {
-            if (!(EndDateType.FOREVER.equals(newEndDateType) || EndDateType.END_DATE.equals(newEndDateType))) {
-                throw new IllegalArgumentException("Invalid end date type.");
+        existingSavingGoal.setEndDate(updateSavingGoalDTO.getEndDate()); // Ensure end date is set regardless of type
+        existingSavingGoal.setEndDateType(updateSavingGoalDTO.getEndDateType());
+        if (updateSavingGoalDTO.getEndDateType() == EndDateType.END_DATE) {
+            LocalDate newEndDate = updateSavingGoalDTO.getEndDate();
+            if (newEndDate == null) {
+                throw new IllegalArgumentException("End Date cannot be null");
+            }
+            if (newEndDate.isBefore(existingSavingGoal.getStartDate())
+                    || newEndDate.isEqual(existingSavingGoal.getStartDate())) {
+                throw new IllegalArgumentException("End date cannot be before or equal to start date.");
             }
 
-            existingSavingGoal.setEndDateType(newEndDateType);
-            if (EndDateType.END_DATE.equals(newEndDateType)) {
-                LocalDate newEndDate = updateSavingGoalDTO.getEndDate();
-                if (newEndDate == null) {
-                    throw new IllegalArgumentException("End Date cannot be null");
-                }
-                if (newEndDate.isBefore(existingSavingGoal.getStartDate())
-                        || newEndDate.isEqual(existingSavingGoal.getStartDate())) {
-                    throw new IllegalArgumentException("End date cannot be before or equal to start date.");
-                }
-                existingSavingGoal.setEndDate(newEndDate);
-                List<Transaction> transactions = transactionRepository.findBySavingGoal_Id(savingGoalId);
-                transactions.stream()
-                        .filter(t -> t.getTransactionDate().isBefore(updateSavingGoalDTO.getStartDate())
-                                || (newEndDate != null && t.getTransactionDate().isAfter(newEndDate)))
-                        .forEach(transaction -> {
-                            if (transaction.getCategory().getType() == CateTypeENum.INCOME) {
-                                wallet.setBalance(wallet.getBalance().subtract(transaction.getAmount()));
-                                existingSavingGoal.setCurrentAmount(
-                                        existingSavingGoal.getCurrentAmount().subtract(transaction.getAmount()));
-                            } else {
-                                wallet.setBalance(wallet.getBalance().add(transaction.getAmount()));
-                                existingSavingGoal
-                                        .setCurrentAmount(
-                                                existingSavingGoal.getCurrentAmount().add(transaction.getAmount()));
-                            }
-                            transactionRepository.delete(transaction);
-                        });
-            } else {
-                existingSavingGoal.setEndDate(null);
-            }
+            // Fetch transactions that fall outside the new date range and adjust
+            // accordingly
+            List<Transaction> transactions = transactionRepository.findBySavingGoal_Id(savingGoalId);
+            transactions.stream()
+                    .filter(t -> t.getTransactionDate().isBefore(updateSavingGoalDTO.getStartDate())
+                            || t.getTransactionDate().isAfter(newEndDate))
+                    .forEach(transaction -> {
+                        BigDecimal transactionAmount = transaction.getAmount();
+                        if (transaction.getCategory().getType() == CateTypeENum.INCOME) {
+                            wallet.setBalance(wallet.getBalance().subtract(transactionAmount));
+                            existingSavingGoal.setCurrentAmount(
+                                    existingSavingGoal.getCurrentAmount().subtract(transactionAmount));
+                        } else {
+                            wallet.setBalance(wallet.getBalance().add(transactionAmount));
+                            existingSavingGoal
+                                    .setCurrentAmount(existingSavingGoal.getCurrentAmount().add(transactionAmount));
+                        }
+                        transactionRepository.delete(transaction);
+                    });
+            walletRepository.save(wallet);
+            savingGoalsRepository.save(existingSavingGoal);
+        } else {
+            existingSavingGoal.setEndDate(null);
         }
 
         BigDecimal newWalletBalance = wallet.getBalance().add(difference);
         wallet.setBalance(newWalletBalance);
         if (difference.compareTo(BigDecimal.ZERO) != 0) {
+
+            LocalDate transactionDate = LocalDate.now();
+            if (updateSavingGoalDTO.getStartDate().isAfter(transactionDate)) {
+                transactionDate = updateSavingGoalDTO.getStartDate();
+            }
+
             Transaction adjustmentTransaction = new Transaction();
             adjustmentTransaction.setWallet(wallet);
-            adjustmentTransaction.setTransactionDate(LocalDate.now());
+            adjustmentTransaction.setTransactionDate(transactionDate);
             adjustmentTransaction.setAmount(difference.abs());
             adjustmentTransaction.setUser(wallet.getUser());
             adjustmentTransaction.setSavingGoal(existingSavingGoal);
@@ -244,7 +254,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
                 if (difference.compareTo(BigDecimal.ZERO) > 0) {
                     Income income = new Income();
                     income.setAmount(difference.abs());
-                    income.setIncomeDate(LocalDate.now());
+                    income.setIncomeDate(transactionDate);
                     income.setUser(wallet.getUser());
                     income.setTransaction(adjustmentTransaction);
                     income.setWallet(wallet);
@@ -253,7 +263,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
                 } else {
                     Expense expense = new Expense();
                     expense.setAmount(difference.abs());
-                    expense.setExpenseDate(LocalDate.now());
+                    expense.setExpenseDate(transactionDate);
                     expense.setUser(wallet.getUser());
                     expense.setTransaction(adjustmentTransaction);
                     expense.setWallet(wallet);
