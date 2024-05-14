@@ -31,7 +31,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -50,7 +49,6 @@ public class User {
 
 	@NotBlank
 	@Column(unique = true)
-	@Size(max = 50)
 	private String email;
 
 	@JsonIgnore

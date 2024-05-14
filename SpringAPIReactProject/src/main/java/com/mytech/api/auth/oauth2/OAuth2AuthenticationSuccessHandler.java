@@ -59,9 +59,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             String username = oAuth2User.getAttribute("name");
             String decodedUsername = URLDecoder.decode(username, "UTF-8");
             String email = oAuth2User.getAttribute("email");
+            String decodedEmail = URLDecoder.decode(email, "UTF-8"); // Giải mã email
             boolean isEnabled = true;
 
-            JwtResponse jwtResponse = new JwtResponse(token, userDetails.getId(), decodedUsername, email, isEnabled);
+            JwtResponse jwtResponse = new JwtResponse(token, userDetails.getId(), decodedUsername, decodedEmail,
+                    isEnabled);
 
             ObjectMapper objectMapper = new ObjectMapper();
             String jwtResponseJson = objectMapper.writeValueAsString(jwtResponse);
