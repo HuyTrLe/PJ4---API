@@ -13,6 +13,7 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
+import com.mytech.api.models.transaction.TransactionSavingGoalsView;
 import com.mytech.api.models.transaction.TransactionView;
 
 @Repository
@@ -125,5 +126,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			+ "FROM Transaction t " + "JOIN t.category c " + "JOIN c.icon ci "
 			+ "WHERE t.user.id = :userId and t.wallet.id = :walletId " + "ORDER BY t.id desc")
 	Page<TransactionView> getTop5NewTransactionforWallet(int userId, int walletId, Pageable pageable);
+
+	@Query("SELECT new com.mytech.api.models.transaction.TransactionSavingGoalsView(t.category.name, t.amount, t.category.icon.path, t.transactionDate, t.savingGoal.id, t.user.id) FROM Transaction t WHERE t.savingGoal.id = :savingGoalId AND t.user.id = :userId")
+	List<TransactionSavingGoalsView> getBySavingGoal_IdAndUser_Id(Long savingGoalId, Long userId);
 
 }

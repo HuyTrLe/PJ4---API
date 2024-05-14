@@ -129,15 +129,9 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             BigDecimal newBalance = wallet.getBalance().add(savingGoal.getCurrentAmount());
             wallet.setBalance(newBalance);
             walletRepository.save(wallet);
-
-            LocalDate transactionDate = LocalDate.now();
-            if (savingGoalDTO.getStartDate().isAfter(transactionDate)) {
-                transactionDate = savingGoalDTO.getStartDate();
-            }
-
             Transaction incomeTransaction = new Transaction();
             incomeTransaction.setWallet(wallet);
-            incomeTransaction.setTransactionDate(transactionDate);
+            incomeTransaction.setTransactionDate(LocalDate.now());
             incomeTransaction.setAmount(savingGoal.getCurrentAmount().abs());
             incomeTransaction.setUser(wallet.getUser());
             incomeTransaction.setSavingGoal(createdSavingGoal);
@@ -150,7 +144,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
                 incomeTransaction = transactionRepository.save(incomeTransaction);
                 Income income = new Income();
                 income.setAmount(savingGoal.getCurrentAmount().abs());
-                income.setIncomeDate(transactionDate);
+                income.setIncomeDate(LocalDate.now());
                 income.setUser(wallet.getUser());
                 income.setTransaction(incomeTransaction);
                 income.setWallet(wallet);
@@ -221,15 +215,9 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         BigDecimal newWalletBalance = wallet.getBalance().add(difference);
         wallet.setBalance(newWalletBalance);
         if (difference.compareTo(BigDecimal.ZERO) != 0) {
-
-            LocalDate transactionDate = LocalDate.now();
-            if (updateSavingGoalDTO.getStartDate().isAfter(transactionDate)) {
-                transactionDate = updateSavingGoalDTO.getStartDate();
-            }
-
             Transaction adjustmentTransaction = new Transaction();
             adjustmentTransaction.setWallet(wallet);
-            adjustmentTransaction.setTransactionDate(transactionDate);
+            adjustmentTransaction.setTransactionDate(LocalDate.now());
             adjustmentTransaction.setAmount(difference.abs());
             adjustmentTransaction.setUser(wallet.getUser());
             adjustmentTransaction.setSavingGoal(existingSavingGoal);
@@ -254,7 +242,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
                 if (difference.compareTo(BigDecimal.ZERO) > 0) {
                     Income income = new Income();
                     income.setAmount(difference.abs());
-                    income.setIncomeDate(transactionDate);
+                    income.setIncomeDate(LocalDate.now());
                     income.setUser(wallet.getUser());
                     income.setTransaction(adjustmentTransaction);
                     income.setWallet(wallet);
@@ -263,7 +251,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
                 } else {
                     Expense expense = new Expense();
                     expense.setAmount(difference.abs());
-                    expense.setExpenseDate(transactionDate);
+                    expense.setExpenseDate(LocalDate.now());
                     expense.setUser(wallet.getUser());
                     expense.setTransaction(adjustmentTransaction);
                     expense.setWallet(wallet);

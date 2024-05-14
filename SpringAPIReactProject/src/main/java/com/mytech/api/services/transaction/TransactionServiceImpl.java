@@ -26,6 +26,7 @@ import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
+import com.mytech.api.models.transaction.TransactionSavingGoalsView;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
@@ -158,46 +159,61 @@ public class TransactionServiceImpl implements TransactionService {
 
 		if (wallet.getWalletType() == 3) {
 			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
-			boolean hasActiveGoal = goals.stream()
-					.anyMatch(goal -> (goal.getStartDate().isBefore(LocalDate.now())
-							|| goal.getStartDate().isEqual(LocalDate.now())) // Start date là trước đó hoặc bằng ngày
-																				// hiện tại
-							&& (goal.getEndDate() == null || goal.getEndDate().isAfter(LocalDate.now()))); // End date
-																											// là null
-																											// (forever)
-																											// hoặc là
-																											// sau ngày
-																											// hiện tại
-
-			if (hasActiveGoal) {
-				LocalDate transactionDate = transactionDTO.getTransactionDate();
-				Long savingGoalId = transactionDTO.getSavingGoalId();
-
-				if (transactionDate == null) {
-					throw new IllegalArgumentException("Transaction date cannot be null");
-				}
-
-				if (savingGoalId == null || savingGoalId == 0) {
+			if (!goals.isEmpty()) {
+				boolean hasActiveGoal = goals.stream()
+						.anyMatch(goal -> (goal.getStartDate().isBefore(LocalDate.now())
+								|| goal.getStartDate().isEqual(LocalDate.now())) // Start date là trước đó hoặc bằng
+																					// ngày
+																					// hiện tại
+								&& (goal.getEndDate() == null || goal.getEndDate().isAfter(LocalDate.now()))); // End
+																												// date
+																												// là
+																												// null
+																												// (forever)
+																												// hoặc
+																												// là
+																												// sau
+																												// ngày
+																												// hiện
+																												// tại
+				if (!hasActiveGoal) {
 					throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
 				}
 
-				SavingGoal selectedSavingGoal = saving_goalsRepository.findById(savingGoalId)
-						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+				if (hasActiveGoal) {
+					LocalDate transactionDate = transactionDTO.getTransactionDate();
+					Long savingGoalId = transactionDTO.getSavingGoalId();
 
-				if (selectedSavingGoal.getEndDateType() == EndDateType.END_DATE) {
-					LocalDate startDate = selectedSavingGoal.getStartDate();
-					LocalDate endDate = selectedSavingGoal.getEndDate();
-
-					if (transactionDate.isBefore(startDate) || transactionDate.isAfter(endDate)) {
-						throw new IllegalArgumentException(
-								"Transaction date must be within the goal's start and end dates");
+					if (transactionDate == null) {
+						throw new IllegalArgumentException("Transaction date cannot be null");
 					}
-				}
 
-				selectedSavingGoal.setCurrentAmount(potentialNewBalance);
-				saving_goalsRepository.save(selectedSavingGoal);
-				transaction.setSavingGoal(selectedSavingGoal);
+					if (savingGoalId == null || savingGoalId == 0) {
+						throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
+					}
+
+					SavingGoal selectedSavingGoal = saving_goalsRepository.findById(savingGoalId)
+							.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+
+					if (selectedSavingGoal.getEndDateType() == EndDateType.END_DATE) {
+						LocalDate startDate = selectedSavingGoal.getStartDate();
+						LocalDate endDate = selectedSavingGoal.getEndDate();
+
+						if (transactionDate.isBefore(startDate) || transactionDate.isAfter(endDate)) {
+							throw new IllegalArgumentException(
+									"Transaction date must be within the goal's start and end dates");
+						}
+					}
+
+					selectedSavingGoal.setCurrentAmount(potentialNewBalance);
+					saving_goalsRepository.save(selectedSavingGoal);
+					transaction.setSavingGoal(selectedSavingGoal);
+				}
+			} else {
+				throw new IllegalArgumentException(
+						"A saving goal must be create to selected for goal-type wallets");
 			}
+
 		}
 
 		wallet.setBalance(potentialNewBalance);
@@ -460,6 +476,13 @@ public class TransactionServiceImpl implements TransactionService {
 		System.out.println("transactiondto amount: " + transactionDTO.getAmount());
 
 		return modelMapper.map(existingTransaction, TransactionDTO.class);
+	}
+
+	@Override
+	public List<TransactionSavingGoalsView> getBySavingGoal_IdAndUser_Id(Long savingGoalId, Long userId) {
+		return transactionRepository.getBySavingGoal_IdAndUser_Id(savingGoalId, userId) != null
+				? transactionRepository.getBySavingGoal_IdAndUser_Id(savingGoalId, userId)
+				: null;
 	}
 
 	@Override

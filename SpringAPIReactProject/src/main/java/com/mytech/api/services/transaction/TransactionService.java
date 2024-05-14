@@ -11,6 +11,7 @@ import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
+import com.mytech.api.models.transaction.TransactionSavingGoalsView;
 import com.mytech.api.models.transaction.TransactionView;
 
 public interface TransactionService {
@@ -53,4 +54,6 @@ public interface TransactionService {
     List<TransactionReport> getTransactionReportMonth(ParamBudget param);
 
     List<TransactionData> FindTransaction(FindTransactionParam param);
+
+    List<TransactionSavingGoalsView> getBySavingGoal_IdAndUser_Id(Long savingGoalId, Long userId);
 }

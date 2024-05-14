@@ -34,6 +34,7 @@ import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
+import com.mytech.api.models.transaction.TransactionSavingGoalsView;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.wallet.WalletRepository;
@@ -321,6 +322,17 @@ public class TransactionController {
 			return ResponseEntity.ok(transactions);
 		}
 		return ResponseEntity.notFound().build();
+	}
+
+	@GetMapping("/savingGoals/{savingGoalId}/users/{userId}")
+	@PreAuthorize("#userId == authentication.principal.id")
+	public ResponseEntity<?> getTransactionBySavingGoalId(@PathVariable Long savingGoalId, @PathVariable Long userId) {
+		List<TransactionSavingGoalsView> transactionDTOs = transactionService
+				.getBySavingGoal_IdAndUser_Id(savingGoalId, userId);
+		if (transactionDTOs.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(transactionDTOs);
 	}
 
 }
