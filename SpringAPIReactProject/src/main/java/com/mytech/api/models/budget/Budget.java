@@ -40,10 +40,10 @@ public class Budget {
 	@JoinColumn(name = "category_id")
 	private Category category;
 
-	@Column(nullable = false, precision = 10, scale = 2)
+	@Column(nullable = false, precision = 19, scale = 4)
 	private BigDecimal amount;
 
-	@Column(nullable = true, precision = 10, scale = 2)
+	@Column(nullable = true, precision = 19, scale = 4)
 	private BigDecimal threshold_amount;
 
 	@Column(name = "period_start", nullable = false)
