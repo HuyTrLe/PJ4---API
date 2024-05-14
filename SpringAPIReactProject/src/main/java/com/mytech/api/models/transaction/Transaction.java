@@ -9,6 +9,7 @@ import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.user.User;
+import com.mytech.api.models.wallet.Transfer;
 import com.mytech.api.models.wallet.Wallet;
 
 import jakarta.persistence.CascadeType;
@@ -75,5 +76,9 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "bill_id")
     private Bill bill;
+
+    @ManyToOne
+    @JoinColumn(name = "transfer_id")
+    private Transfer transfer;
 
 }
