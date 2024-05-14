@@ -1,5 +1,6 @@
 package com.mytech.api.controllers.transaction;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -22,9 +23,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
+import com.mytech.api.models.bill.Bill;
+import com.mytech.api.models.bill.BillResponse;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.transaction.TransactionRecurringDTO;
+import com.mytech.api.models.transaction.TransactionResponce;
 import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 import com.mytech.api.services.transaction.TransactionRecurringService;
@@ -108,5 +112,30 @@ public class TransactionRecurringController {
     public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId, Authentication authentication) {
         return transactionRecurringService.deleteTransaction(transactionId, authentication);
     }
+    
+    
+    @GetMapping("findRecuActive/users/{userId}")
+	public ResponseEntity<?> findRecuActive(@PathVariable int userId) {
+		List<TransactionRecurring> transRecu = transactionRecurringService.findRecuActive(userId);
+		if (transRecu != null) {
+			List<TransactionResponce> transRecuDTO = transRecu.stream()
+	                .map(tranre -> modelMapper.map(tranre, TransactionResponce.class))
+	                .collect(Collectors.toList());
+			 return ResponseEntity.ok(transRecuDTO);
+		}	
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
+	
+	@GetMapping("findRecuExpired/users/{userId}")
+	public ResponseEntity<?> findRecuExpired(@PathVariable int userId) {
+		List<TransactionRecurring> transRecu = transactionRecurringService.findRecuExpired(userId);
+		if (transRecu != null) {
+			List<TransactionResponce> transRecuDTO = transRecu.stream()
+	                .map(tranre -> modelMapper.map(tranre, TransactionResponce.class))
+	                .collect(Collectors.toList());
+			 return ResponseEntity.ok(transRecuDTO);
+		}	
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
 
 }

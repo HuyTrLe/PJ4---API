@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.transaction.TransactionRecurring;
 
 @Repository
@@ -18,4 +19,13 @@ public interface TransactionRecurringRepository extends JpaRepository<Transactio
     Page<TransactionRecurring> findByUserId(Integer userId, Pageable pageable);
 
     List<TransactionRecurring> findByRecurrence_DueDate(LocalDate dueDate);
+    
+    @Query("SELECT b FROM TransactionRecurring b " +
+            "WHERE (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate <= b.recurrence.endDate) " +
+            "OR (b.recurrence.endType = 'TIMES' AND :currentDate <= b.recurrence.dueDate) OR (b.recurrence.endType = 'FOREVER') AND b.user.id = :userId ORDER BY b.id desc")
+    List<TransactionRecurring> findRecuActive(int userId,LocalDate currentDate);
+    @Query("SELECT b FROM TransactionRecurring b " +
+            "WHERE (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate > b.recurrence.endDate) " +
+            "OR (b.recurrence.endType = 'TIMES' AND :currentDate > b.recurrence.dueDate) AND b.user.id = :userId ORDER BY b.id desc")
+    List<TransactionRecurring> findRecuExpired (int userId,LocalDate currentDate);
 }
