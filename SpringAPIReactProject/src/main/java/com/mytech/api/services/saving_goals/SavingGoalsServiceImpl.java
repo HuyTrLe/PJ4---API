@@ -136,7 +136,8 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             incomeTransaction.setUser(wallet.getUser());
             incomeTransaction.setSavingGoal(createdSavingGoal);
 
-            List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
+            List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
+                    savingGoalDTO.getUserId());
             if (!incomeCategories.isEmpty()) {
                 Category incomeCategory = incomeCategories.get(0);
                 incomeTransaction.setCategory(incomeCategory);
@@ -224,12 +225,14 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             adjustmentTransaction.setSavingGoal(existingSavingGoal);
             Category category = null;
             if (difference.compareTo(BigDecimal.ZERO) > 0) {
-                List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
+                List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
+                        updateSavingGoalDTO.getUserId());
                 if (!incomeCategories.isEmpty()) {
                     category = incomeCategories.get(0); // Lấy danh mục thu nhập đầu tiên
                 }
             } else {
-                List<Category> expenseCategories = categoryRepository.findByName("Outgoing Transfer");
+                List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
+                        updateSavingGoalDTO.getUserId());
                 if (!expenseCategories.isEmpty()) {
                     category = expenseCategories.get(0); // Lấy danh mục chi tiêu đầu tiên
                 }
