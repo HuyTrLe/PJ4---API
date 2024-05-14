@@ -167,18 +167,23 @@ public class WalletServiceImpl implements WalletService {
 				goalTransaction.setTransactionDate(LocalDate.now());
 				goalTransaction.setAmount(balanceDifference.abs());
 				goalTransaction.setUser(existingWallet.getUser());
-				// Determine category based on balance difference
-				Category category;
-				if (balanceDifference.compareTo(BigDecimal.ZERO) > 0) {
-					List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
-							existingWallet.getUser().getId());
-					category = !incomeCategories.isEmpty() ? incomeCategories.get(0) : null;
-				} else {
-					List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
-							existingWallet.getUser().getId());
-					category = !expenseCategories.isEmpty() ? expenseCategories.get(0) : null;
-				}
-				if (!goals.isEmpty()) {
+				boolean hasActiveGoal = goals.stream()
+						.anyMatch(goal -> (goal.getStartDate().isBefore(LocalDate.now())
+								|| goal.getStartDate().isEqual(LocalDate.now())) // Start date là trước đó hoặc bằng
+																					// ngày
+																					// hiện tại
+								&& (goal.getEndDate() == null || goal.getEndDate().isAfter(LocalDate.now()))); // End
+																												// date
+																												// là
+																												// null
+																												// (forever)
+																												// hoặc
+																												// là
+																												// sau
+																												// ngày
+																												// hiện
+																												// tại
+				if (hasActiveGoal) {
 					// If there are goals, a valid goal ID must be selected
 					Long savingGoalId = walletDTO.getSavingGoalId();
 					if (savingGoalId == null || savingGoalId == 0) {
@@ -194,19 +199,25 @@ public class WalletServiceImpl implements WalletService {
 					BigDecimal newGoalBalance = currentAmount.add(balanceDifference);
 					selectedSavingGoal.setCurrentAmount(newGoalBalance);
 					saving_goalsRepository.save(selectedSavingGoal);
-
 					goalTransaction.setSavingGoal(selectedSavingGoal);
 
-					// Set category for the transaction
-					if (category != null) {
-						goalTransaction.setCategory(category);
-						transactionRepository.save(goalTransaction);
-					}
+				}
+				// Determine category based on balance difference
+				Category category;
+				if (balanceDifference.compareTo(BigDecimal.ZERO) > 0) {
+					List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
+							existingWallet.getUser().getId());
+					category = !incomeCategories.isEmpty() ? incomeCategories.get(0) : null;
+					goalTransaction.setCategory(category);
+					transactionRepository.save(goalTransaction);
+					createIncomeTransaction(existingWallet, balanceDifference.abs(), goalTransaction, category);
 				} else {
-					if (category != null) {
-						goalTransaction.setCategory(category);
-						transactionRepository.save(goalTransaction);
-					}
+					List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
+							existingWallet.getUser().getId());
+					category = !expenseCategories.isEmpty() ? expenseCategories.get(0) : null;
+					goalTransaction.setCategory(category);
+					transactionRepository.save(goalTransaction);
+					createExpenseTransaction(existingWallet, balanceDifference.abs(), goalTransaction, category);
 				}
 			} else {
 				// Create transaction for the balance adjustment
@@ -222,16 +233,16 @@ public class WalletServiceImpl implements WalletService {
 					List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
 							existingWallet.getUser().getId());
 					category = !incomeCategories.isEmpty() ? incomeCategories.get(0) : null;
+					balanceTransaction.setCategory(category);
+					transactionRepository.save(balanceTransaction);
+					createIncomeTransaction(existingWallet, balanceDifference.abs(), balanceTransaction, category);
 				} else {
 					List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
 							existingWallet.getUser().getId());
 					category = !expenseCategories.isEmpty() ? expenseCategories.get(0) : null;
-				}
-
-				// Set category for the transaction
-				if (category != null) {
 					balanceTransaction.setCategory(category);
 					transactionRepository.save(balanceTransaction);
+					createExpenseTransaction(existingWallet, balanceDifference.abs(), balanceTransaction, category);
 				}
 			}
 		}

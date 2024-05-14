@@ -1,5 +1,6 @@
 package com.mytech.api.controllers.saving_goals;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,12 +50,25 @@ public class Saving_goalsController {
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<List<SavingGoalDTO>> getAllSavingGoalByUserByWallet(@PathVariable int userId,
             @PathVariable Integer walletId) {
+        LocalDate currentDate = LocalDate.now();
+
         List<SavingGoal> savingGoals = savingGoalsService.getSavingGoalsByWalletId(userId, walletId);
-        List<SavingGoalDTO> savingGoalDTOs = savingGoals.stream()
+
+        // Lọc danh sách các mục tiêu tiết kiệm để chỉ bao gồm các mục tiêu bắt đầu từ
+        // hôm nay hoặc trước đó, và không có ngày kết thúc trong tương lai
+        List<SavingGoal> filteredSavingGoals = savingGoals.stream()
+                .filter(savingGoal -> (savingGoal.getStartDate().isEqual(currentDate)
+                        || savingGoal.getStartDate().isBefore(currentDate)) // Start date là trước đó hoặc bằng ngày
+                                                                            // hiện tại
+                        && (savingGoal.getEndDate() == null || savingGoal.getEndDate().isEqual(currentDate)
+                                || savingGoal.getEndDate().isAfter(currentDate))) // End date vẫn còn hiệu lực hoặc là
+                                                                                  // forever
+                .collect(Collectors.toList());
+
+        List<SavingGoalDTO> savingGoalDTOs = filteredSavingGoals.stream()
                 .map(savingGoal -> modelMapper.map(savingGoal, SavingGoalDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(savingGoalDTOs);
-
     }
 
     @DeleteMapping("/delete/{savingGoalId}")

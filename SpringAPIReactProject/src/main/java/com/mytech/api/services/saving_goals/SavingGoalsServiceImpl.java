@@ -165,7 +165,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         BigDecimal oldAmount = existingSavingGoal.getCurrentAmount();
         BigDecimal newAmount = updateSavingGoalDTO.getCurrentAmount();
         BigDecimal difference = newAmount.subtract(oldAmount);
-        if (updateSavingGoalDTO.getTargetAmount().compareTo(updateSavingGoalDTO.getCurrentAmount()) <= 0) {
+        if (updateSavingGoalDTO.getTargetAmount().compareTo(updateSavingGoalDTO.getCurrentAmount()) < 0) {
             throw new IllegalArgumentException("Target amount must be greater than current amount");
         }
         existingSavingGoal.setTargetAmount(updateSavingGoalDTO.getTargetAmount());

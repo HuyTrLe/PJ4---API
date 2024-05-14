@@ -158,7 +158,18 @@ public class TransactionServiceImpl implements TransactionService {
 
 		if (wallet.getWalletType() == 3) {
 			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
-			if (!goals.isEmpty()) {
+			boolean hasActiveGoal = goals.stream()
+					.anyMatch(goal -> (goal.getStartDate().isBefore(LocalDate.now())
+							|| goal.getStartDate().isEqual(LocalDate.now())) // Start date là trước đó hoặc bằng ngày
+																				// hiện tại
+							&& (goal.getEndDate() == null || goal.getEndDate().isAfter(LocalDate.now()))); // End date
+																											// là null
+																											// (forever)
+																											// hoặc là
+																											// sau ngày
+																											// hiện tại
+
+			if (hasActiveGoal) {
 				LocalDate transactionDate = transactionDTO.getTransactionDate();
 				Long savingGoalId = transactionDTO.getSavingGoalId();
 
@@ -358,33 +369,27 @@ public class TransactionServiceImpl implements TransactionService {
 		existingTransaction.setNotes(transactionDTO.getNotes());
 		existingTransaction.setAmount(transactionDTO.getAmount());
 
-		if (wallet.getWalletType() == 3) {
+		Long savingGoalId = transactionDTO.getSavingGoalId();
+		if (savingGoalId != null && savingGoalId != 0) {
 			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
-			if (!goals.isEmpty()) {
-				LocalDate transactionDate = transactionDTO.getTransactionDate();
-				Long savingGoalId = transactionDTO.getSavingGoalId();
+			LocalDate transactionDate = transactionDTO.getTransactionDate();
 
-				if (transactionDate == null) {
-					throw new IllegalArgumentException("Transaction date cannot be null");
-				}
-
-				if (savingGoalId == null || savingGoalId == 0) {
-					throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
-				}
-
-				SavingGoal selectedSavingGoal = goals.stream()
-						.filter(g -> g.getId().equals(savingGoalId))
-						.findFirst()
-						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
-
-				if (transactionDate.isBefore(selectedSavingGoal.getStartDate()) ||
-						(selectedSavingGoal.getEndDate() != null
-								&& transactionDate.isAfter(selectedSavingGoal.getEndDate()))) {
-					throw new IllegalArgumentException("Transaction date must be within the saving goal's duration");
-				}
-				selectedSavingGoal.setCurrentAmount(walletBalance);
-				existingTransaction.setSavingGoal(selectedSavingGoal);
+			if (transactionDate == null) {
+				throw new IllegalArgumentException("Transaction date cannot be null");
 			}
+
+			SavingGoal selectedSavingGoal = goals.stream()
+					.filter(g -> g.getId().equals(savingGoalId))
+					.findFirst()
+					.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+
+			if (transactionDate.isBefore(selectedSavingGoal.getStartDate()) ||
+					(selectedSavingGoal.getEndDate() != null
+							&& transactionDate.isAfter(selectedSavingGoal.getEndDate()))) {
+				throw new IllegalArgumentException("Transaction date must be within the saving goal's duration");
+			}
+			selectedSavingGoal.setCurrentAmount(walletBalance);
+			existingTransaction.setSavingGoal(selectedSavingGoal);
 		}
 
 		// Adjust budget only if category or amount has changed
