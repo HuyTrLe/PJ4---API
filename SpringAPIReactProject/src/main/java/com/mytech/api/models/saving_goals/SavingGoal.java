@@ -40,10 +40,10 @@ public class SavingGoal {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal targetAmount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal currentAmount;
 
     @Column(nullable = false)

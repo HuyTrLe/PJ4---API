@@ -45,7 +45,7 @@ public class Transaction {
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 
     @Column(name = "transaction_date", nullable = false)
