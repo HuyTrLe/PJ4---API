@@ -1,6 +1,8 @@
 package com.mytech.api.auth.oauth2;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -55,19 +57,19 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
             OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
             String username = oAuth2User.getAttribute("name");
+            String decodedUsername = URLDecoder.decode(username, "UTF-8");
             String email = oAuth2User.getAttribute("email");
             boolean isEnabled = true;
 
-            JwtResponse jwtResponse = new JwtResponse(token, userDetails.getId(), username, email, isEnabled);
+            JwtResponse jwtResponse = new JwtResponse(token, userDetails.getId(), decodedUsername, email, isEnabled);
 
             ObjectMapper objectMapper = new ObjectMapper();
             String jwtResponseJson = objectMapper.writeValueAsString(jwtResponse);
 
             return "http://localhost:3000/oauth2/redirect?jwtResponse=" + jwtResponseJson;
-        } catch (JsonProcessingException e) {
-            // Xử lý ngoại lệ JsonProcessingException ở đây
-            e.printStackTrace(); // Hoặc thực hiện xử lý khác
-            return ""; // Trả về giá trị mặc định hoặc thông báo lỗi
+        } catch (UnsupportedEncodingException | JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
