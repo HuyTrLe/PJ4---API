@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mytech.api.models.transaction.Transaction;
-import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 
@@ -41,10 +40,10 @@ public class SavingGoal {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal targetAmount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal currentAmount;
 
     @Column(nullable = false)
@@ -65,9 +64,6 @@ public class SavingGoal {
 
     @OneToMany(mappedBy = "savingGoal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transaction = new ArrayList<>();
-
-    @OneToMany(mappedBy = "savingGoal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TransactionRecurring> transactionsRecurring = new ArrayList<>();
 
     public SavingGoal(Long id, String name, BigDecimal targetAmount, BigDecimal currentAmount, LocalDate startDate,
             LocalDate endDate, User user, Wallet wallet) {

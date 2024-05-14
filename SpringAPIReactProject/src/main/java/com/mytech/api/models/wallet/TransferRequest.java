@@ -23,6 +23,4 @@ public class TransferRequest {
     @NotNull(message = "Exchange rate cannot be null")
     private BigDecimal exchangeRate;
 
-    private Long savingGoalId;
-
 }

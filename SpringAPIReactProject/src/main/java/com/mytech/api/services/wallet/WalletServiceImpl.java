@@ -11,7 +11,6 @@ import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
-import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.wallet.TransferRequest;
 import com.mytech.api.models.wallet.Wallet;
@@ -55,10 +54,6 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Wallet name already exists");
 		}
 
-		if (wallet.getWalletType() == 3 && wallet.getBalance().compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("Wallet Goals cannot have a negative balance");
-		}
-
 		if ("USD".equals(wallet.getCurrency()) && walletDTO.getBalance().compareTo(BigDecimal.ZERO) < 0) {
 			throw new IllegalArgumentException("Wallet USD cannot have a negative balance");
 		}
@@ -73,55 +68,53 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Invalid currency");
 		}
 
-		// if (currency.equals("USD") && walletRepository.existsByCurrency(currency)) {
-		// throw new IllegalArgumentException("Only one wallet allowed per currency
-		// (USD)");
-		// }
-
 		BigDecimal newBalance = wallet.getBalance();
 		wallet.setBalance(newBalance);
 		walletRepository.save(wallet);
-		Transaction transaction = new Transaction();
-		transaction.setWallet(wallet);
-		transaction.setTransactionDate(LocalDate.now());
-		transaction.setAmount(wallet.getBalance().abs());
-		transaction.setUser(wallet.getUser());
 
-		if (currency.equals("USD")) {
-			List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
-					wallet.getUser().getId());
-			if (!incomeCategories.isEmpty()) {
-				Category incomeCategory = incomeCategories.get(0);
-				transaction.setCategory(incomeCategory);
-				transaction = transactionRepository.save(transaction);
+		if (newBalance.compareTo(BigDecimal.ZERO) != 0) {
+			Transaction transaction = new Transaction();
+			transaction.setWallet(wallet);
+			transaction.setTransactionDate(LocalDate.now());
+			transaction.setAmount(wallet.getBalance().abs());
+			transaction.setUser(wallet.getUser());
 
-				Income income = new Income();
-				income.setAmount(wallet.getBalance().abs());
-				income.setIncomeDate(LocalDate.now());
-				income.setUser(wallet.getUser());
-				income.setTransaction(transaction);
-				income.setWallet(wallet);
-				income.setCategory(incomeCategory);
-				incomeRepository.save(income);
-			}
-		} else if (currency.equals("VND")) {
-			if (wallet.getBalance().compareTo(BigDecimal.ZERO) > 0) {
+			if (currency.equals("USD")) {
 				List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
 						wallet.getUser().getId());
 				if (!incomeCategories.isEmpty()) {
 					Category incomeCategory = incomeCategories.get(0);
 					transaction.setCategory(incomeCategory);
 					transaction = transactionRepository.save(transaction);
-					createIncomeTransaction(wallet, newBalance, transaction, incomeCategory);
+
+					Income income = new Income();
+					income.setAmount(wallet.getBalance().abs());
+					income.setIncomeDate(LocalDate.now());
+					income.setUser(wallet.getUser());
+					income.setTransaction(transaction);
+					income.setWallet(wallet);
+					income.setCategory(incomeCategory);
+					incomeRepository.save(income);
 				}
-			} else {
-				List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
-						wallet.getUser().getId());
-				if (!expenseCategories.isEmpty()) {
-					Category expenseCategory = expenseCategories.get(0);
-					transaction.setCategory(expenseCategory);
-					transaction = transactionRepository.save(transaction);
-					createExpenseTransaction(wallet, newBalance, transaction, expenseCategory);
+			} else if (currency.equals("VND")) {
+				if (wallet.getBalance().compareTo(BigDecimal.ZERO) > 0) {
+					List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
+							wallet.getUser().getId());
+					if (!incomeCategories.isEmpty()) {
+						Category incomeCategory = incomeCategories.get(0);
+						transaction.setCategory(incomeCategory);
+						transaction = transactionRepository.save(transaction);
+						createIncomeTransaction(wallet, newBalance, transaction, incomeCategory);
+					}
+				} else {
+					List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
+							wallet.getUser().getId());
+					if (!expenseCategories.isEmpty()) {
+						Category expenseCategory = expenseCategories.get(0);
+						transaction.setCategory(expenseCategory);
+						transaction = transactionRepository.save(transaction);
+						createExpenseTransaction(wallet, newBalance, transaction, expenseCategory);
+					}
 				}
 			}
 		}
@@ -139,10 +132,6 @@ public class WalletServiceImpl implements WalletService {
 			return modelMapper.map(existingWallet, WalletDTO.class);
 		}
 
-		if (existingWallet.getWalletType() == 3 && walletDTO.getBalance().compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("Wallet Goals cannot have a negative balance");
-		}
-
 		if ("USD".equals(existingWallet.getCurrency()) && walletDTO.getBalance().compareTo(BigDecimal.ZERO) < 0) {
 			throw new IllegalArgumentException("Wallet USD cannot have a negative balance");
 		}
@@ -156,64 +145,13 @@ public class WalletServiceImpl implements WalletService {
 		// Update balance and save the wallet
 		existingWallet.setWalletName(walletDTO.getWalletName());
 		existingWallet.setBalance(walletDTO.getBalance());
-		existingWallet = walletRepository.save(existingWallet);
 
 		// Calculate balance difference
 		BigDecimal balanceDifference = existingWallet.getBalance().subtract(oldBalance);
 
 		// If balance difference is not zero, handle accordingly
 		if (balanceDifference.compareTo(BigDecimal.ZERO) != 0) {
-			if (existingWallet.getWalletType() == 3) {
-				// Fetch associated goals
-				List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(walletId);
-				// Create transaction for the goal adjustment
-				Transaction goalTransaction = new Transaction();
-				goalTransaction.setWallet(existingWallet);
-				goalTransaction.setTransactionDate(LocalDate.now());
-				goalTransaction.setAmount(balanceDifference.abs());
-				goalTransaction.setUser(existingWallet.getUser());
-				// Determine category based on balance difference
-				Category category;
-				if (balanceDifference.compareTo(BigDecimal.ZERO) > 0) {
-					List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
-							existingWallet.getUser().getId());
-					category = !incomeCategories.isEmpty() ? incomeCategories.get(0) : null;
-				} else {
-					List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
-							existingWallet.getUser().getId());
-					category = !expenseCategories.isEmpty() ? expenseCategories.get(0) : null;
-				}
-				if (!goals.isEmpty()) {
-					// If there are goals, a valid goal ID must be selected
-					Long savingGoalId = walletDTO.getSavingGoalId();
-					if (savingGoalId == null || savingGoalId == 0) {
-						throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
-					}
-					SavingGoal selectedSavingGoal = goals.stream()
-							.filter(g -> g.getId().equals(savingGoalId))
-							.findFirst()
-							.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
-					BigDecimal currentAmount = selectedSavingGoal.getCurrentAmount() != null
-							? selectedSavingGoal.getCurrentAmount()
-							: BigDecimal.ZERO;
-					BigDecimal newGoalBalance = currentAmount.add(balanceDifference);
-					selectedSavingGoal.setCurrentAmount(newGoalBalance);
-					saving_goalsRepository.save(selectedSavingGoal);
-
-					goalTransaction.setSavingGoal(selectedSavingGoal);
-
-					// Set category for the transaction
-					if (category != null) {
-						goalTransaction.setCategory(category);
-						transactionRepository.save(goalTransaction);
-					}
-				} else {
-					if (category != null) {
-						goalTransaction.setCategory(category);
-						transactionRepository.save(goalTransaction);
-					}
-				}
-			} else {
+			if (existingWallet.getWalletType() != 3) {
 				// Create transaction for the balance adjustment
 				Transaction balanceTransaction = new Transaction();
 				balanceTransaction.setWallet(existingWallet);
@@ -227,20 +165,22 @@ public class WalletServiceImpl implements WalletService {
 					List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
 							existingWallet.getUser().getId());
 					category = !incomeCategories.isEmpty() ? incomeCategories.get(0) : null;
+					balanceTransaction.setCategory(category);
+					transactionRepository.save(balanceTransaction);
+					createIncomeTransaction(existingWallet, balanceDifference.abs(), balanceTransaction, category);
 				} else {
 					List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
 							existingWallet.getUser().getId());
 					category = !expenseCategories.isEmpty() ? expenseCategories.get(0) : null;
-				}
-
-				// Set category for the transaction
-				if (category != null) {
 					balanceTransaction.setCategory(category);
 					transactionRepository.save(balanceTransaction);
+					createExpenseTransaction(existingWallet, balanceDifference.abs(), balanceTransaction, category);
 				}
+			} else {
+				throw new IllegalArgumentException("Cannot update goals wallet");
 			}
 		}
-
+		walletRepository.save(existingWallet);
 		return modelMapper.map(existingWallet, WalletDTO.class);
 	}
 
@@ -271,12 +211,15 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Insufficient funds in source wallet");
 		}
 
-		List<Category> categories = categoryRepository.findByNameAndUserId("Incoming Transfer",
-				sourceWallet.getUser().getId());
-		Category categoryOutgoing = categories.isEmpty() ? null : categories.get(0);
-		List<Category> categories2 = categoryRepository.findByNameAndUserId("Outgoing Transfer",
-				destinationWallet.getUser().getId());
-		Category categoryIncoming = categories2.isEmpty() ? null : categories2.get(0);
+		Category categoryOutgoing = categoryRepository
+				.findByNameAndUserId("Outgoing Transfer", sourceWallet.getUser().getId())
+				.stream().findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Outgoing Transfer category not found"));
+
+		Category categoryIncoming = categoryRepository
+				.findByNameAndUserId("Incoming Transfer", destinationWallet.getUser().getId())
+				.stream().findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Incoming Transfer category not found"));
 		// Create outgoing transaction from the source wallet
 		Transaction outgoingTransaction = new Transaction();
 		outgoingTransaction.setTransactionDate(LocalDate.now());
@@ -296,54 +239,26 @@ public class WalletServiceImpl implements WalletService {
 		incomingTransaction.setUser(destinationWallet.getUser());
 		incomingTransaction.setNotes("Transfer Money");
 
-		if (destinationWallet.getWalletType() == 3) {
-			// Fetch saving goals associated with the destination wallet
-			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(destinationWallet.getWalletId());
+		if (destinationWallet.getWalletType() != 3) {
 
-			// Check if there are saving goals associated with this wallet
-			if (!goals.isEmpty()) {
-				// A saving goal ID must be provided since goals are available
-				Long savingGoalId = transferRequest.getSavingGoalId();
-				if (savingGoalId == null || savingGoalId == 0) {
-					throw new IllegalArgumentException(
-							"A saving goal must be selected for transfers to goal-type wallets");
-				}
+			incomingTransaction = transactionRepository.save(incomingTransaction);
 
-				// Validate the selected saving goal
-				SavingGoal goal = goals.stream()
-						.filter(g -> g.getId().equals(savingGoalId))
-						.findFirst()
-						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+			// Update the balance for both wallets
+			BigDecimal newSourceBalance = sourceWallet.getBalance().subtract(transferRequest.getAmount());
+			sourceWallet.setBalance(newSourceBalance);
+			walletRepository.save(sourceWallet);
 
-				// Update the selected saving goal's current amount
-				goal.setCurrentAmount(goal.getCurrentAmount().add(amountInVND));
-				saving_goalsRepository.save(goal);
+			BigDecimal newDestinationBalance = destinationWallet.getBalance().add(amountInVND);
+			destinationWallet.setBalance(newDestinationBalance);
+			walletRepository.save(destinationWallet);
 
-				// Associate the saving goal with the incoming transaction
-				incomingTransaction.setSavingGoal(goal);
-			} else {
-				// No goals available, add amount directly to the wallet balance
-				BigDecimal newWalletBalance = destinationWallet.getBalance().add(amountInVND);
-				destinationWallet.setBalance(newWalletBalance);
-				walletRepository.save(destinationWallet);
-			}
+			// Call createIncomeTransaction and createExpenseTransaction with category
+			// parameter
+			createIncomeTransaction(destinationWallet, amountInVND, incomingTransaction, categoryIncoming);
+			createExpenseTransaction(sourceWallet, transferRequest.getAmount(), outgoingTransaction, categoryOutgoing);
+		} else {
+			throw new IllegalArgumentException("Cannot transfer to goals wallet");
 		}
-
-		incomingTransaction = transactionRepository.save(incomingTransaction);
-
-		// Update the balance for both wallets
-		BigDecimal newSourceBalance = sourceWallet.getBalance().subtract(transferRequest.getAmount());
-		sourceWallet.setBalance(newSourceBalance);
-		walletRepository.save(sourceWallet);
-
-		BigDecimal newDestinationBalance = destinationWallet.getBalance().add(amountInVND);
-		destinationWallet.setBalance(newDestinationBalance);
-		walletRepository.save(destinationWallet);
-
-		// Call createIncomeTransaction and createExpenseTransaction with category
-		// parameter
-		createIncomeTransaction(destinationWallet, amountInVND, incomingTransaction, categoryIncoming);
-		createExpenseTransaction(sourceWallet, transferRequest.getAmount(), outgoingTransaction, categoryOutgoing);
 
 	}
 

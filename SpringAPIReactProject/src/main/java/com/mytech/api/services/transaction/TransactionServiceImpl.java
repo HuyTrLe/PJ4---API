@@ -19,6 +19,7 @@ import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.saving_goals.EndDateType;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.FindTransactionParam;
@@ -26,6 +27,7 @@ import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
 import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
+import com.mytech.api.models.transaction.TransactionSavingGoalsView;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
@@ -119,22 +121,6 @@ public class TransactionServiceImpl implements TransactionService {
 		transaction.setCategory(category);
 		transaction.setAmount(transaction.getAmount());
 		transaction.setTransactionDate(transaction.getTransactionDate());
-		if (wallet.getWalletType() == 3) {
-			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
-			if (!goals.isEmpty()) {
-				Long savingGoalId = transactionDTO.getSavingGoalId();
-				if (savingGoalId == null || savingGoalId == 0) {
-					throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
-				}
-				SavingGoal selectedSavingGoal = goals.stream()
-						.filter(g -> g.getId().equals(savingGoalId))
-						.findFirst()
-						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
-
-				adjustGoalsAndSaveTransaction(transaction);
-				transaction.setSavingGoal(selectedSavingGoal);
-			}
-		}
 
 		switch (category.getType()) {
 			case INCOME:
@@ -172,8 +158,63 @@ public class TransactionServiceImpl implements TransactionService {
 			potentialNewBalance = potentialNewBalance.subtract(transaction.getAmount());
 		}
 
-		if (wallet.getWalletType() == 3 && potentialNewBalance.compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("Insufficient balance in the wallet for the expense transaction");
+		if (wallet.getWalletType() == 3) {
+			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
+			if (!goals.isEmpty()) {
+				boolean hasActiveGoal = goals.stream()
+						.anyMatch(goal -> (goal.getStartDate().isBefore(LocalDate.now())
+								|| goal.getStartDate().isEqual(LocalDate.now())) // Start date là trước đó hoặc bằng
+																					// ngày
+																					// hiện tại
+								&& (goal.getEndDate() == null || goal.getEndDate().isAfter(LocalDate.now()))); // End
+																												// date
+																												// là
+																												// null
+																												// (forever)
+																												// hoặc
+																												// là
+																												// sau
+																												// ngày
+																												// hiện
+																												// tại
+				if (!hasActiveGoal) {
+					throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
+				}
+
+				if (hasActiveGoal) {
+					LocalDate transactionDate = transactionDTO.getTransactionDate();
+					Long savingGoalId = transactionDTO.getSavingGoalId();
+
+					if (transactionDate == null) {
+						throw new IllegalArgumentException("Transaction date cannot be null");
+					}
+
+					if (savingGoalId == null || savingGoalId == 0) {
+						throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
+					}
+
+					SavingGoal selectedSavingGoal = saving_goalsRepository.findById(savingGoalId)
+							.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+
+					if (selectedSavingGoal.getEndDateType() == EndDateType.END_DATE) {
+						LocalDate startDate = selectedSavingGoal.getStartDate();
+						LocalDate endDate = selectedSavingGoal.getEndDate();
+
+						if (transactionDate.isBefore(startDate) || transactionDate.isAfter(endDate)) {
+							throw new IllegalArgumentException(
+									"Transaction date must be within the goal's start and end dates");
+						}
+					}
+
+					selectedSavingGoal.setCurrentAmount(potentialNewBalance);
+					saving_goalsRepository.save(selectedSavingGoal);
+					transaction.setSavingGoal(selectedSavingGoal);
+				}
+			} else {
+				throw new IllegalArgumentException(
+						"A saving goal must be create to selected for goal-type wallets");
+			}
+
 		}
 
 		wallet.setBalance(potentialNewBalance);
@@ -206,14 +247,6 @@ public class TransactionServiceImpl implements TransactionService {
 			potentialNewBalance = potentialNewBalance.add(transaction.getAmount());
 		} else if (transaction.getExpense() != null) {
 			potentialNewBalance = potentialNewBalance.subtract(transaction.getAmount());
-		}
-		// if (potentialNewBalance.compareTo(BigDecimal.ZERO) < 0) {
-		// throw new InsufficientFundsException("Insufficient funds in wallet after
-		// transaction.");
-		// }
-
-		if (wallet.getWalletType() == 3) {
-			adjustGoalsAndSaveTransaction(transaction);
 		}
 
 		// Since there are sufficient funds, update the wallet balance
@@ -353,21 +386,27 @@ public class TransactionServiceImpl implements TransactionService {
 		existingTransaction.setNotes(transactionDTO.getNotes());
 		existingTransaction.setAmount(transactionDTO.getAmount());
 
-		if (wallet.getWalletType() == 3) {
+		Long savingGoalId = transactionDTO.getSavingGoalId();
+		if (savingGoalId != null && savingGoalId != 0) {
 			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
-			if (!goals.isEmpty()) {
-				Long savingGoalId = transactionDTO.getSavingGoalId();
-				if (savingGoalId == null || savingGoalId == 0) {
-					throw new IllegalArgumentException("A saving goal must be selected for goal-type wallets");
-				}
-				SavingGoal selectedSavingGoal = goals.stream()
-						.filter(g -> g.getId().equals(savingGoalId))
-						.findFirst()
-						.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+			LocalDate transactionDate = transactionDTO.getTransactionDate();
 
-				adjustGoalsAndUpdateTransaction(transactionId, transactionDTO);
-				existingTransaction.setSavingGoal(selectedSavingGoal);
+			if (transactionDate == null) {
+				throw new IllegalArgumentException("Transaction date cannot be null");
 			}
+
+			SavingGoal selectedSavingGoal = goals.stream()
+					.filter(g -> g.getId().equals(savingGoalId))
+					.findFirst()
+					.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
+
+			if (transactionDate.isBefore(selectedSavingGoal.getStartDate()) ||
+					(selectedSavingGoal.getEndDate() != null
+							&& transactionDate.isAfter(selectedSavingGoal.getEndDate()))) {
+				throw new IllegalArgumentException("Transaction date must be within the saving goal's duration");
+			}
+			selectedSavingGoal.setCurrentAmount(walletBalance);
+			existingTransaction.setSavingGoal(selectedSavingGoal);
 		}
 
 		// Adjust budget only if category or amount has changed
@@ -441,6 +480,13 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	@Override
+	public List<TransactionSavingGoalsView> getBySavingGoal_IdAndUser_Id(Long savingGoalId, Long userId) {
+		return transactionRepository.getBySavingGoal_IdAndUser_Id(savingGoalId, userId) != null
+				? transactionRepository.getBySavingGoal_IdAndUser_Id(savingGoalId, userId)
+				: null;
+	}
+
+	@Override
 	public List<TransactionView> getTop5NewTransaction(int userId) {
 		PageRequest pageable = PageRequest.of(0, 5);
 		Page<TransactionView> transactionsPage = transactionRepository.getTop5NewTransaction(userId, pageable);
@@ -495,60 +541,6 @@ public class TransactionServiceImpl implements TransactionService {
 				pageable);
 		List<TransactionView> transactions = transactionsPage.getContent();
 		return transactions;
-	}
-
-	private void adjustGoalsAndSaveTransaction(Transaction transaction) {
-
-		Wallet existingWallet = walletService.getWalletById(transaction.getWallet().getWalletId());
-		Category existingCategory = categoryService.getByCateId(transaction.getCategory().getId());
-		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
-				.orElseThrow(() -> new RuntimeException(
-						"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
-		if ((selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
-			throw new IllegalArgumentException(
-					"This saving goal has either reached its is past its end date.");
-		}
-		BigDecimal walletBalance = existingWallet.getBalance();
-		BigDecimal transactionAmount = transaction.getAmount(); // Extracting transaction amount
-
-		if (existingCategory.getType() == CateTypeENum.INCOME) {
-			walletBalance = existingWallet.getBalance().add(transactionAmount);
-			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
-		} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
-			if (walletBalance.compareTo(transactionAmount) < 0) {
-				throw new IllegalArgumentException("Insufficient funds in the wallet for this transaction.");
-			}
-			walletBalance = existingWallet.getBalance().subtract(transactionAmount);
-			selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
-		}
-		saving_goalsRepository.save(selectedSavingGoal);
-	}
-
-	@Transactional
-	private void adjustGoalsAndUpdateTransaction(Integer transactionId, TransactionDTO transactionDTO) {
-		Transaction existingTransaction = transactionRepository.findById(transactionId)
-				.orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + transactionId));
-		Wallet existingWallet = walletService.getWalletById(transactionDTO.getWalletId());
-		Category existingCategory = categoryService.getByCateId(transactionDTO.getCategoryId());
-		SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transactionDTO.getSavingGoalId())
-				.orElseThrow(() -> new EntityNotFoundException(
-						"Saving goal not found with id: " + transactionDTO.getSavingGoalId()));
-		if ((selectedSavingGoal.getEndDate() != null && LocalDate.now().isAfter(selectedSavingGoal.getEndDate()))) {
-			throw new IllegalArgumentException(
-					"This saving goal has either reached its target amount or is past its end date.");
-		}
-		BigDecimal oldAmount = existingTransaction.getAmount();
-		BigDecimal newAmount = transactionDTO.getAmount();
-		BigDecimal difference = newAmount.subtract(oldAmount);
-		BigDecimal walletBalanceUpdate = existingCategory.getType() == CateTypeENum.INCOME ? difference
-				: difference.negate();
-
-		BigDecimal updatedWalletBalance = existingWallet.getBalance().add(walletBalanceUpdate);
-
-		existingWallet.setBalance(updatedWalletBalance);
-		selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(walletBalanceUpdate));
-		saving_goalsRepository.save(selectedSavingGoal);
-		walletRepository.save(existingWallet); // Assuming there's a method to save wallet updates
 	}
 
 	private void adjustGoalsAndDeleteTransaction(Transaction transaction) {

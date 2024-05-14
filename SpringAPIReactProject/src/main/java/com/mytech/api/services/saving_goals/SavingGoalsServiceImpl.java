@@ -11,9 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.saving_goals.EndDateType;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
 import com.mytech.api.models.saving_goals.SavingParam;
@@ -101,17 +103,27 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         if (savingGoal.getTargetAmount().compareTo(savingGoal.getCurrentAmount()) <= 0) {
             throw new IllegalArgumentException("Target amount must be greater than current amount");
         }
+
         // Set end date based on the type
         if (savingGoalDTO.getEndDateType() == null) {
             throw new IllegalArgumentException("You need to choose either Forever or End Date for Goals");
-        } else if ("FOREVER".equals(savingGoalDTO.getEndDateType())) {
+        } else if (EndDateType.FOREVER.equals(savingGoalDTO.getEndDateType())) {
             savingGoal.setEndDate(null);
-        } else if ("END_DATE".equals(savingGoalDTO.getEndDateType())) {
-            if (savingGoalDTO.getEndDate() == null) {
+        } else if (EndDateType.END_DATE.equals(savingGoalDTO.getEndDateType())) {
+            LocalDate startDate = savingGoalDTO.getStartDate();
+            LocalDate endDate = savingGoalDTO.getEndDate();
+
+            if (endDate == null) {
                 throw new IllegalArgumentException("Please select an End Date for the goal");
             }
-            savingGoal.setEndDate(savingGoalDTO.getEndDate());
+
+            if (endDate.isEqual(startDate) || endDate.isBefore(startDate)) {
+                throw new IllegalArgumentException("End date cannot be before or in start date.");
+            }
+
+            savingGoal.setEndDate(endDate);
         }
+
         SavingGoal createdSavingGoal = savingGoalsRepository.save(savingGoal);
 
         // Update wallet balance if current amount > 0
@@ -126,7 +138,8 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
             incomeTransaction.setUser(wallet.getUser());
             incomeTransaction.setSavingGoal(createdSavingGoal);
 
-            List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
+            List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
+                    savingGoalDTO.getUserId());
             if (!incomeCategories.isEmpty()) {
                 Category incomeCategory = incomeCategories.get(0);
                 incomeTransaction.setCategory(incomeCategory);
@@ -148,93 +161,109 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
     @Override
     @Transactional
     public SavingGoalDTO updateSavingGoal(Long savingGoalId, SavingGoalDTO updateSavingGoalDTO) {
-        // Lấy mục tiêu tiết kiệm hiện có từ cơ sở dữ liệu
         SavingGoal existingSavingGoal = savingGoalsRepository.findById(savingGoalId)
                 .orElseThrow(() -> new RuntimeException("Saving Goal not found with ID: " + savingGoalId));
-
-        // Lấy ví liên kết với mục tiêu tiết kiệm
         Wallet wallet = walletRepository.findById(existingSavingGoal.getWallet().getWalletId())
                 .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
-
-        // Lấy số tiền hiện tại của mục tiêu tiết kiệm trước khi cập nhật
         BigDecimal oldAmount = existingSavingGoal.getCurrentAmount();
-
-        // Lấy số tiền mới từ DTO cập nhật
         BigDecimal newAmount = updateSavingGoalDTO.getCurrentAmount();
-
-        // Tính toán sự khác biệt giữa số tiền mới và số tiền cũ
         BigDecimal difference = newAmount.subtract(oldAmount);
+        if (updateSavingGoalDTO.getTargetAmount().compareTo(updateSavingGoalDTO.getCurrentAmount()) < 0) {
+            throw new IllegalArgumentException("Target amount must be greater than current amount");
+        }
+        existingSavingGoal.setTargetAmount(updateSavingGoalDTO.getTargetAmount());
+        existingSavingGoal.setCurrentAmount(updateSavingGoalDTO.getCurrentAmount());
 
-        // Cập nhật số tiền mới cho mục tiêu tiết kiệm và cập nhật số dư của ví
+        existingSavingGoal.setTargetAmount(updateSavingGoalDTO.getTargetAmount());
         existingSavingGoal.setCurrentAmount(newAmount);
+        existingSavingGoal.setStartDate(updateSavingGoalDTO.getStartDate());
+        existingSavingGoal.setEndDate(updateSavingGoalDTO.getEndDate()); // Ensure end date is set regardless of type
+        existingSavingGoal.setEndDateType(updateSavingGoalDTO.getEndDateType());
+        if (updateSavingGoalDTO.getEndDateType() == EndDateType.END_DATE) {
+            LocalDate newEndDate = updateSavingGoalDTO.getEndDate();
+            if (newEndDate == null) {
+                throw new IllegalArgumentException("End Date cannot be null");
+            }
+            if (newEndDate.isBefore(existingSavingGoal.getStartDate())
+                    || newEndDate.isEqual(existingSavingGoal.getStartDate())) {
+                throw new IllegalArgumentException("End date cannot be before or equal to start date.");
+            }
+
+            // Fetch transactions that fall outside the new date range and adjust
+            // accordingly
+            List<Transaction> transactions = transactionRepository.findBySavingGoal_Id(savingGoalId);
+            transactions.stream()
+                    .filter(t -> t.getTransactionDate().isBefore(updateSavingGoalDTO.getStartDate())
+                            || t.getTransactionDate().isAfter(newEndDate))
+                    .forEach(transaction -> {
+                        BigDecimal transactionAmount = transaction.getAmount();
+                        if (transaction.getCategory().getType() == CateTypeENum.INCOME) {
+                            wallet.setBalance(wallet.getBalance().subtract(transactionAmount));
+                            existingSavingGoal.setCurrentAmount(
+                                    existingSavingGoal.getCurrentAmount().subtract(transactionAmount));
+                        } else {
+                            wallet.setBalance(wallet.getBalance().add(transactionAmount));
+                            existingSavingGoal
+                                    .setCurrentAmount(existingSavingGoal.getCurrentAmount().add(transactionAmount));
+                        }
+                        transactionRepository.delete(transaction);
+                    });
+            walletRepository.save(wallet);
+            savingGoalsRepository.save(existingSavingGoal);
+        } else {
+            existingSavingGoal.setEndDate(null);
+        }
+
         BigDecimal newWalletBalance = wallet.getBalance().add(difference);
         wallet.setBalance(newWalletBalance);
-
         if (difference.compareTo(BigDecimal.ZERO) != 0) {
             Transaction adjustmentTransaction = new Transaction();
             adjustmentTransaction.setWallet(wallet);
             adjustmentTransaction.setTransactionDate(LocalDate.now());
-            adjustmentTransaction.setAmount(difference.abs()); // Số tiền điều chỉnh là giá trị tuyệt đối của sự khác
-                                                               // biệt
+            adjustmentTransaction.setAmount(difference.abs());
             adjustmentTransaction.setUser(wallet.getUser());
             adjustmentTransaction.setSavingGoal(existingSavingGoal);
-            // Xác định danh mục dựa trên dấu của sự khác biệt
             Category category = null;
             if (difference.compareTo(BigDecimal.ZERO) > 0) {
-                // Tìm danh mục thu nhập
-                List<Category> incomeCategories = categoryRepository.findByName("Incoming Transfer");
+                List<Category> incomeCategories = categoryRepository.findByNameAndUserId("Incoming Transfer",
+                        updateSavingGoalDTO.getUserId());
                 if (!incomeCategories.isEmpty()) {
                     category = incomeCategories.get(0); // Lấy danh mục thu nhập đầu tiên
                 }
             } else {
-                // Tìm danh mục chi tiêu
-                List<Category> expenseCategories = categoryRepository.findByName("Outgoing Transfer");
+                List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
+                        updateSavingGoalDTO.getUserId());
                 if (!expenseCategories.isEmpty()) {
                     category = expenseCategories.get(0); // Lấy danh mục chi tiêu đầu tiên
                 }
             }
 
             if (category != null) {
-                // Gán danh mục cho giao dịch điều chỉnh
                 adjustmentTransaction.setCategory(category);
-
-                // Lưu giao dịch điều chỉnh vào cơ sở dữ liệu
                 adjustmentTransaction = transactionRepository.save(adjustmentTransaction);
-
-                // Tùy thuộc vào dấu của sự khác biệt, tạo giao dịch thu nhập hoặc chi tiêu
                 if (difference.compareTo(BigDecimal.ZERO) > 0) {
-                    // Tạo giao dịch thu nhập
                     Income income = new Income();
-                    income.setAmount(difference.abs()); // Số tiền thu nhập là giá trị tuyệt đối của sự khác biệt
+                    income.setAmount(difference.abs());
                     income.setIncomeDate(LocalDate.now());
                     income.setUser(wallet.getUser());
                     income.setTransaction(adjustmentTransaction);
                     income.setWallet(wallet);
                     income.setCategory(category);
-
-                    // Lưu giao dịch thu nhập vào cơ sở dữ liệu
                     incomeRepository.save(income);
                 } else {
-                    // Tạo giao dịch chi tiêu
                     Expense expense = new Expense();
-                    expense.setAmount(difference.abs()); // Số tiền chi tiêu là giá trị tuyệt đối của sự khác biệt
+                    expense.setAmount(difference.abs());
                     expense.setExpenseDate(LocalDate.now());
                     expense.setUser(wallet.getUser());
                     expense.setTransaction(adjustmentTransaction);
                     expense.setWallet(wallet);
                     expense.setCategory(category);
-                    // Lưu giao dịch chi tiêu vào cơ sở dữ liệu
                     expenseRepository.save(expense);
                 }
             }
         }
-        if (newAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Current amount cannot be negative.");
-        }
-        // Lưu mục tiêu tiết kiệm và cập nhật số dư của ví vào cơ sở dữ liệu
         savingGoalsRepository.save(existingSavingGoal);
         walletRepository.save(wallet);
-        // Trả về DTO của mục tiêu tiết kiệm đã được cập nhật
         return modelMapper.map(existingSavingGoal, SavingGoalDTO.class);
     }
 

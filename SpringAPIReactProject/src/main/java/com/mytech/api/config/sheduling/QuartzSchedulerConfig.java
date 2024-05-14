@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class QuartzSchedulerConfig {	
+public class QuartzSchedulerConfig {
 
     @Bean
     JobDetail updateBillsJobDetail() {
@@ -30,10 +30,10 @@ public class QuartzSchedulerConfig {
                 .forJob(updateBillsJobDetail())
                 .withIdentity("jobTrigger")
                 .withDescription("Trigger for job")
-                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(18, 27))
+                .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(17, 39))
                 .build();
     }
-    
+
     @Bean
     JobDetail debtNotificationJobDetail() {
         return JobBuilder.newJob(DebtNotificationJob.class)

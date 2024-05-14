@@ -49,7 +49,7 @@ public class Wallet {
 	@Column(name = "wallet_name", nullable = false)
 	private String walletName;
 
-	@Column(name = "balance", nullable = false)
+	@Column(name = "balance", nullable = false, precision = 19, scale = 4)
 	private BigDecimal balance;
 
 	@Column(name = "bank_name")

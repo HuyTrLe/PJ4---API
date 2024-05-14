@@ -47,7 +47,7 @@ public class Debt {
     @Column(name = "creditor", nullable = false)
     private String creditor;
 
-    @Column(name = "amount", nullable = false)
+    @Column(name = "amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 
     @Column(name = "due_date", nullable = false)

@@ -1,5 +1,6 @@
 package com.mytech.api.controllers.saving_goals;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,12 +53,25 @@ public class Saving_goalsController {
     @PreAuthorize("#userId == authentication.principal.id")
     public ResponseEntity<List<SavingGoalDTO>> getAllSavingGoalByUserByWallet(@PathVariable int userId,
             @PathVariable Integer walletId) {
+        LocalDate currentDate = LocalDate.now();
+
         List<SavingGoal> savingGoals = savingGoalsService.getSavingGoalsByWalletId(userId, walletId);
-        List<SavingGoalDTO> savingGoalDTOs = savingGoals.stream()
+
+        // Lọc danh sách các mục tiêu tiết kiệm để chỉ bao gồm các mục tiêu bắt đầu từ
+        // hôm nay hoặc trước đó, và không có ngày kết thúc trong tương lai
+        List<SavingGoal> filteredSavingGoals = savingGoals.stream()
+                .filter(savingGoal -> (savingGoal.getStartDate().isEqual(currentDate)
+                        || savingGoal.getStartDate().isBefore(currentDate)) // Start date là trước đó hoặc bằng ngày
+                                                                            // hiện tại
+                        && (savingGoal.getEndDate() == null || savingGoal.getEndDate().isEqual(currentDate)
+                                || savingGoal.getEndDate().isAfter(currentDate))) // End date vẫn còn hiệu lực hoặc là
+                                                                                  // forever
+                .collect(Collectors.toList());
+
+        List<SavingGoalDTO> savingGoalDTOs = filteredSavingGoals.stream()
                 .map(savingGoal -> modelMapper.map(savingGoal, SavingGoalDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(savingGoalDTOs);
-
     }
 
     @DeleteMapping("/delete/{savingGoalId}")
@@ -84,7 +98,7 @@ public class Saving_goalsController {
             String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
                     .collect(Collectors.joining("\n"));
             System.out.println(errors);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
         SavingGoalDTO createdSavingGoalDTO = savingGoalsService.createSavingGoal(savingGoalRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSavingGoalDTO);
@@ -93,15 +107,15 @@ public class Saving_goalsController {
     @PutMapping("/update/{savingGoalId}")
     @PreAuthorize("#updatedSavingGoalDTO.userId == authentication.principal.id")
     public ResponseEntity<?> updateSavingGoal(@PathVariable Long savingGoalId,
-            @RequestBody SavingGoalDTO updatedSavingGoalDTO) {
-        try {
-            SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);
-            return ResponseEntity.ok(updatedSavingGoal);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            @Valid @RequestBody SavingGoalDTO updatedSavingGoalDTO, BindingResult result) {
+        if (result.hasErrors()) {
+            String errors = result.getFieldErrors().stream().map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining("\n"));
+            System.out.println(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
+        SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);
+        return ResponseEntity.ok(updatedSavingGoal);
     }
     
     @GetMapping("findWorkingByUserId/user/{userId}")
