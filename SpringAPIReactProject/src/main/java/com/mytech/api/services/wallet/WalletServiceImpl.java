@@ -211,12 +211,15 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Insufficient funds in source wallet");
 		}
 
-		List<Category> categories = categoryRepository.findByNameAndUserId("Incoming Transfer",
-				destinationWallet.getUser().getId());
-		Category categoryOutgoing = categories.isEmpty() ? null : categories.get(0);
-		List<Category> categories2 = categoryRepository.findByNameAndUserId("Outgoing Transfer",
-				sourceWallet.getUser().getId());
-		Category categoryIncoming = categories2.isEmpty() ? null : categories2.get(0);
+		Category categoryOutgoing = categoryRepository
+				.findByNameAndUserId("Outgoing Transfer", sourceWallet.getUser().getId())
+				.stream().findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Outgoing Transfer category not found"));
+
+		Category categoryIncoming = categoryRepository
+				.findByNameAndUserId("Incoming Transfer", destinationWallet.getUser().getId())
+				.stream().findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Incoming Transfer category not found"));
 		// Create outgoing transaction from the source wallet
 		Transaction outgoingTransaction = new Transaction();
 		outgoingTransaction.setTransactionDate(LocalDate.now());
