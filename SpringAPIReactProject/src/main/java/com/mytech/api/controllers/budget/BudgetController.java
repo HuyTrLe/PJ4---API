@@ -136,4 +136,16 @@ public class BudgetController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(validBudgetDTOs);
     }
+    
+    @PostMapping("/getBudgetPast")
+    public ResponseEntity<List<BudgetResponse>> getBudgetPast(@RequestBody @Valid ParamBudget paramPudget, BindingResult result) {
+        List<BudgetResponse> budgets = budgetService.getBudgetPast(paramPudget);
+        return ResponseEntity.ok(budgets);
+    }
+    
+    @PostMapping("/getBudgetFuture")  
+    public ResponseEntity<List<BudgetResponse>> getBudgetFuture(@RequestBody @Valid ParamBudget paramPudget, BindingResult result) {
+        List<BudgetResponse> budgets = budgetService.getBudgetFuture(paramPudget);
+        return ResponseEntity.ok(budgets);
+    }
 }

@@ -21,6 +21,7 @@ import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.saving_goals.EndDateType;
 import com.mytech.api.models.saving_goals.SavingGoal;
+import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
@@ -29,12 +30,14 @@ import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionSavingGoalsView;
 import com.mytech.api.models.transaction.TransactionView;
 import com.mytech.api.models.user.User;
+import com.mytech.api.models.wallet.Transfer;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CategoryRepository;
 import com.mytech.api.repositories.expense.ExpenseRepository;
 import com.mytech.api.repositories.income.IncomeRepository;
 import com.mytech.api.repositories.saving_goals.Saving_goalsRepository;
 import com.mytech.api.repositories.transaction.TransactionRepository;
+import com.mytech.api.repositories.wallet.TransferRepository;
 import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.budget.BudgetService;
 import com.mytech.api.services.category.CategoryService;
@@ -58,12 +61,13 @@ public class TransactionServiceImpl implements TransactionService {
 	private final SavingGoalsService savingGoalsService;
 	private final CategoryService categoryService;
 	private final UserRepository userRepository;
+	private final TransferRepository transferRepository;
 
 	public TransactionServiceImpl(TransactionRepository transactionRepository, BudgetService budgetService,
 			WalletService walletService, ModelMapper modelMapper, CategoryRepository categoryRepository,
 			WalletRepository walletRepository, IncomeRepository incomeRepository, ExpenseRepository expenseRepository,
 			Saving_goalsRepository saving_goalsRepository, CategoryService categoryService,
-			UserRepository userRepository, SavingGoalsService savingGoalsService) {
+			UserRepository userRepository, TransferRepository transferRepository, SavingGoalsService savingGoalsService) {
 		this.transactionRepository = transactionRepository;
 		this.budgetService = budgetService;
 		this.walletService = walletService;
@@ -75,6 +79,7 @@ public class TransactionServiceImpl implements TransactionService {
 		this.saving_goalsRepository = saving_goalsRepository;
 		this.categoryService = categoryService;
 		this.userRepository = userRepository;
+		this.transferRepository = transferRepository;
 		this.savingGoalsService = savingGoalsService;
 	}
 
@@ -294,6 +299,22 @@ public class TransactionServiceImpl implements TransactionService {
 		LocalDate transactionDate = transaction.getTransactionDate();
 		boolean isDeletion = true;
 
+		Transfer transfer = transaction.getTransfer();
+		if (transfer != null) {
+			// Delete all linked transactions if it's part of a transfer
+			List<Transaction> linkedTransactions = transfer.getTransactions();
+			linkedTransactions.forEach(linkedTransaction -> {
+				updateWalletBalanceOnDeletion(linkedTransaction);
+				transactionRepository.delete(linkedTransaction);
+			});
+			// Delete the transfer itself
+			transferRepository.delete(transfer);
+		} else {
+			// Update and delete a single transaction if no transfer is linked
+			updateWalletBalanceOnDeletion(transaction);
+			transactionRepository.delete(transaction);
+		}
+
 		budgetService.adjustBudgetForTransaction(transaction, isDeletion, transactionAmount, transactionDate);
 
 		if (transaction.getWallet().getWalletType() == 3) {
@@ -301,6 +322,44 @@ public class TransactionServiceImpl implements TransactionService {
 		}
 
 		transactionRepository.delete(transaction);
+	}
+
+	private void updateWalletBalanceOnDeletion(Transaction transaction) {
+		Wallet wallet = transaction.getWallet();
+		BigDecimal newBalance = calculateDeleteTransWalletBalance(
+				wallet.getBalance(),
+				"INCOME".equalsIgnoreCase(transaction.getCategory().getType().toString()) ? transaction.getAmount()
+						: BigDecimal.ZERO,
+				"EXPENSE".equalsIgnoreCase(transaction.getCategory().getType().toString()) ? transaction.getAmount()
+						: BigDecimal.ZERO);
+
+		wallet.setBalance(newBalance);
+		walletRepository.save(wallet);
+	}
+
+	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal incomeAmount,
+			BigDecimal expenseAmount) {
+		return currentBalance.add(expenseAmount).subtract(incomeAmount);
+	}
+
+	private void adjustGoalsAndDeleteTransaction(Transaction transaction) {
+		// Check if the transaction is associated with a saving goal
+		if (transaction.getSavingGoal() != null) {
+			// Retrieve the saving goal associated with the transaction
+			SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
+					.orElseThrow(() -> new EntityNotFoundException(
+							"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
+			BigDecimal transactionAmount = transaction.getAmount();
+			Category existingCategory = transaction.getCategory();
+			if (existingCategory.getType() == CateTypeENum.INCOME) {
+				// Reverse the income effect: subtract from wallet and goal
+				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
+			} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
+				// Reverse the expense effect: add back to wallet and goal
+				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
+			}
+			saving_goalsRepository.save(selectedSavingGoal);
+		}
 	}
 
 	@Override
@@ -551,30 +610,16 @@ public class TransactionServiceImpl implements TransactionService {
 		return transactions;
 	}
 
-	private void adjustGoalsAndDeleteTransaction(Transaction transaction) {
-		// Check if the transaction is associated with a saving goal
-		if (transaction.getSavingGoal() != null) {
-			// Retrieve the saving goal associated with the transaction
-			SavingGoal selectedSavingGoal = saving_goalsRepository.findById(transaction.getSavingGoal().getId())
-					.orElseThrow(() -> new EntityNotFoundException(
-							"Saving goal not found with id: " + transaction.getSavingGoal().getId()));
-			BigDecimal transactionAmount = transaction.getAmount();
-			Category existingCategory = transaction.getCategory();
-			if (existingCategory.getType() == CateTypeENum.INCOME) {
-				// Reverse the income effect: subtract from wallet and goal
-				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionAmount));
-			} else if (existingCategory.getType() == CateTypeENum.EXPENSE) {
-				// Reverse the expense effect: add back to wallet and goal
-				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionAmount));
-			}
-			saving_goalsRepository.save(selectedSavingGoal);
-		}
-	}
-
 	@Override
 	public List<TransactionData> getTransactionWithBudget(ParamBudget param) {
 		return transactionRepository.getTransactionWithBudget(param.getUserId(), param.getCategoryId(),
 				param.getFromDate(), param.getToDate());
+	}
+
+	@Override
+	public List<TransactionData> getTransactionWithSaving(TransactionWithSaving param) {
+
+		return transactionRepository.getTransactionWithSaving(param.getUserId(), param.getGoalId());
 	}
 
 }

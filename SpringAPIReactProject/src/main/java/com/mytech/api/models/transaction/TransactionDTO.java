@@ -32,6 +32,8 @@ public class TransactionDTO {
 
     private Long savingGoalId;
 
+    private Long transferId;
+
     public TransactionDTO(Integer transactionId, Long userId, int walletId, BigDecimal amount,
             LocalDate transactionDate, long categoryId, String notes) {
         this.transactionId = transactionId;

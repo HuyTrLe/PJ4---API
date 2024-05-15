@@ -303,4 +303,14 @@ public class BudgetServiceImpl implements BudgetService {
 	    LocalDate today = LocalDate.now();
 	    return budgetRepository.findByUserIdAndPeriodStartGreaterThan(userId, today);
 	}
+
+	@Override
+	public List<BudgetResponse> getBudgetPast(ParamBudget param) {
+		return budgetRepository.getBudgetPast(param.getUserId(), param.getFromDate());
+	}
+
+	@Override
+	public List<BudgetResponse> getBudgetFuture(ParamBudget param) {
+		return budgetRepository.getBudgetFuture(param.getUserId(), param.getFromDate());
+	}
 }

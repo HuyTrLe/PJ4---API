@@ -12,6 +12,7 @@ import com.mytech.api.models.category.Category;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.transaction.Transaction;
+import com.mytech.api.models.wallet.Transfer;
 import com.mytech.api.models.wallet.TransferRequest;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.models.wallet.WalletDTO;
@@ -20,6 +21,7 @@ import com.mytech.api.repositories.expense.ExpenseRepository;
 import com.mytech.api.repositories.income.IncomeRepository;
 import com.mytech.api.repositories.saving_goals.Saving_goalsRepository;
 import com.mytech.api.repositories.transaction.TransactionRepository;
+import com.mytech.api.repositories.wallet.TransferRepository;
 import com.mytech.api.repositories.wallet.WalletRepository;
 
 @Service
@@ -32,11 +34,13 @@ public class WalletServiceImpl implements WalletService {
 	private final ExpenseRepository expenseRepository;
 	private final Saving_goalsRepository saving_goalsRepository;
 	private final ModelMapper modelMapper;
+	private final TransferRepository transferRepository;
 
 	public WalletServiceImpl(WalletRepository walletRepository, UserRepository userRepository,
 			TransactionRepository transactionRepository, CategoryRepository categoryRepository,
 			IncomeRepository incomeRepository, ExpenseRepository expenseRepository,
-			Saving_goalsRepository saving_goalsRepository, ModelMapper modelMapper) {
+			Saving_goalsRepository saving_goalsRepository, ModelMapper modelMapper,
+			TransferRepository transferRepository) {
 		this.walletRepository = walletRepository;
 		this.transactionRepository = transactionRepository;
 		this.categoryRepository = categoryRepository;
@@ -44,6 +48,7 @@ public class WalletServiceImpl implements WalletService {
 		this.expenseRepository = expenseRepository;
 		this.saving_goalsRepository = saving_goalsRepository;
 		this.modelMapper = modelMapper;
+		this.transferRepository = transferRepository;
 	}
 
 	@Override
@@ -203,6 +208,16 @@ public class WalletServiceImpl implements WalletService {
 			throw new IllegalArgumentException("Transfer is only allowed from USD wallet to VND wallet");
 		}
 
+		Transfer transfer = new Transfer();
+		transfer.setUser(sourceWallet.getUser());
+		transfer.setSourceWallet(walletRepository.findById(transferRequest.getSourceWalletId()).orElseThrow());
+		transfer.setDestinationWallet(
+				walletRepository.findById(transferRequest.getDestinationWalletId()).orElseThrow());
+		transfer.setAmount(transferRequest.getAmount());
+		transfer.setExchangeRate(transferRequest.getExchangeRate());
+		transfer.setTransferDate(LocalDate.now());
+		transfer = transferRepository.save(transfer);
+
 		// Calculate the corresponding amount in VND
 		BigDecimal amountInVND = transferRequest.getAmount().multiply(transferRequest.getExchangeRate());
 
@@ -228,6 +243,7 @@ public class WalletServiceImpl implements WalletService {
 		outgoingTransaction.setCategory(categoryOutgoing);
 		outgoingTransaction.setUser(sourceWallet.getUser());
 		outgoingTransaction.setNotes("Transfer Money");
+		outgoingTransaction.setTransfer(transfer);
 		outgoingTransaction = transactionRepository.save(outgoingTransaction);
 
 		// Create incoming transaction to the destination wallet
@@ -237,6 +253,7 @@ public class WalletServiceImpl implements WalletService {
 		incomingTransaction.setWallet(destinationWallet);
 		incomingTransaction.setCategory(categoryIncoming);
 		incomingTransaction.setUser(destinationWallet.getUser());
+		incomingTransaction.setTransfer(transfer);
 		incomingTransaction.setNotes("Transfer Money");
 
 		if (destinationWallet.getWalletType() != 3) {

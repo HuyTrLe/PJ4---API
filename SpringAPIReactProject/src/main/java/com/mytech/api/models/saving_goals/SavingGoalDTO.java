@@ -4,7 +4,6 @@ package com.mytech.api.models.saving_goals;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +26,7 @@ public class SavingGoalDTO {
 
 	@NotNull(message = "Current Amount cannot be null")
 	private BigDecimal currentAmount;
-	@FutureOrPresent(message = "Start date must be in future or present")
+	// @FutureOrPresent(message = "Start date must be in future or present")
 	private LocalDate startDate;
 	private LocalDate endDate;
 	private EndDateType endDateType;

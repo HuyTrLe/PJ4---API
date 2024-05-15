@@ -20,8 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.debt.DebtDTO;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
+import com.mytech.api.models.saving_goals.TransactionWithSaving;
+import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.services.saving_goals.SavingGoalsService;
 
 import jakarta.validation.Valid;
@@ -114,4 +117,40 @@ public class Saving_goalsController {
         SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);
         return ResponseEntity.ok(updatedSavingGoal);
     }
+    
+    @GetMapping("findWorkingByUserId/user/{userId}")
+    public ResponseEntity<List<SavingGoalDTO>> findWorkingByUserId(@PathVariable Long userId) {
+        List<SavingGoal> savingGoals = savingGoalsService.findWorkingByUserId(userId);
+        if (savingGoals.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        List<SavingGoalDTO> savingDTOs = savingGoals.stream()
+                .map(saving -> modelMapper.map(saving, SavingGoalDTO.class))
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(savingDTOs, HttpStatus.OK);
+    }
+    
+    @GetMapping("findFinishedByUserId/user/{userId}")
+    public ResponseEntity<List<SavingGoalDTO>> findFinishedByUserId(@PathVariable Long userId) {
+        List<SavingGoal> savingGoals = savingGoalsService.findFinishedByUserId(userId);
+        if (savingGoals.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        List<SavingGoalDTO> savingDTOs = savingGoals.stream()
+                .map(saving -> modelMapper.map(saving, SavingGoalDTO.class))
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(savingDTOs, HttpStatus.OK);
+    }
+    
+    @PostMapping("/getSavingWithSavingID")
+	public ResponseEntity<?> GetSavingWithSavingID(@RequestBody @Valid TransactionWithSaving param) {
+		List<SavingGoal> savingData = savingGoalsService.getSavingWithSavingID(param);
+		if (savingData != null && !savingData.isEmpty()) {
+			 List<SavingGoalDTO> savingDTOs = savingData.stream()
+		                .map(saving -> modelMapper.map(saving, SavingGoalDTO.class))
+		                .collect(Collectors.toList());
+			return ResponseEntity.ok(savingDTOs);
+		}
+		return ResponseEntity.notFound().build();
+	}
 }

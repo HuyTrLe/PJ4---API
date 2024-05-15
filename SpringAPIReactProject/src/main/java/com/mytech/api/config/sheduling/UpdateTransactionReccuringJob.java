@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
 
+import com.mytech.api.auth.email.EmailNotification;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
 import com.mytech.api.models.recurrence.MonthOption;
@@ -30,6 +31,9 @@ import jakarta.transaction.Transactional;
 public class UpdateTransactionReccuringJob extends QuartzJobBean {
 
     private static final Logger logger = LoggerFactory.getLogger(UpdateTransactionReccuringJob.class);
+
+    @Autowired
+    private EmailNotification emailService;
 
     @Autowired
     private RecurrenceRepository recurrenceRepository;
@@ -106,6 +110,8 @@ public class UpdateTransactionReccuringJob extends QuartzJobBean {
                             break;
                     }
                     transactionService.saveTransaction(transaction);
+                    String emailContent = buildEmailContent(transaction);
+                    emailService.send(transactionRecurring.getUser().getEmail(), emailContent);
                     logger.info("Updated bill ID: {} with new due date: {}",
                             transactionRecurring.getTransactionRecurringId(),
                             nextDueDate);
@@ -162,6 +168,16 @@ public class UpdateTransactionReccuringJob extends QuartzJobBean {
         }
 
         return dayOfWeekInMonth;
+    }
+
+    private String buildEmailContent(Transaction transaction) {
+        return "Dear " + transaction.getUser().getUsername() + ",\n\n" +
+                "Your payment for the bill '" + transaction.getCategory().getName()
+                + "' has been processed successfully. " +
+                "Amount: " + transaction.getAmount() + "\n" +
+                "Date: " + transaction.getTransactionDate() + "\n\n" +
+                "Thank you for using our services!\n" +
+                "MyTech Support Team";
     }
 
 }

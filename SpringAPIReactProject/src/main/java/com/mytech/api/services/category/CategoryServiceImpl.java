@@ -16,11 +16,8 @@ import com.mytech.api.models.category.Cat_IconDTO;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.category.CategoryDTO;
-
 import com.mytech.api.models.category.CategoryResponse;
-
 import com.mytech.api.models.transaction.Transaction;
-
 import com.mytech.api.models.user.User;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CateIconRepository;
@@ -200,16 +197,11 @@ public class CategoryServiceImpl implements CategoryService {
 			Category existingCategory = categoryRepository.findById(categoryId)
 					.orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
-			// Check if the categoryType is being updated
-			if (!existingCategory.getType().equals(updateCategoryDTO.getType())) {
-				throw new IllegalArgumentException("Cannot update category type");
+			if (!existingCategory.getName().equals(updateCategoryDTO.getName())) {
+				if (categoryRepository.existsByNameAndIdNot(updateCategoryDTO.getName(), categoryId)) {
+					throw new IllegalArgumentException("Category name already exists");
+				}
 			}
-
-			if (categoryRepository.existsByNameAndIdNot(updateCategoryDTO.getName(), categoryId)) {
-				throw new IllegalArgumentException("Category name already exists");
-			}
-
-			// Copy the fields that can be updated
 			existingCategory.setName(updateCategoryDTO.getName());
 
 			User user = userRepository.findById(updateCategoryDTO.getUserId())
@@ -217,9 +209,9 @@ public class CategoryServiceImpl implements CategoryService {
 			Cat_Icon catIcon = catIconRepository.findById(updateCategoryDTO.getIcon().getId())
 					.orElseThrow(() -> new IllegalArgumentException("Icon not found"));
 
+			existingCategory.setType(updateCategoryDTO.getType());
 			existingCategory.setUser(user);
 			existingCategory.setIcon(catIcon);
-
 			Category updatedCategory = categoryRepository.save(existingCategory);
 
 			return modelMapper.map(updatedCategory, CategoryDTO.class);

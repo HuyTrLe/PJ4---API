@@ -23,6 +23,8 @@ import com.mytech.api.models.notifications.NotificationType;
 import com.mytech.api.models.saving_goals.EndDateType;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
+import com.mytech.api.models.saving_goals.SavingParam;
+import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.wallet.Wallet;
 import com.mytech.api.repositories.categories.CategoryRepository;
@@ -287,6 +289,36 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
     public List<SavingGoal> getSavingGoalsByWalletId(int userId, Integer walletId) {
         return savingGoalsRepository.findByUserIdAndWallet_WalletId(userId, walletId);
     }
+
+	@Override
+	public List<SavingGoal> findFinishedByUserId(Long userId) {
+		return savingGoalsRepository.findFinishedByUserId(userId);
+	}
+
+	@Override
+	public List<SavingGoal> findWorkingByUserId(Long userId) {
+		return savingGoalsRepository.findWorkingByUserId(userId);
+	}
+
+	@Override
+	public List<SavingGoal> getSavingWithSavingID(TransactionWithSaving param) {
+		return savingGoalsRepository.getSavingWithSavingID(param.getUserId(),param.getGoalId());
+	}
+
+	@Override
+	public List<SavingGoal> findFinishedByUserId(Long userId) {
+		return savingGoalsRepository.findFinishedByUserId(userId);
+	}
+
+	@Override
+	public List<SavingGoal> findWorkingByUserId(Long userId) {
+		return savingGoalsRepository.findWorkingByUserId(userId);
+	}
+
+	@Override
+	public List<SavingGoal> getSavingWithSavingID(TransactionWithSaving param) {
+		return savingGoalsRepository.getSavingWithSavingID(param.getUserId(),param.getGoalId());
+	}
 
     public void checkAndSendSavingGoalNotifications() {
         List<SavingGoal> allSavingGoals = savingGoalsRepository.findAll();

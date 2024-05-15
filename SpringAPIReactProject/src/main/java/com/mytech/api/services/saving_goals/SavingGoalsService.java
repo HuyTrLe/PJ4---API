@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
+import com.mytech.api.models.saving_goals.SavingParam;
+import com.mytech.api.models.saving_goals.TransactionWithSaving;
 
 public interface SavingGoalsService {
 
@@ -22,6 +24,11 @@ public interface SavingGoalsService {
     boolean existsSavingGoalById(Long savingGoalId);
 
     List<SavingGoal> getSavingGoalsByWalletId(int userId, Integer walletId);
+    
+    List<SavingGoal> findFinishedByUserId(Long userId);
+	List<SavingGoal> findWorkingByUserId(Long userId);
+	
+	List<SavingGoal> getSavingWithSavingID(TransactionWithSaving param);
     
     void checkAndSendSavingGoalProgressNotifications(SavingGoal savingGoal);
 }

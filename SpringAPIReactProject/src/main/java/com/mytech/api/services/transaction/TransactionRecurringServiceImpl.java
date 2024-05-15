@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.auth.services.MyUserDetails;
+import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
 import com.mytech.api.models.recurrence.Recurrence;
@@ -176,5 +177,17 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
     public List<TransactionRecurring> findByRecurrence_DueDate(LocalDate dueDate) {
         return transactionRecurringRepository.findByRecurrence_DueDate(dueDate);
     }
+
+	@Override
+	public List<TransactionRecurring> findRecuActive(int userId) {
+		LocalDate currentDate = LocalDate.now();
+		return transactionRecurringRepository.findRecuActive(userId, currentDate);
+	}
+
+	@Override
+	public List<TransactionRecurring> findRecuExpired(int userId) {
+		LocalDate currentDate = LocalDate.now();
+		return transactionRecurringRepository.findRecuExpired(userId, currentDate);
+	}
 
 }

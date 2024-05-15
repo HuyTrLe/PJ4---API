@@ -21,7 +21,6 @@ import com.mytech.api.models.recurrence.MonthOption;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceDTO;
 import com.mytech.api.models.transaction.Transaction;
-import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.repositories.recurrence.RecurrenceRepository;
 import com.mytech.api.services.bill.BillService;
 import com.mytech.api.services.transaction.TransactionRecurringService;
@@ -57,8 +56,6 @@ public class UpdateBillsJob extends QuartzJobBean {
     protected void executeInternal(JobExecutionContext context) {
         LocalDate currentDate = LocalDate.now();
         List<Bill> billsDueToday = billService.findByRecurrence_DueDate(currentDate);
-        List<TransactionRecurring> transactionDueDates = TransactionRecurringService
-                .findByRecurrence_DueDate(currentDate);
 
         for (Bill bill : billsDueToday) {
             Recurrence recurrence = bill.getRecurrence();

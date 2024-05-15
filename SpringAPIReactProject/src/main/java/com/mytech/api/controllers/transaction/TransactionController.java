@@ -1,6 +1,5 @@
 package com.mytech.api.controllers.transaction;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +28,7 @@ import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.InsufficientFundsException;
 import com.mytech.api.models.budget.ParamBudget;
 import com.mytech.api.models.category.CateTypeENum;
+import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.FindTransactionParam;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.transaction.TransactionDTO;
@@ -36,12 +36,14 @@ import com.mytech.api.models.transaction.TransactionData;
 import com.mytech.api.models.transaction.TransactionReport;
 import com.mytech.api.models.transaction.TransactionSavingGoalsView;
 import com.mytech.api.models.transaction.TransactionView;
-import com.mytech.api.models.wallet.Wallet;
+import com.mytech.api.repositories.saving_goals.Saving_goalsRepository;
+import com.mytech.api.repositories.transaction.TransactionRepository;
 import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.category.CategoryService;
 import com.mytech.api.services.recurrence.RecurrenceService;
 import com.mytech.api.services.transaction.TransactionService;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 @RestController
@@ -53,6 +55,10 @@ public class TransactionController {
 	CategoryService categoryService;
 	@Autowired
 	UserRepository userRepository;
+	@Autowired
+	TransactionRepository transactionRepository;
+	@Autowired
+	Saving_goalsRepository savingGoalsRepository;
 	@Autowired
 	WalletRepository walletRepository;
 	@Autowired
@@ -259,40 +265,28 @@ public class TransactionController {
 	}
 
 	@DeleteMapping("/delete/{transactionId}")
+	@Transactional
 	public ResponseEntity<?> deleteTransaction(@PathVariable Integer transactionId, Authentication authentication) {
-		Transaction transaction = transactionService.getTransactionById(transactionId);
+		try {
+			Transaction transaction = transactionService.getTransactionById(transactionId);
 
-		if (transaction == null) {
-			return ResponseEntity.notFound().build();
+			if (transaction == null) {
+				return ResponseEntity.notFound().build();
+			}
+
+			MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+			if (!transaction.getUser().getId().equals(userDetails.getId())) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN)
+						.body("You are not authorized to delete this transaction.");
+			}
+
+			transactionService.deleteTransaction(transactionId);
+			return ResponseEntity.noContent().build();
+		} catch (Exception ex) {
+			// Log exception details here to diagnose issues
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("An error occurred while deleting the transaction.");
 		}
-
-		MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-		if (!transaction.getUser().getId().equals(userDetails.getId())) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body("You are not authorized to delete this transaction.");
-		}
-
-		Wallet wallet = transaction.getWallet();
-
-		BigDecimal newBalance;
-		if ("INCOME".equalsIgnoreCase(transaction.getCategory().getType().toString())) {
-			newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), transaction.getAmount(),
-					BigDecimal.ZERO);
-		} else {
-			newBalance = calculateDeleteTransWalletBalance(wallet.getBalance(), BigDecimal.ZERO,
-					transaction.getAmount());
-		}
-
-		wallet.setBalance(newBalance);
-		walletRepository.save(wallet);
-
-		transactionService.deleteTransaction(transactionId);
-		return ResponseEntity.noContent().build();
-	}
-
-	private BigDecimal calculateDeleteTransWalletBalance(BigDecimal currentBalance, BigDecimal incomeAmount,
-			BigDecimal expenseAmount) {
-		return currentBalance.subtract(incomeAmount).add(expenseAmount);
 	}
 
 	@GetMapping("/wallets/{walletId}/users/{userId}")
@@ -318,6 +312,15 @@ public class TransactionController {
 	@PostMapping("/getTransactionWithBudget")
 	public ResponseEntity<?> getTransactionWithBudget(@RequestBody @Valid ParamBudget paramBudget) {
 		List<TransactionData> transactions = transactionService.getTransactionWithBudget(paramBudget);
+		if (transactions != null && !transactions.isEmpty()) {
+			return ResponseEntity.ok(transactions);
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	@PostMapping("/getTransactionWithSaving")
+	public ResponseEntity<?> getTransactionWithSaving(@RequestBody @Valid TransactionWithSaving param) {
+		List<TransactionData> transactions = transactionService.getTransactionWithSaving(param);
 		if (transactions != null && !transactions.isEmpty()) {
 			return ResponseEntity.ok(transactions);
 		}
