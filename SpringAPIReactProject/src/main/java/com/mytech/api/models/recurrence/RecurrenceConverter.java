@@ -68,6 +68,9 @@ public class RecurrenceConverter {
             case TIMES:
                 recurrence.setEndType(EndType.TIMES);
                 recurrence.setTimes(recurrenceRequestDTO.getTimes());
+                if (recurrenceRequestDTO.getTimes() <= 0) {
+                    throw new IllegalArgumentException("Times must be at least 1.");
+                }
                 break;
         }
         LocalDate dueDate = calculateDueDate(recurrenceRequestDTO);
