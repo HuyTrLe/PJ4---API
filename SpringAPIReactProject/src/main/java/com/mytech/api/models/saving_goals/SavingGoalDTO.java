@@ -4,7 +4,7 @@ package com.mytech.api.models.saving_goals;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -20,7 +20,7 @@ public class SavingGoalDTO {
 	@NotBlank(message = "Name cannot be blank")
 	private String name;
 
-	@Min(value = 0, message = "Target amount must be greater than or equal to 0")
+	@DecimalMin(value = "0.01", message = "Target amount must be greater than 0")
 	@NotNull(message = "Target Amount cannot be null")
 	private BigDecimal targetAmount;
 
