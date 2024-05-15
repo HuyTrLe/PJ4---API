@@ -228,6 +228,9 @@ public class TransactionServiceImpl implements TransactionService {
 		walletRepository.save(wallet);
 
 		Transaction createdTransaction = transactionRepository.save(transaction);
+		budgetService.adjustBudgetForTransaction(createdTransaction, false, BigDecimal.ZERO,
+	            createdTransaction.getTransactionDate());
+		
 		if (createdTransaction.getSavingGoal() != null) {
 	        savingGoalsService.checkAndSendSavingGoalProgressNotifications(createdTransaction.getSavingGoal());
 	    }
