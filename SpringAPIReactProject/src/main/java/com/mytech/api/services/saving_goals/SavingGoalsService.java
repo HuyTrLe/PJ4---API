@@ -22,4 +22,6 @@ public interface SavingGoalsService {
     boolean existsSavingGoalById(Long savingGoalId);
 
     List<SavingGoal> getSavingGoalsByWalletId(int userId, Integer walletId);
+    
+    void checkAndSendSavingGoalProgressNotifications(SavingGoal savingGoal);
 }

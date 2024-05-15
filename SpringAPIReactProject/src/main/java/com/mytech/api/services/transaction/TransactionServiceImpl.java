@@ -38,6 +38,7 @@ import com.mytech.api.repositories.transaction.TransactionRepository;
 import com.mytech.api.repositories.wallet.WalletRepository;
 import com.mytech.api.services.budget.BudgetService;
 import com.mytech.api.services.category.CategoryService;
+import com.mytech.api.services.saving_goals.SavingGoalsService;
 import com.mytech.api.services.wallet.WalletService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -54,6 +55,7 @@ public class TransactionServiceImpl implements TransactionService {
 	private final IncomeRepository incomeRepository;
 	private final ExpenseRepository expenseRepository;
 	private final Saving_goalsRepository saving_goalsRepository;
+	private final SavingGoalsService savingGoalsService;
 	private final CategoryService categoryService;
 	private final UserRepository userRepository;
 
@@ -61,7 +63,7 @@ public class TransactionServiceImpl implements TransactionService {
 			WalletService walletService, ModelMapper modelMapper, CategoryRepository categoryRepository,
 			WalletRepository walletRepository, IncomeRepository incomeRepository, ExpenseRepository expenseRepository,
 			Saving_goalsRepository saving_goalsRepository, CategoryService categoryService,
-			UserRepository userRepository) {
+			UserRepository userRepository, SavingGoalsService savingGoalsService) {
 		this.transactionRepository = transactionRepository;
 		this.budgetService = budgetService;
 		this.walletService = walletService;
@@ -73,6 +75,7 @@ public class TransactionServiceImpl implements TransactionService {
 		this.saving_goalsRepository = saving_goalsRepository;
 		this.categoryService = categoryService;
 		this.userRepository = userRepository;
+		this.savingGoalsService = savingGoalsService;
 	}
 
 	private void revertWalletBalanceIfNeeded(Transaction oldTransaction) {
@@ -220,6 +223,9 @@ public class TransactionServiceImpl implements TransactionService {
 		walletRepository.save(wallet);
 
 		Transaction createdTransaction = transactionRepository.save(transaction);
+		if (createdTransaction.getSavingGoal() != null) {
+	        savingGoalsService.checkAndSendSavingGoalProgressNotifications(createdTransaction.getSavingGoal());
+	    }
 		return modelMapper.map(createdTransaction, TransactionDTO.class);
 	}
 
@@ -473,6 +479,9 @@ public class TransactionServiceImpl implements TransactionService {
 
 		// budgetService.adjustBudgetForTransaction(existingTransaction, false,
 		// oldAmount, oldTransactionDate);
+		if (existingTransaction.getSavingGoal() != null) {
+	        savingGoalsService.checkAndSendSavingGoalProgressNotifications(existingTransaction.getSavingGoal());
+	    }
 		System.out.println("transactiondto amount: " + transactionDTO.getAmount());
 
 		return modelMapper.map(existingTransaction, TransactionDTO.class);

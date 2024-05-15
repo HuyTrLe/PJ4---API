@@ -2,6 +2,8 @@ package com.mytech.api.services.saving_goals;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,8 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.debt.Debt;
 import com.mytech.api.models.expense.Expense;
 import com.mytech.api.models.income.Income;
+import com.mytech.api.models.notifications.NotificationDTO;
+import com.mytech.api.models.notifications.NotificationType;
 import com.mytech.api.models.saving_goals.EndDateType;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
@@ -262,6 +267,9 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         }
         savingGoalsRepository.save(existingSavingGoal);
         walletRepository.save(wallet);
+        
+        checkAndSendSavingGoalProgressNotifications(existingSavingGoal);
+        
         return modelMapper.map(existingSavingGoal, SavingGoalDTO.class);
     }
 
@@ -280,4 +288,62 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         return savingGoalsRepository.findByUserIdAndWallet_WalletId(userId, walletId);
     }
 
+    public void checkAndSendSavingGoalNotifications() {
+        List<SavingGoal> allSavingGoals = savingGoalsRepository.findAll();
+        for (SavingGoal savingGoal : allSavingGoals) {
+            checkAndSendSavingGoalNotificationsDue(savingGoal);
+        }
+    }
+
+    private void checkAndSendSavingGoalNotificationsDue(SavingGoal savingGoal) {
+        LocalDate today = LocalDate.now();
+
+        // Check if the end date is approaching and send notification
+        if (savingGoal.getEndDate() != null && ChronoUnit.DAYS.between(today, savingGoal.getEndDate()) <= 3) {
+            sendNotification(savingGoal, NotificationType.SAVING_GOAL_DUE, 
+                "Your saving goal '" + savingGoal.getName() + "' is due in 3 days or less.");
+        }
+
+        
+    }
+    
+    public void checkAndSendSavingGoalProgressNotifications(SavingGoal savingGoal) {
+        BigDecimal targetAmount = savingGoal.getTargetAmount();
+        BigDecimal currentAmount = savingGoal.getCurrentAmount();
+        BigDecimal ninetyPercentOfTarget = targetAmount.multiply(new BigDecimal("0.9"));
+        
+        if (currentAmount.compareTo(ninetyPercentOfTarget) >= 0 && currentAmount.compareTo(targetAmount) < 0) {
+            // Reached 90% but not yet 100%
+            sendNotification(
+                savingGoal,
+                NotificationType.SAVING_GOAL_LIMIT,
+                "You've reached 90% of your saving goal '" + savingGoal.getName() + "'. You're almost there!"
+            );
+        } else if (currentAmount.compareTo(targetAmount) == 0) {
+            // Exactly 100%
+            sendNotification(
+                savingGoal,
+                NotificationType.SAVING_GOAL_DUE,
+                "Congratulations! You've exactly met your saving goal '" + savingGoal.getName() + "'."
+            );
+        } else if (currentAmount.compareTo(targetAmount) > 0) {
+            // More than 100%
+            sendNotification(
+                savingGoal,
+                NotificationType.SAVING_GOAL_LIMIT,
+                "Great job! You've exceeded your saving goal '" + savingGoal.getName() + "'."
+            );
+        }
+    }
+    
+    private void sendNotification(SavingGoal savingGoal, NotificationType notificationType, String message) {
+	    NotificationDTO notificationDTO = new NotificationDTO();
+	    notificationDTO.setUserId(savingGoal.getUser().getId());
+	    notificationDTO.setNotificationType(notificationType);
+	    notificationDTO.setEventId(savingGoal.getId());
+	    notificationDTO.setMessage(message);
+	    notificationDTO.setTimestamp(LocalDateTime.now());
+	    
+	    notificationService.sendNotification(notificationDTO);
+	}
 }
