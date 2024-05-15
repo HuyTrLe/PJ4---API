@@ -67,7 +67,8 @@ public class TransactionServiceImpl implements TransactionService {
 			WalletService walletService, ModelMapper modelMapper, CategoryRepository categoryRepository,
 			WalletRepository walletRepository, IncomeRepository incomeRepository, ExpenseRepository expenseRepository,
 			Saving_goalsRepository saving_goalsRepository, CategoryService categoryService,
-			UserRepository userRepository, TransferRepository transferRepository, SavingGoalsService savingGoalsService) {
+			UserRepository userRepository, TransferRepository transferRepository,
+			SavingGoalsService savingGoalsService) {
 		this.transactionRepository = transactionRepository;
 		this.budgetService = budgetService;
 		this.walletService = walletService;
@@ -229,11 +230,11 @@ public class TransactionServiceImpl implements TransactionService {
 
 		Transaction createdTransaction = transactionRepository.save(transaction);
 		budgetService.adjustBudgetForTransaction(createdTransaction, false, BigDecimal.ZERO,
-	            createdTransaction.getTransactionDate());
-		
+				createdTransaction.getTransactionDate());
+
 		if (createdTransaction.getSavingGoal() != null) {
-	        savingGoalsService.checkAndSendSavingGoalProgressNotifications(createdTransaction.getSavingGoal());
-	    }
+			savingGoalsService.checkAndSendSavingGoalProgressNotifications(createdTransaction.getSavingGoal());
+		}
 		return modelMapper.map(createdTransaction, TransactionDTO.class);
 	}
 
@@ -454,26 +455,33 @@ public class TransactionServiceImpl implements TransactionService {
 		existingTransaction.setAmount(transactionDTO.getAmount());
 
 		Long savingGoalId = transactionDTO.getSavingGoalId();
+
+		// Check if the transaction affects a saving goal
 		if (savingGoalId != null && savingGoalId != 0) {
-			List<SavingGoal> goals = saving_goalsRepository.findByWallet_WalletId(transactionDTO.getWalletId());
+			SavingGoal selectedSavingGoal = saving_goalsRepository.findById(savingGoalId)
+					.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
 			LocalDate transactionDate = transactionDTO.getTransactionDate();
 
-			if (transactionDate == null) {
-				throw new IllegalArgumentException("Transaction date cannot be null");
-			}
-
-			SavingGoal selectedSavingGoal = goals.stream()
-					.filter(g -> g.getId().equals(savingGoalId))
-					.findFirst()
-					.orElseThrow(() -> new RuntimeException("Invalid saving goal ID: " + savingGoalId));
-
-			if (transactionDate.isBefore(selectedSavingGoal.getStartDate()) ||
-					(selectedSavingGoal.getEndDate() != null
-							&& transactionDate.isAfter(selectedSavingGoal.getEndDate()))) {
+			if (selectedSavingGoal.getEndDate() != null && transactionDate.isAfter(selectedSavingGoal.getEndDate())) {
 				throw new IllegalArgumentException("Transaction date must be within the saving goal's duration");
 			}
-			selectedSavingGoal.setCurrentAmount(walletBalance);
-			existingTransaction.setSavingGoal(selectedSavingGoal);
+
+			// Adjust the current amount of the saving goal based on transaction type
+			if (oldCategory.getType() == CateTypeENum.INCOME) {
+				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(oldAmount));
+			} else if (oldCategory.getType() == CateTypeENum.EXPENSE) {
+				selectedSavingGoal.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(oldAmount));
+			}
+
+			if (newCategory.getType() == CateTypeENum.INCOME) {
+				selectedSavingGoal
+						.setCurrentAmount(selectedSavingGoal.getCurrentAmount().add(transactionDTO.getAmount()));
+			} else if (newCategory.getType() == CateTypeENum.EXPENSE) {
+				selectedSavingGoal
+						.setCurrentAmount(selectedSavingGoal.getCurrentAmount().subtract(transactionDTO.getAmount()));
+			}
+
+			saving_goalsRepository.save(selectedSavingGoal);
 		}
 
 		// Adjust budget only if category or amount has changed
@@ -542,8 +550,8 @@ public class TransactionServiceImpl implements TransactionService {
 		// budgetService.adjustBudgetForTransaction(existingTransaction, false,
 		// oldAmount, oldTransactionDate);
 		if (existingTransaction.getSavingGoal() != null) {
-	        savingGoalsService.checkAndSendSavingGoalProgressNotifications(existingTransaction.getSavingGoal());
-	    }
+			savingGoalsService.checkAndSendSavingGoalProgressNotifications(existingTransaction.getSavingGoal());
+		}
 		System.out.println("transactiondto amount: " + transactionDTO.getAmount());
 
 		return modelMapper.map(existingTransaction, TransactionDTO.class);

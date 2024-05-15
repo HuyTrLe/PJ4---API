@@ -22,7 +22,6 @@ import com.mytech.api.models.notifications.NotificationType;
 import com.mytech.api.models.saving_goals.EndDateType;
 import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
-import com.mytech.api.models.saving_goals.SavingParam;
 import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.Transaction;
 import com.mytech.api.models.wallet.Wallet;
@@ -157,6 +156,32 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
                 income.setCategory(incomeCategory);
                 incomeRepository.save(income);
             }
+        } else {
+            BigDecimal newBalanceExpense = wallet.getBalance().subtract(savingGoal.getCurrentAmount().abs());
+            wallet.setBalance(newBalanceExpense);
+            walletRepository.save(wallet);
+            Transaction expenseTransaction = new Transaction();
+            expenseTransaction.setWallet(wallet);
+            expenseTransaction.setTransactionDate(LocalDate.now());
+            expenseTransaction.setAmount(savingGoal.getCurrentAmount().abs());
+            expenseTransaction.setUser(wallet.getUser());
+            expenseTransaction.setSavingGoal(createdSavingGoal);
+
+            List<Category> expenseCategories = categoryRepository.findByNameAndUserId("Outgoing Transfer",
+                    savingGoalDTO.getUserId());
+            if (!expenseCategories.isEmpty()) {
+                Category expenseCategory = expenseCategories.get(0);
+                expenseTransaction.setCategory(expenseCategory);
+                expenseTransaction = transactionRepository.save(expenseTransaction);
+                Expense expense = new Expense();
+                expense.setAmount(savingGoal.getCurrentAmount().abs());
+                expense.setExpenseDate(LocalDate.now());
+                expense.setUser(wallet.getUser());
+                expense.setTransaction(expenseTransaction);
+                expense.setWallet(wallet);
+                expense.setCategory(expenseCategory);
+                expenseRepository.save(expense);
+            }
         }
 
         return modelMapper.map(createdSavingGoal, SavingGoalDTO.class);
@@ -268,7 +293,7 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         }
         savingGoalsRepository.save(existingSavingGoal);
         walletRepository.save(wallet);
-        
+
         checkAndSendSavingGoalProgressNotifications(existingSavingGoal);
         return modelMapper.map(existingSavingGoal, SavingGoalDTO.class);
     }
@@ -288,20 +313,20 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         return savingGoalsRepository.findByUserIdAndWallet_WalletId(userId, walletId);
     }
 
-	@Override
-	public List<SavingGoal> findFinishedByUserId(Long userId) {
-		return savingGoalsRepository.findFinishedByUserId(userId);
-	}
+    @Override
+    public List<SavingGoal> findFinishedByUserId(Long userId) {
+        return savingGoalsRepository.findFinishedByUserId(userId);
+    }
 
-	@Override
-	public List<SavingGoal> findWorkingByUserId(Long userId) {
-		return savingGoalsRepository.findWorkingByUserId(userId);
-	}
+    @Override
+    public List<SavingGoal> findWorkingByUserId(Long userId) {
+        return savingGoalsRepository.findWorkingByUserId(userId);
+    }
 
-	@Override
-	public List<SavingGoal> getSavingWithSavingID(TransactionWithSaving param) {
-		return savingGoalsRepository.getSavingWithSavingID(param.getUserId(),param.getGoalId());
-	}
+    @Override
+    public List<SavingGoal> getSavingWithSavingID(TransactionWithSaving param) {
+        return savingGoalsRepository.getSavingWithSavingID(param.getUserId(), param.getGoalId());
+    }
 
     public void checkAndSendSavingGoalNotifications() {
         List<SavingGoal> allSavingGoals = savingGoalsRepository.findAll();
@@ -315,51 +340,47 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
 
         // Check if the end date is approaching and send notification
         if (savingGoal.getEndDate() != null && ChronoUnit.DAYS.between(today, savingGoal.getEndDate()) <= 3) {
-            sendNotification(savingGoal, NotificationType.SAVING_GOAL_DUE, 
-                "Your saving goal '" + savingGoal.getName() + "' is due in 3 days or less.");
+            sendNotification(savingGoal, NotificationType.SAVING_GOAL_DUE,
+                    "Your saving goal '" + savingGoal.getName() + "' is due in 3 days or less.");
         }
 
-        
     }
-    
+
     public void checkAndSendSavingGoalProgressNotifications(SavingGoal savingGoal) {
         BigDecimal targetAmount = savingGoal.getTargetAmount();
         BigDecimal currentAmount = savingGoal.getCurrentAmount();
         BigDecimal ninetyPercentOfTarget = targetAmount.multiply(new BigDecimal("0.9"));
-        
+
         if (currentAmount.compareTo(ninetyPercentOfTarget) >= 0 && currentAmount.compareTo(targetAmount) < 0) {
             // Reached 90% but not yet 100%
             sendNotification(
-                savingGoal,
-                NotificationType.SAVING_GOAL_LIMIT,
-                "You've reached 90% of your saving goal '" + savingGoal.getName() + "'. You're almost there!"
-            );
+                    savingGoal,
+                    NotificationType.SAVING_GOAL_LIMIT,
+                    "You've reached 90% of your saving goal '" + savingGoal.getName() + "'. You're almost there!");
         } else if (currentAmount.compareTo(targetAmount) == 0) {
             // Exactly 100%
             sendNotification(
-                savingGoal,
-                NotificationType.SAVING_GOAL_DUE,
-                "Congratulations! You've exactly met your saving goal '" + savingGoal.getName() + "'."
-            );
+                    savingGoal,
+                    NotificationType.SAVING_GOAL_DUE,
+                    "Congratulations! You've exactly met your saving goal '" + savingGoal.getName() + "'.");
         } else if (currentAmount.compareTo(targetAmount) > 0) {
             // More than 100%
             sendNotification(
-                savingGoal,
-                NotificationType.SAVING_GOAL_LIMIT,
-                "Great job! You've exceeded your saving goal '" + savingGoal.getName() + "'."
-            );
+                    savingGoal,
+                    NotificationType.SAVING_GOAL_LIMIT,
+                    "Great job! You've exceeded your saving goal '" + savingGoal.getName() + "'.");
         }
     }
-    
+
     private void sendNotification(SavingGoal savingGoal, NotificationType notificationType, String message) {
-	    NotificationDTO notificationDTO = new NotificationDTO();
-	    notificationDTO.setUserId(savingGoal.getUser().getId());
-	    notificationDTO.setNotificationType(notificationType);
-	    notificationDTO.setEventId(savingGoal.getId());
-	    notificationDTO.setMessage(message);
-	    notificationDTO.setTimestamp(LocalDateTime.now());
-	    
-	    notificationService.sendNotification(notificationDTO);
-	}
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setUserId(savingGoal.getUser().getId());
+        notificationDTO.setNotificationType(notificationType);
+        notificationDTO.setEventId(savingGoal.getId());
+        notificationDTO.setMessage(message);
+        notificationDTO.setTimestamp(LocalDateTime.now());
+
+        notificationService.sendNotification(notificationDTO);
+    }
 
 }
