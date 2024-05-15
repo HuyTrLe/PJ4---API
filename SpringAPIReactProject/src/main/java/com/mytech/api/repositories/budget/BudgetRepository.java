@@ -30,7 +30,7 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
 
 	List<Budget> findByUserIdAndPeriodStartGreaterThan(int userId, LocalDate date);
 
-	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart <= :toDate and t.periodEnd >= :fromDate")
+	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path,t.periodStart,t.periodEnd) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart <= :toDate and t.periodEnd >= :fromDate")
 	List<BudgetResponse> getBudgetWithTime(int userId, LocalDate fromDate, LocalDate toDate);
 
 	Optional<Budget> findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(Long userId,
@@ -47,10 +47,10 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
 			@Param("periodStart") LocalDate periodStart, @Param("periodEnd") LocalDate periodEnd,
 			@Param("budgetId") Integer budgetId);
 	
-	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart < :fromDate ")
+	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path,t.periodStart,t.periodEnd) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodEnd < :fromDate ")
 	List<BudgetResponse> getBudgetPast(int userId, LocalDate fromDate);
 	
-	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart > :fromDate ")
+	@Query("SELECT new com.mytech.api.models.budget.BudgetResponse(t.budgetId,t.amount, t.threshold_amount, c.name, ci.path,t.periodStart,t.periodEnd) FROM Budget t JOIN t.category c JOIN c.icon ci WHERE t.user.id = :userId and t.periodStart > :fromDate ")
 	List<BudgetResponse> getBudgetFuture(int userId, LocalDate fromDate);
 
 }
