@@ -5,6 +5,9 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.repositories.UserRepository;
@@ -78,6 +82,15 @@ public class WalletController {
         List<WalletDTO> walletDTOs = wallets.stream()
                 .map(w -> modelMapper.map(w, WalletDTO.class))
                 .collect(Collectors.toList());
+        return ResponseEntity.ok(walletDTOs);
+    }
+
+    @GetMapping("/page/users/{userId}")
+    public ResponseEntity<Page<WalletDTO>> getPageAllWallets(@PathVariable int userId,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Wallet> wallets = walletService.getPageAllWallets(userId, pageable);
+        Page<WalletDTO> walletDTOs = wallets.map(wallet -> modelMapper.map(wallet, WalletDTO.class));
         return ResponseEntity.ok(walletDTOs);
     }
 

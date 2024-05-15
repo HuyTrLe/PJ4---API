@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -381,6 +383,11 @@ public class SavingGoalsServiceImpl implements SavingGoalsService {
         notificationDTO.setTimestamp(LocalDateTime.now());
 
         notificationService.sendNotification(notificationDTO);
+    }
+
+    @Override
+    public Page<SavingGoal> getPageAllGoals(int userId, Pageable pageable) {
+        return savingGoalsRepository.findByUserId(userId, pageable);
     }
 
 }

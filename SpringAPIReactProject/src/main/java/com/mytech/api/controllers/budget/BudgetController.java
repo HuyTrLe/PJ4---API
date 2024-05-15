@@ -1,10 +1,12 @@
 package com.mytech.api.controllers.budget;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.services.MyUserDetails;
@@ -72,10 +75,11 @@ public class BudgetController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(budgetDTOs);
     }
-    
+
     @PostMapping("/getBudgetWithTime")
- 
-    public ResponseEntity<List<BudgetResponse>> getBudgetWithTime(@RequestBody @Valid ParamBudget paramPudget, BindingResult result) {
+
+    public ResponseEntity<List<BudgetResponse>> getBudgetWithTime(@RequestBody @Valid ParamBudget paramPudget,
+            BindingResult result) {
         List<BudgetResponse> budgets = budgetService.getBudgetWithTime(paramPudget);
         return ResponseEntity.ok(budgets);
     }
@@ -109,42 +113,44 @@ public class BudgetController {
         budgetService.deleteBudget(budgetId);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
-    
-    @GetMapping("valid/user/{userId}")
-    public ResponseEntity<List<BudgetDTO>> getValidBudgetsByUserId(@PathVariable int userId) {
-        List<Budget> validBudgets = budgetService.getValidBudget(userId);
-        List<BudgetDTO> validBudgetDTOs = validBudgets.stream()
-                .map(budget -> modelMapper.map(budget, BudgetDTO.class))
-                .collect(Collectors.toList());
+
+    @GetMapping("/valid/user/{userId}")
+    public ResponseEntity<Page<BudgetDTO>> getValidBudgetsByUserId(@PathVariable int userId,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Budget> validBudgets = budgetService.getValidBudget(userId, pageable);
+        Page<BudgetDTO> validBudgetDTOs = validBudgets.map(budget -> modelMapper.map(budget, BudgetDTO.class));
         return ResponseEntity.ok(validBudgetDTOs);
     }
-    
-    @GetMapping("past/user/{userId}")
-    public ResponseEntity<List<BudgetDTO>> getPastBudgets(@PathVariable int userId) {
-        List<Budget> validBudgets = budgetService.getPastBudgets(userId);
-        List<BudgetDTO> validBudgetDTOs = validBudgets.stream()
-                .map(budget -> modelMapper.map(budget, BudgetDTO.class))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(validBudgetDTOs);
+
+    @GetMapping("/past/user/{userId}")
+    public ResponseEntity<Page<BudgetDTO>> getPastBudgets(@PathVariable int userId,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Budget> pastBudgets = budgetService.getPastBudgets(userId, pageable);
+        Page<BudgetDTO> pastBudgetDTOs = pastBudgets.map(budget -> modelMapper.map(budget, BudgetDTO.class));
+        return ResponseEntity.ok(pastBudgetDTOs);
     }
-    
-    @GetMapping("future/user/{userId}")
-    public ResponseEntity<List<BudgetDTO>> getFutureBudgets(@PathVariable int userId) {
-        List<Budget> validBudgets = budgetService.getFutureBudgets(userId);
-        List<BudgetDTO> validBudgetDTOs = validBudgets.stream()
-                .map(budget -> modelMapper.map(budget, BudgetDTO.class))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(validBudgetDTOs);
+
+    @GetMapping("/future/user/{userId}")
+    public ResponseEntity<Page<BudgetDTO>> getFutureBudgets(@PathVariable int userId,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Budget> futureBudgets = budgetService.getFutureBudgets(userId, pageable);
+        Page<BudgetDTO> futureBudgetDTOs = futureBudgets.map(budget -> modelMapper.map(budget, BudgetDTO.class));
+        return ResponseEntity.ok(futureBudgetDTOs);
     }
-    
+
     @PostMapping("/getBudgetPast")
-    public ResponseEntity<List<BudgetResponse>> getBudgetPast(@RequestBody @Valid ParamBudget paramPudget, BindingResult result) {
+    public ResponseEntity<List<BudgetResponse>> getBudgetPast(@RequestBody @Valid ParamBudget paramPudget,
+            BindingResult result) {
         List<BudgetResponse> budgets = budgetService.getBudgetPast(paramPudget);
         return ResponseEntity.ok(budgets);
     }
-    
-    @PostMapping("/getBudgetFuture")  
-    public ResponseEntity<List<BudgetResponse>> getBudgetFuture(@RequestBody @Valid ParamBudget paramPudget, BindingResult result) {
+
+    @PostMapping("/getBudgetFuture")
+    public ResponseEntity<List<BudgetResponse>> getBudgetFuture(@RequestBody @Valid ParamBudget paramPudget,
+            BindingResult result) {
         List<BudgetResponse> budgets = budgetService.getBudgetFuture(paramPudget);
         return ResponseEntity.ok(budgets);
     }

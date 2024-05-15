@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mytech.api.auth.services.MyUserDetails;
@@ -25,6 +29,8 @@ import com.mytech.api.models.saving_goals.SavingGoal;
 import com.mytech.api.models.saving_goals.SavingGoalDTO;
 import com.mytech.api.models.saving_goals.TransactionWithSaving;
 import com.mytech.api.models.transaction.TransactionData;
+import com.mytech.api.models.wallet.Wallet;
+import com.mytech.api.models.wallet.WalletDTO;
 import com.mytech.api.services.saving_goals.SavingGoalsService;
 
 import jakarta.validation.Valid;
@@ -117,7 +123,7 @@ public class Saving_goalsController {
         SavingGoalDTO updatedSavingGoal = savingGoalsService.updateSavingGoal(savingGoalId, updatedSavingGoalDTO);
         return ResponseEntity.ok(updatedSavingGoal);
     }
-    
+
     @GetMapping("findWorkingByUserId/user/{userId}")
     public ResponseEntity<List<SavingGoalDTO>> findWorkingByUserId(@PathVariable Long userId) {
         List<SavingGoal> savingGoals = savingGoalsService.findWorkingByUserId(userId);
@@ -129,7 +135,7 @@ public class Saving_goalsController {
                 .collect(Collectors.toList());
         return new ResponseEntity<>(savingDTOs, HttpStatus.OK);
     }
-    
+
     @GetMapping("findFinishedByUserId/user/{userId}")
     public ResponseEntity<List<SavingGoalDTO>> findFinishedByUserId(@PathVariable Long userId) {
         List<SavingGoal> savingGoals = savingGoalsService.findFinishedByUserId(userId);
@@ -141,16 +147,25 @@ public class Saving_goalsController {
                 .collect(Collectors.toList());
         return new ResponseEntity<>(savingDTOs, HttpStatus.OK);
     }
-    
+
     @PostMapping("/getSavingWithSavingID")
-	public ResponseEntity<?> GetSavingWithSavingID(@RequestBody @Valid TransactionWithSaving param) {
-		List<SavingGoal> savingData = savingGoalsService.getSavingWithSavingID(param);
-		if (savingData != null && !savingData.isEmpty()) {
-			 List<SavingGoalDTO> savingDTOs = savingData.stream()
-		                .map(saving -> modelMapper.map(saving, SavingGoalDTO.class))
-		                .collect(Collectors.toList());
-			return ResponseEntity.ok(savingDTOs);
-		}
-		return ResponseEntity.notFound().build();
-	}
+    public ResponseEntity<?> GetSavingWithSavingID(@RequestBody @Valid TransactionWithSaving param) {
+        List<SavingGoal> savingData = savingGoalsService.getSavingWithSavingID(param);
+        if (savingData != null && !savingData.isEmpty()) {
+            List<SavingGoalDTO> savingDTOs = savingData.stream()
+                    .map(saving -> modelMapper.map(saving, SavingGoalDTO.class))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(savingDTOs);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/page/users/{userId}")
+    public ResponseEntity<Page<SavingGoalDTO>> getPageAllGoals(@PathVariable int userId,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SavingGoal> goals = savingGoalsService.getPageAllGoals(userId, pageable);
+        Page<SavingGoalDTO> savingGoalDTOs = goals.map(goal -> modelMapper.map(goal, SavingGoalDTO.class));
+        return ResponseEntity.ok(savingGoalDTOs);
+    }
 }
