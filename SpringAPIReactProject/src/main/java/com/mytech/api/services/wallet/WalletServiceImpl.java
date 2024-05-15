@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.mytech.api.auth.repositories.UserRepository;
@@ -287,6 +289,11 @@ public class WalletServiceImpl implements WalletService {
 	@Override
 	public List<Wallet> getWalletsByUserId(int userId) {
 		return walletRepository.findByUserId(userId);
+	}
+
+	@Override
+	public Page<Wallet> getPageAllWallets(int userId, Pageable pageable) {
+		return walletRepository.findByUserId(userId, pageable);
 	}
 
 	@Override
