@@ -18,6 +18,7 @@ import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.bill.BillDTO;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.debt.ReportDebtParam;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.user.User;
@@ -145,15 +146,15 @@ public class BillServiceImpl implements BillService {
 	}
 
 	@Override
-	public List<Bill> findBillActive(int userId) {
+	public List<Bill> findBillActive(ReportDebtParam param) {
 		LocalDate currentDate = LocalDate.now();
-		return billRepository.findBillActive(userId, currentDate);
+		return billRepository.findBillActive(param.getUserId(), currentDate,param.getFromDate(),param.getToDate());
 	}
 
 	@Override
-	public List<Bill> findBillExpired(int userId) {
+	public List<Bill> findBillExpired(ReportDebtParam param) {
 		LocalDate currentDate = LocalDate.now();
-		return billRepository.findBillExpired(userId, currentDate);
+		return billRepository.findBillExpired(param.getUserId(), currentDate,param.getFromDate(),param.getToDate());
 	}
 
 }

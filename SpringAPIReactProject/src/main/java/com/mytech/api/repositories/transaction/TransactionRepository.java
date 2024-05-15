@@ -61,9 +61,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			"JOIN t.category c " +
 			"JOIN c.icon ci " +
 			"WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = com.mytech.api.models.category.CateTypeENum.EXPENSE "
-			+
-			"GROUP BY t.transactionDate " +
-			"ORDER BY t.transactionDate ASC")
+			+"ORDER BY t.transactionDate ASC")
 	List<TransactionReport> getTransactionReport(int userId, LocalDate fromDate, LocalDate toDate);
 
 	@Query("SELECT new com.mytech.api.models.transaction.TransactionReport(" +
@@ -89,7 +87,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 			"FROM Transaction t " +
 			"JOIN t.category c " +
 			"JOIN c.icon ci " +
-			"WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = :type AND ( :walletId != 0 and t.wallet.id = :walletId) "
+			"WHERE t.user.id = :userId and t.transactionDate between :fromDate and :toDate and c.type = :type OR ( :walletId != 0 and t.wallet.id = :walletId) "
 			+
 			"ORDER BY t.id DESC")
 	List<TransactionData> FindTransaction(int userId, LocalDate fromDate, LocalDate toDate, CateTypeENum type,

@@ -27,6 +27,7 @@ import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.bill.BillDTO;
 import com.mytech.api.models.bill.BillResponse;
 import com.mytech.api.models.budget.BudgetDTO;
+import com.mytech.api.models.debt.ReportDebtParam;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.services.bill.BillService;
 import com.mytech.api.services.category.CategoryService;
@@ -78,9 +79,9 @@ public class BillController {
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 	
-	@GetMapping("findBillActive/users/{userId}")
-	public ResponseEntity<?> findBillActive(@PathVariable int userId) {
-		List<Bill> bill = billService.findBillActive(userId);
+	@PostMapping("/findBillActive")
+	public ResponseEntity<?> findBillActive(@RequestBody ReportDebtParam param) {
+		List<Bill> bill = billService.findBillActive(param);
 		if (bill != null) {
 			List<BillResponse> billDTOs = bill.stream()
 	                .map(bills -> modelMapper.map(bills, BillResponse.class))
@@ -90,9 +91,9 @@ public class BillController {
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 	
-	@GetMapping("findBillExpired/users/{userId}")
-	public ResponseEntity<?> findBillExpired(@PathVariable int userId) {
-		List<Bill> bill = billService.findBillExpired(userId);
+	@PostMapping("/findBillExpired")
+	public ResponseEntity<?> findBillExpired(@RequestBody ReportDebtParam param) {
+		List<Bill> bill = billService.findBillExpired(param);
 		if (bill != null) {
 			List<BillResponse> billDTOs = bill.stream()
 	                .map(bills -> modelMapper.map(bills, BillResponse.class))

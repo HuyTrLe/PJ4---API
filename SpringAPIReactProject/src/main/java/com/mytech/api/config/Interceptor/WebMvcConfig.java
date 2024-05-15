@@ -17,8 +17,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/recurrences/userRecurrence/**")
                 .addPathPatterns("/api/categories/user/**")
                 .addPathPatterns("/api/bills/users/**")
-                .addPathPatterns("/api/bills/findBillActive/users/**")
-                .addPathPatterns("/api/bills/findBillExpired/users/**")
                 .addPathPatterns("/api/wallets/users/**")
                 .addPathPatterns("/api/expenses/users/**")
                 .addPathPatterns("/api/debts/user/**")
