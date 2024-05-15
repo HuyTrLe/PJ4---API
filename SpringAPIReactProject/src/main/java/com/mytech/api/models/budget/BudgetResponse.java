@@ -17,4 +17,6 @@ public class BudgetResponse{
 	  private BigDecimal thresholdAmount;
 	  private String categoryName;       
 	  private String categoryIcon; 
+	  private LocalDate startDate;
+	  private LocalDate toDate;
 }
