@@ -62,16 +62,19 @@ public class BudgetServiceImpl implements BudgetService {
 	    savedBudget = budgetRepository.save(savedBudget);
 	    
 	    checkAndSendNotifications(savedBudget);
+	    checkAndSendNotificationsLimit(savedBudget);
 	    
 	    return savedBudget;
 	}
+	
+	public void checkAndSendNotificationDue() {
+		List<Budget> allBudgets = budgetRepository.findAll();
+		for (Budget budget : allBudgets) {
+			checkAndSendNotifications(budget);
+		}
+	}
 
 	private void checkAndSendNotifications(Budget budget) {
-		if (budget.getAmount().compareTo(budget.getThreshold_amount()) >= 0) {
-	        sendNotification(budget, NotificationType.BUDGET_LIMIT,
-	            "Your budget for " + budget.getCategory().getName() + " has reached its limit.");
-	    }
-
 	    // Notification for budget due - check if already sent today
 	    long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), budget.getPeriodEnd());
 	    if (daysUntilDue <= 3) {
@@ -85,6 +88,13 @@ public class BudgetServiceImpl implements BudgetService {
 	            sendNotification(budget, NotificationType.BUDGET_DUE,
 	                "Your budget for " + budget.getCategory().getName() + " is about to be due in 3 days or less.");
 	        }
+	    }
+	}
+	
+	private void checkAndSendNotificationsLimit(Budget budget) {
+		if (budget.getAmount().compareTo(budget.getThreshold_amount()) >= 0) {
+	        sendNotification(budget, NotificationType.BUDGET_LIMIT,
+	            "Uh oh, your budget for " + budget.getCategory().getName() + " has reached its limit.");
 	    }
 	}
 
@@ -107,48 +117,6 @@ public class BudgetServiceImpl implements BudgetService {
 	    
 	    notificationService.sendNotification(notificationDTO);
 	}
-
-	// @Scheduled(fixedDelayString = "PT1H") // This will run the task every hour
-//	public void checkBudgetsPeriodically() {
-//		List<Budget> allBudgets = budgetRepository.findAll();
-//		LocalDate today = LocalDate.now();
-//
-//		for (Budget budget : allBudgets) {
-//			// Check if the budget reaches its limit
-//			if (budget.getAmount().compareTo(budget.getThreshold_amount()) >= 0) {
-//				sendLimitNotification(budget);
-//			}
-//
-//			// Check if the budget is about to be due
-//			long daysUntilDue = ChronoUnit.DAYS.between(today, budget.getPeriodEnd());
-//			if (daysUntilDue <= 3) {
-//				sendDueNotification(budget);
-//			}
-//		}
-//	}
-//
-//	private void sendLimitNotification(Budget budget) {
-//		// Create and send a notification for budget limit
-//		NotificationDTO notificationDTO = new NotificationDTO();
-//		notificationDTO.setUserId(budget.getUser().getId());
-//		notificationDTO.setNotificationType(NotificationType.BUDGET_LIMIT);
-//		notificationDTO.setEventId(Long.valueOf(budget.getBudgetId()));
-//		notificationDTO.setMessage("Your budget for " + budget.getCategory().getName() + " has reached its limit.");
-//		notificationDTO.setTimestamp(LocalDateTime.now());
-//		notificationService.sendNotification(notificationDTO);
-//	}
-//
-//	private void sendDueNotification(Budget budget) {
-//		// Create and send a notification for budget due
-//		NotificationDTO notificationDTO = new NotificationDTO();
-//		notificationDTO.setUserId(budget.getUser().getId());
-//		notificationDTO.setNotificationType(NotificationType.BUDGET_DUE);
-//		notificationDTO.setEventId(Long.valueOf(budget.getBudgetId()));
-//		notificationDTO.setMessage(
-//				"Your budget for " + budget.getCategory().getName() + " is about to be due in 3 days or less.");
-//		notificationDTO.setTimestamp(LocalDateTime.now());
-//		notificationService.sendNotification(notificationDTO);
-//	}
 
 	@Override
 	public Budget getBudgetById(int budgetId) {
@@ -185,7 +153,7 @@ public class BudgetServiceImpl implements BudgetService {
 				Optional<Budget> oldBudgetOpt = budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId, categoryId, oldTransactionDate, oldTransactionDate);
 	            oldBudgetOpt.ifPresent(oldBudget -> {
 	                adjustBudget(userId, categoryId, oldTransactionDate, oldAmount.negate());
-	                checkAndSendNotifications(oldBudget); // Send notification for the old budget
+	                checkAndSendNotificationsLimit(oldBudget); // Send notification for the old budget
 	            });
 
 				// Add the transaction amount to the new budget date
@@ -227,21 +195,22 @@ public class BudgetServiceImpl implements BudgetService {
 	        }
 
 	        budgetRepository.save(newBudget);
-	        checkAndSendNotifications(newBudget);
+	        checkAndSendNotificationsLimit(newBudget);
 	    }
 	    
-	    Optional<Budget> updatedBudgetOpt = budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId, categoryId, newTransactionDate, newTransactionDate);
-	    if (updatedBudgetOpt.isPresent()) {
-	        Budget updatedBudget = updatedBudgetOpt.get();
-	        checkAndSendNotifications(updatedBudget); // Send notification for the updated budget
-	    }
+//	    Optional<Budget> updatedBudgetOpt = budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId, categoryId, newTransactionDate, newTransactionDate);
+//	    if (updatedBudgetOpt.isPresent()) {
+//	        Budget updatedBudget = updatedBudgetOpt.get();
+//	        checkAndSendNotificationsLimit(updatedBudget); // Send notification for the updated budget
+//	    }
 	}
 
 	private void adjustBudget(Long userId, Long categoryId, LocalDate transactionDate, BigDecimal amountAdjustment) {
 		budgetRepository.findByUserIdAndCategory_IdAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(userId,
 				categoryId, transactionDate, transactionDate).ifPresent(budget -> {
 					budget.setAmount(budget.getAmount().add(amountAdjustment));
-					budgetRepository.save(budget);
+					Budget savedBudget = budgetRepository.save(budget);
+					checkAndSendNotificationsLimit(savedBudget);
 				});
 	}
 
@@ -251,7 +220,8 @@ public class BudgetServiceImpl implements BudgetService {
 		if (budgetOpt.isPresent()) {
 			Budget budget = budgetOpt.get();
 			budget.setAmount(budget.getAmount().add(amount));
-			budgetRepository.save(budget);
+			Budget savedBudget = budgetRepository.save(budget);
+			checkAndSendNotificationsLimit(savedBudget);
 		} else {
 			System.out.println("No budget found for category id: " + categoryId + ", skipping budget adjustment.");
 		}
@@ -277,6 +247,7 @@ public class BudgetServiceImpl implements BudgetService {
 		LocalDate today = LocalDate.now();
 		newBudget.setPeriodStart(today.with(TemporalAdjusters.firstDayOfMonth()));
 		newBudget.setPeriodEnd(today.with(TemporalAdjusters.lastDayOfMonth()));
+		checkAndSendNotificationsLimit(newBudget);
 
 		return budgetRepository.save(newBudget);
 	}
