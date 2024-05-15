@@ -29,4 +29,6 @@ public interface SavingGoalsService {
 	List<SavingGoal> findWorkingByUserId(Long userId);
 	
 	List<SavingGoal> getSavingWithSavingID(TransactionWithSaving param);
+    
+    void checkAndSendSavingGoalProgressNotifications(SavingGoal savingGoal);
 }
