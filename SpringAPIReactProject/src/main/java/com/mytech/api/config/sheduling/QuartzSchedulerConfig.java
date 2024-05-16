@@ -1,6 +1,5 @@
 package com.mytech.api.config.sheduling;
 
-import org.hibernate.annotations.Comment;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -21,14 +20,22 @@ public class QuartzSchedulerConfig {
 	@Bean
 	JobDetail updateTransactionReccurenceJobDetail() {
 		return JobBuilder.newJob().ofType(UpdateTransactionReccuringJob.class).storeDurably()
-				.withIdentity("uupdateTransactionReccringsJob").withDescription("Update Transaction Recurring job")
+				.withIdentity("updateTransactionReccringsJob").withDescription("Update Transaction Recurring job")
 				.build();
 	}
 
 	@Bean
 	Trigger jobTrigger() {
 		return TriggerBuilder.newTrigger().forJob(updateBillsJobDetail()).withIdentity("jobTrigger")
-				.withDescription("Trigger for job").withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(17, 39))
+				.withDescription("Trigger for job").withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(13, 23))
+				.build();
+	}
+
+	@Bean
+	Trigger transactionJobTrigger() {
+		return TriggerBuilder.newTrigger().forJob(updateTransactionReccurenceJobDetail())
+				.withIdentity("TransactionJobTrigger")
+				.withDescription("Trigger for job").withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(13, 26))
 				.build();
 	}
 

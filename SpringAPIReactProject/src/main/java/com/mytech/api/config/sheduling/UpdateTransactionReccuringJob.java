@@ -171,13 +171,21 @@ public class UpdateTransactionReccuringJob extends QuartzJobBean {
     }
 
     private String buildEmailContent(Transaction transaction) {
-        return "Dear " + transaction.getUser().getUsername() + ",\n\n" +
-                "Your payment for the bill '" + transaction.getCategory().getName()
-                + "' has been processed successfully. " +
-                "Amount: " + transaction.getAmount() + "\n" +
-                "Date: " + transaction.getTransactionDate() + "\n\n" +
-                "Thank you for using our services!\n" +
-                "MyTech Support Team";
+        return "<html>" +
+                "<body>" +
+                "<p style='font-family: Arial, sans-serif; font-size: 16px; color: #333;'>" +
+                "Dear <strong>" + transaction.getUser().getUsername() + "</strong>,</p>" +
+                "<p style='font-family: Arial, sans-serif; font-size: 16px; color: #333;'>" +
+                "Your payment for the bill <strong>'" + transaction.getCategory().getName()
+                + "'</strong> has been processed successfully." +
+                "<br>Amount: <strong>" + transaction.getAmount() + "</strong>" +
+                "<br>Date: <strong>" + transaction.getTransactionDate() + "</strong></p>" +
+                "<p style='font-family: Arial, sans-serif; font-size: 16px; color: #333;'>Thank you for using our services!</p>"
+                +
+                "<p style='font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; color: #555;'>MyTech Support Team</p>"
+                +
+                "</body>" +
+                "</html>";
     }
 
 }
