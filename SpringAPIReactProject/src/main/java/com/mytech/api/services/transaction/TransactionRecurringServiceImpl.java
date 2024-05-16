@@ -18,6 +18,7 @@ import com.mytech.api.auth.services.MyUserDetails;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.category.CateTypeENum;
 import com.mytech.api.models.category.Category;
+import com.mytech.api.models.debt.ReportDebtParam;
 import com.mytech.api.models.recurrence.Recurrence;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.transaction.TransactionRecurring;
@@ -179,15 +180,15 @@ public class TransactionRecurringServiceImpl implements TransactionRecurringServ
     }
 
 	@Override
-	public List<TransactionRecurring> findRecuActive(int userId) {
+	public List<TransactionRecurring> findRecuActive(ReportDebtParam param) {
 		LocalDate currentDate = LocalDate.now();
-		return transactionRecurringRepository.findRecuActive(userId, currentDate);
+		return transactionRecurringRepository.findRecuActive(param.getUserId(), currentDate,param.getFromDate(),param.getToDate());
 	}
 
 	@Override
-	public List<TransactionRecurring> findRecuExpired(int userId) {
+	public List<TransactionRecurring> findRecuExpired(ReportDebtParam param) {
 		LocalDate currentDate = LocalDate.now();
-		return transactionRecurringRepository.findRecuExpired(userId, currentDate);
+		return transactionRecurringRepository.findRecuExpired(param.getUserId(), currentDate,param.getFromDate(),param.getToDate());
 	}
 
 }

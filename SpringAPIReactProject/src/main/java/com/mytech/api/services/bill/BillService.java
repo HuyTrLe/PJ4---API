@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.bill.BillDTO;
+import com.mytech.api.models.debt.ReportDebtParam;
 
 public interface BillService {
 
@@ -27,8 +28,8 @@ public interface BillService {
 
 	ResponseEntity<?> deleteBill(int billId, Authentication authentication);
 	
-	List<Bill> findBillActive(int userId);
+	List<Bill> findBillActive(ReportDebtParam param);
 
-	List<Bill> findBillExpired(int userId);
+	List<Bill> findBillExpired(ReportDebtParam param);
 
 }

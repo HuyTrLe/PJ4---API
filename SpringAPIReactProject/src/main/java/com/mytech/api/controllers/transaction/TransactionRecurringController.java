@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mytech.api.auth.repositories.UserRepository;
 import com.mytech.api.models.bill.Bill;
 import com.mytech.api.models.bill.BillResponse;
+import com.mytech.api.models.debt.ReportDebtParam;
 import com.mytech.api.models.recurrence.RecurrenceConverter;
 import com.mytech.api.models.transaction.TransactionRecurring;
 import com.mytech.api.models.transaction.TransactionRecurringDTO;
@@ -114,9 +115,9 @@ public class TransactionRecurringController {
     }
     
     
-    @GetMapping("findRecuActive/users/{userId}")
-	public ResponseEntity<?> findRecuActive(@PathVariable int userId) {
-		List<TransactionRecurring> transRecu = transactionRecurringService.findRecuActive(userId);
+    @PostMapping("/findRecuActive")
+	public ResponseEntity<?> findRecuActive(@RequestBody ReportDebtParam param) {
+		List<TransactionRecurring> transRecu = transactionRecurringService.findRecuActive(param);
 		if (transRecu != null) {
 			List<TransactionResponce> transRecuDTO = transRecu.stream()
 	                .map(tranre -> modelMapper.map(tranre, TransactionResponce.class))
@@ -126,9 +127,9 @@ public class TransactionRecurringController {
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 	
-	@GetMapping("findRecuExpired/users/{userId}")
-	public ResponseEntity<?> findRecuExpired(@PathVariable int userId) {
-		List<TransactionRecurring> transRecu = transactionRecurringService.findRecuExpired(userId);
+    @PostMapping("/findRecuExpired")
+	public ResponseEntity<?> findRecuExpired(@RequestBody ReportDebtParam param) {
+		List<TransactionRecurring> transRecu = transactionRecurringService.findRecuExpired(param);
 		if (transRecu != null) {
 			List<TransactionResponce> transRecuDTO = transRecu.stream()
 	                .map(tranre -> modelMapper.map(tranre, TransactionResponce.class))

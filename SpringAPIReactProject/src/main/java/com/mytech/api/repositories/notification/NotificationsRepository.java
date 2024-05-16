@@ -11,7 +11,7 @@ import com.mytech.api.models.notifications.NotificationType;
 
 public interface NotificationsRepository extends JpaRepository<Notification, Long> {
 
-    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId")
+    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId order by n.id desc ")
     List<Notification> findByUserId(Long userId);
 
     @Query("SELECT n FROM Notification n WHERE n.notificationType = :notificationType")

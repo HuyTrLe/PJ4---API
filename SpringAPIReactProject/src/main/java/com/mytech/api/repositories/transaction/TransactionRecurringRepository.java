@@ -21,17 +21,17 @@ public interface TransactionRecurringRepository extends JpaRepository<Transactio
     List<TransactionRecurring> findByRecurrence_DueDate(LocalDate dueDate);
     
     @Query("SELECT b FROM TransactionRecurring b " +
-            "WHERE (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate <= b.recurrence.endDate) " +
+            "WHERE ((b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate <= b.recurrence.endDate) " +
             "OR (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'WEEKLY' AND :currentDate <= b.recurrence.endDate) " +
             "OR (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'MONTHLY' AND :currentDate <= b.recurrence.endDate) " +
             "OR (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'YEARLY' AND :currentDate <= b.recurrence.endDate) " +
-            "OR (b.recurrence.endType = 'TIMES' AND :currentDate <= b.recurrence.dueDate) OR (b.recurrence.endType = 'FOREVER') AND b.user.id = :userId ORDER BY b.id desc")
-    List<TransactionRecurring> findRecuActive(int userId,LocalDate currentDate);
+            "OR (b.recurrence.endType = 'TIMES' AND :currentDate <= b.recurrence.dueDate) OR (b.recurrence.endType = 'FOREVER')) AND b.user.id = :userId and b.recurrence.dueDate between :fromDate and :toDate ORDER BY b.id desc")
+    List<TransactionRecurring> findRecuActive(Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
     @Query("SELECT b FROM TransactionRecurring b " +
-            "WHERE (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate > b.recurrence.endDate) " +
+            "WHERE ((b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'DAILY' AND :currentDate > b.recurrence.endDate) " +
             "OR (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'WEEKLY' AND :currentDate > b.recurrence.endDate) " +
             "OR (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'MONTHLY' AND :currentDate > b.recurrence.endDate) " +
             "OR (b.recurrence.endType = 'UNTIL' AND b.recurrence.frequencyType = 'YEARLY' AND :currentDate > b.recurrence.endDate) " +
-            "OR (b.recurrence.endType = 'TIMES' AND :currentDate > b.recurrence.dueDate) AND b.user.id = :userId ORDER BY b.id desc")
-    List<TransactionRecurring> findRecuExpired (int userId,LocalDate currentDate);
+            "OR (b.recurrence.endType = 'TIMES' AND :currentDate > b.recurrence.dueDate)) AND b.user.id = :userId  and b.recurrence.dueDate between :fromDate and :toDate ORDER BY b.id desc")
+    List<TransactionRecurring> findRecuExpired (Long userId,LocalDate currentDate,LocalDate fromDate,LocalDate toDate);
 }
