@@ -1,5 +1,6 @@
 package com.mytech.api.config.sheduling;
 
+import org.hibernate.annotations.Comment;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -50,7 +51,21 @@ public class QuartzSchedulerConfig {
 
 	@Bean
 	Trigger savingNotificationJobTrigger() {
-		return TriggerBuilder.newTrigger().forJob(savingNotificationJobDetail()).withIdentity("savingNotificationTrigger")
-				.withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(9, 0)).build();
+		return TriggerBuilder.newTrigger().forJob(savingNotificationJobDetail())
+				.withIdentity("savingNotificationTrigger").withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(9, 0))
+				.build();
 	}
+
+	@Bean
+	JobDetail budgetNotificationJobDetail() {
+		return JobBuilder.newJob(BudgetNotificationJob.class).withIdentity("budgetNotificationJob").storeDurably()
+				.build();
+	}
+
+	Trigger budgetNotificationJobTrigger() {
+		return TriggerBuilder.newTrigger().forJob(budgetNotificationJobDetail())
+				.withIdentity("budgetNotificationTrigger").withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(9, 0))
+				.build();
+	}
+
 }
